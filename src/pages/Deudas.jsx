@@ -1,0 +1,242 @@
+import { useState } from 'react'
+import Layout from '../components/layout/Layout'
+import { useDeudas } from '../hooks/useDeudas'
+import { formatMXN } from '../utils/constantes'
+import { Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+
+const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
+
+export default function Deudas() {
+  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, abonar, eliminar } = useDeudas()
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [form, setForm] = useState(FORM_VACIO)
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [expandida, setExpandida] = useState(null)
+  const [montoAbono, setMontoAbono] = useState({})
+  const [tab, setTab] = useState('deudas')
+
+  const handleAgregar = async () => {
+    if (!form.nombre || !form.saldo_actual) return
+    await agregar({
+      ...form,
+      saldo_original: form.saldo_original || form.saldo_actual,
+      saldo_actual:   Number(form.saldo_actual),
+      pago_mensual:   Number(form.pago_mensual)  || null,
+      tasa_interes:   Number(form.tasa_interes)  || null,
+    })
+    setForm(FORM_VACIO); setMostrarForm(false)
+  }
+
+  const handleAbonar = async (deudaId) => {
+    const monto = montoAbono[deudaId]
+    if (!monto || Number(monto) <= 0) return
+    await abonar(deudaId, monto)
+    setMontoAbono(m => ({ ...m, [deudaId]: '' }))
+  }
+
+  return (
+    <Layout titulo="Deudas">
+      <div className="space-y-4">
+
+        {/* Tarjetas */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="card p-4 border border-red-100">
+            <p className="text-xs text-red-400 font-semibold uppercase tracking-wide mb-1">Total Deuda</p>
+            <p className="text-2xl font-bold font-mono text-red-600">{formatMXN(totalDeuda)}</p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Pago Mensual</p>
+            <p className="text-2xl font-bold font-mono text-primary-700">{formatMXN(totalPagoMensual)}</p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Número de Deudas</p>
+            <p className="text-2xl font-bold font-mono text-gray-700">{deudas.length}</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {[['deudas','Mis Deudas'],['calculadora','Calculadora']].map(([k,l]) => (
+              <button key={k} onClick={() => setTab(k)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all
+                  ${tab === k ? 'bg-primary-700 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {tab === 'deudas' && (
+            <button onClick={() => setMostrarForm(v => !v)} className="btn-primary flex items-center gap-2 text-sm">
+              <Plus className="w-4 h-4" /> Agregar Deuda
+            </button>
+          )}
+        </div>
+
+        {tab === 'deudas' && (
+          <>
+            {mostrarForm && (
+              <div className="card p-5 border-2 border-red-200">
+                <div className="grid grid-cols-4 gap-3 mb-3">
+                  <div className="col-span-2">
+                    <label className="label">Nombre</label>
+                    <input className="input" placeholder="Ej: Mercado Pago, DIDI..."
+                      value={form.nombre} onChange={e => setF('nombre', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Saldo Actual ($)</label>
+                    <input type="number" className="input font-mono"
+                      value={form.saldo_actual} onChange={e => setF('saldo_actual', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Saldo Original ($)</label>
+                    <input type="number" className="input font-mono"
+                      value={form.saldo_original} onChange={e => setF('saldo_original', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Pago Mensual ($)</label>
+                    <input type="number" className="input font-mono"
+                      value={form.pago_mensual} onChange={e => setF('pago_mensual', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Tasa Interés (%)</label>
+                    <input type="number" className="input font-mono" placeholder="0"
+                      value={form.tasa_interes} onChange={e => setF('tasa_interes', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Próximo Pago</label>
+                    <input type="date" className="input"
+                      value={form.fecha_proximo_pago} onChange={e => setF('fecha_proximo_pago', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Notas</label>
+                    <input className="input text-sm"
+                      value={form.notas} onChange={e => setF('notas', e.target.value)} />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn-primary px-6" onClick={handleAgregar} disabled={saving}>
+                    {saving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button className="btn-ghost" onClick={() => setMostrarForm(false)}>Cancelar</button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {loading
+                ? Array(3).fill(0).map((_,i) => <div key={i} className="card h-20 animate-pulse bg-gray-50" />)
+                : deudas.length === 0
+                  ? <div className="card p-16 text-center text-gray-300 text-sm">Sin deudas registradas 🎉</div>
+                  : deudas.map(d => {
+                    const pct = d.saldo_original > 0
+                      ? ((Number(d.saldo_original) - Number(d.saldo_actual)) / Number(d.saldo_original)) * 100 : 0
+                    const expandido = expandida === d.id
+                    return (
+                      <div key={d.id} className="card overflow-hidden">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="font-bold text-gray-900">{d.nombre}</p>
+                              <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
+                                {d.pago_mensual > 0 && <span>Pago: {formatMXN(d.pago_mensual)}/mes</span>}
+                                {d.tasa_interes > 0 && <span>Tasa: {d.tasa_interes}%</span>}
+                                {d.fecha_proximo_pago && <span>Próximo: {d.fecha_proximo_pago}</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <p className="font-bold font-mono text-red-600 text-lg">{formatMXN(d.saldo_actual)}</p>
+                                {d.saldo_original > 0 && <p className="text-xs text-gray-400">de {formatMXN(d.saldo_original)}</p>}
+                              </div>
+                              <button onClick={() => eliminar(d.id)}
+                                className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {d.saldo_original > 0 && (
+                            <div className="mb-3">
+                              <div className="h-2 bg-red-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all"
+                                  style={{ width: `${Math.min(pct, 100)}%` }} />
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1">{pct.toFixed(0)}% pagado</p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <input type="number" className="input text-sm py-1.5 font-mono w-36" placeholder="Monto abono"
+                              value={montoAbono[d.id] ?? ''} onChange={e => setMontoAbono(m => ({ ...m, [d.id]: e.target.value }))} />
+                            <button onClick={() => handleAbonar(d.id)} className="btn-secondary text-sm py-1.5 px-3">
+                              Abonar
+                            </button>
+                            <button onClick={() => setExpandida(expandido ? null : d.id)}
+                              className="btn-ghost text-sm flex items-center gap-1 ml-auto">
+                              Historial {expandido ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {expandido && d.abonos_deuda?.length > 0 && (
+                          <div className="border-t border-gray-50 bg-gray-50 px-4 py-3">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Historial de Abonos</p>
+                            <div className="space-y-1.5">
+                              {[...d.abonos_deuda].sort((a,b) => b.fecha.localeCompare(a.fecha)).map(a => (
+                                <div key={a.id} className="flex justify-between text-sm">
+                                  <span className="text-gray-500 font-mono">{a.fecha}</span>
+                                  <span className="font-semibold text-emerald-600">-{formatMXN(a.monto)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {expandido && d.abonos_deuda?.length === 0 && (
+                          <div className="border-t border-gray-50 bg-gray-50 px-4 py-3 text-sm text-gray-300 text-center">
+                            Sin abonos registrados
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+            </div>
+          </>
+        )}
+
+        {tab === 'calculadora' && (
+          <div className="grid grid-cols-2 gap-6">
+            {[
+              { title: '❄️ Método Snowball', subtitle: 'Paga primero la deuda más pequeña (motivación)', lista: snowball, bgHeader: 'bg-blue-50' },
+              { title: '🏔️ Método Avalanche', subtitle: 'Paga primero la deuda con mayor tasa (ahorra más)', lista: avalanche, bgHeader: 'bg-amber-50' },
+            ].map(({ title, subtitle, lista, bgHeader }) => (
+              <div key={title} className="card overflow-hidden">
+                <div className={`px-5 py-4 border-b border-gray-100 ${bgHeader}`}>
+                  <h3 className="font-bold text-gray-900">{title}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+                </div>
+                {lista.length === 0
+                  ? <div className="p-8 text-center text-gray-300 text-sm">Sin deudas registradas</div>
+                  : <div className="divide-y divide-gray-50">
+                    {lista.map((d, i) => (
+                      <div key={d.id} className="flex items-center gap-3 px-5 py-3">
+                        <span className="w-6 h-6 rounded-full bg-primary-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-gray-800">{d.nombre}</p>
+                          <p className="text-xs text-gray-400">
+                            {formatMXN(d.saldo_actual)}{d.tasa_interes ? ` · ${d.tasa_interes}% anual` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    </Layout>
+  )
+}

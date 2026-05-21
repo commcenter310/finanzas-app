@@ -1,0 +1,101 @@
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import { useMes } from '../context/MesContext'
+import { useSupabaseQuery } from './useSupabaseQuery'
+
+export function useDashboard() {
+  const { user } = useAuth()
+  const { mes, anio } = useMes()
+
+  const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
+  const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+
+  const { data: ingresos, loading: loadingIngresos } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('ingresos')
+      .select('monto_actual, monto_presupuesto')
+      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mes, anio])
+
+  const { data: gastosFijos, loading: loadingFijos } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('gastos_fijos')
+      .select('monto_previsto, monto_actual, clasificacion, pagado')
+      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mes, anio])
+
+  const { data: transacciones, loading: loadingTx } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('transacciones')
+      .select(`
+        id, descripcion, monto, clasificacion, fecha, created_at,
+        categorias(nombre, icono),
+        metodos_pago(nombre)
+      `)
+      .eq('user_id', user.id)
+      .gte('fecha', inicioMes).lte('fecha', finMes)
+      .order('fecha', { ascending: false })
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  }, [user?.id, mes, anio])
+
+  const { data: presupuestos } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('presupuestos')
+      .select('monto_limite, categorias(nombre, icono, clasificacion)')
+      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mes, anio])
+
+  const { data: profile } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('profiles').select('regla_necesidad, regla_deseo, regla_ahorro').eq('id', user.id).single()
+    return data
+  }, [user?.id])
+
+  const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
+  const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
+  const totalTx       = transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+  const totalGastos   = totalFijos + totalTx
+  const porAsignar    = totalIngresos - totalGastos
+
+  const necesidad = [
+    ...gastosFijos?.filter(g => g.clasificacion === 'necesidad') ?? [],
+    ...transacciones?.filter(t => t.clasificacion === 'necesidad') ?? []
+  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
+
+  const deseo = [
+    ...gastosFijos?.filter(g => g.clasificacion === 'deseo') ?? [],
+    ...transacciones?.filter(t => t.clasificacion === 'deseo') ?? []
+  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
+
+  const ahorro = [
+    ...gastosFijos?.filter(g => g.clasificacion === 'ahorro') ?? [],
+    ...transacciones?.filter(t => t.clasificacion === 'ahorro') ?? []
+  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
+
+  const gastosPorCategoria = transacciones?.reduce((acc, t) => {
+    const cat = t.categorias?.nombre ?? 'Sin categoría'
+    acc[cat] = (acc[cat] ?? 0) + Number(t.monto)
+    return acc
+  }, {}) ?? {}
+
+  return {
+    loading: loadingIngresos || loadingFijos || loadingTx,
+    totalIngresos,
+    totalGastos,
+    porAsignar,
+    necesidad,
+    deseo,
+    ahorro,
+    gastosPorCategoria,
+    transacciones: transacciones ?? [],
+    presupuestos: presupuestos ?? [],
+    reglas: profile ?? { regla_necesidad: 0.5, regla_deseo: 0.3, regla_ahorro: 0.2 },
+  }
+}
