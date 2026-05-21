@@ -1,23 +1,33 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Auth() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [modo, setModo] = useState('login') // 'login' | 'registro'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   const handleSubmit = async () => {
     if (!email || !password) return setError('Completa todos los campos')
     setLoading(true)
     setError('')
+    setInfo('')
 
     const { error: err } = modo === 'login'
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password })
 
-    if (err) setError(err.message)
+    if (err) {
+      setError(err.message)
+    } else if (modo === 'login') {
+      navigate('/')
+    } else {
+      setInfo('Cuenta creada. Revisa tu correo para confirmar.')
+    }
     setLoading(false)
   }
 
@@ -51,6 +61,7 @@ export default function Auth() {
           </div>
 
           {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
+          {info  && <p className="text-emerald-600 text-sm bg-emerald-50 rounded-lg p-3">{info}</p>}
 
           <button className="btn-primary w-full py-3" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Cargando...' : modo === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
