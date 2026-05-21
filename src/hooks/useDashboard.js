@@ -4,7 +4,7 @@ import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 
 export function useDashboard() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { mes, anio } = useMes()
 
   const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
@@ -53,11 +53,6 @@ export function useDashboard() {
     return data || []
   }, [user?.id, mes, anio])
 
-  const { data: profile } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('profiles').select('regla_necesidad, regla_deseo, regla_ahorro').eq('id', user.id).single()
-    return data
-  }, [user?.id])
-
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
   const totalTx       = transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
@@ -96,6 +91,8 @@ export function useDashboard() {
     gastosPorCategoria,
     transacciones: transacciones ?? [],
     presupuestos: presupuestos ?? [],
-    reglas: profile ?? { regla_necesidad: 0.5, regla_deseo: 0.3, regla_ahorro: 0.2 },
+    reglas: profile
+      ? { regla_necesidad: profile.regla_necesidad ?? 0.5, regla_deseo: profile.regla_deseo ?? 0.3, regla_ahorro: profile.regla_ahorro ?? 0.2 }
+      : { regla_necesidad: 0.5, regla_deseo: 0.3, regla_ahorro: 0.2 },
   }
 }
