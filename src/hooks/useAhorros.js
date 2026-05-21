@@ -18,6 +18,12 @@ export function useAhorros() {
     return data ?? []
   }, [user?.id, mes, anio])
 
+  const { data: metodos } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('metodos_pago')
+      .select('id, nombre').eq('user_id', user.id).eq('activo', true)
+    return data ?? []
+  }, [user?.id])
+
   const totales = {
     meta:   ahorros?.reduce((s, a) => s + Number(a.monto_meta), 0) ?? 0,
     actual: ahorros?.reduce((s, a) => s + Number(a.monto_actual), 0) ?? 0,
@@ -44,5 +50,26 @@ export function useAhorros() {
     refetch()
   }
 
-  return { ahorros: ahorros ?? [], loading, saving, totales, agregar, actualizar, eliminar }
+  const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
+    setSaving(true)
+    const montoNum = Number(monto)
+    const [{ error: errTx }, { error: errAhorro }] = await Promise.all([
+      supabase.from('transacciones').insert({
+        user_id:        user.id,
+        descripcion:    `Ahorro: ${ahorro.concepto}`,
+        monto:          montoNum,
+        clasificacion:  'ahorro',
+        fecha,
+        metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
+      }),
+      supabase.from('ahorros').update({
+        monto_actual: Number(ahorro.monto_actual) + montoNum,
+      }).eq('id', ahorro.id),
+    ])
+    setSaving(false)
+    if (!errTx && !errAhorro) refetch()
+    return { error: errTx || errAhorro }
+  }
+
+  return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, saving, totales, agregar, actualizar, eliminar, depositar }
 }
