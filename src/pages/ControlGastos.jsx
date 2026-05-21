@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Search, X, MessageSquare } from 'lucide-react'
+import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
 
 const CLASIF_OPTS = [
   { value: 'necesidad', label: '🔵 Necesidad' },
@@ -16,11 +16,31 @@ const FORM_VACIO = {
 }
 
 export default function ControlGastos() {
-  const { transacciones, categorias, metodos, loading, saving, totales, agregar, eliminar } = useTransacciones()
+  const { transacciones, categorias, metodos, loading, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
 
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const abrirEditar = (t) => {
+    setForm({
+      descripcion:    t.descripcion,
+      monto:          t.monto,
+      categoria_id:   t.categorias?.id   ?? '',
+      clasificacion:  t.clasificacion,
+      metodo_pago_id: t.metodos_pago?.id ?? '',
+      fecha:          t.fecha,
+    })
+    setEditandoId(t.id)
+    setMostrarForm(true)
+  }
+
+  const cerrarForm = () => {
+    setMostrarForm(false)
+    setEditandoId(null)
+    setForm(FORM_VACIO)
+  }
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroClasif, setFiltroClasif] = useState('')
@@ -32,18 +52,18 @@ export default function ControlGastos() {
     if (cat) setF('clasificacion', cat.clasificacion)
   }
 
-  const handleAgregar = async () => {
+  const handleGuardar = async () => {
     if (!form.descripcion || !form.monto) return
-    const { error } = await agregar({
+    const datos = {
       ...form,
       monto:          Number(form.monto),
       categoria_id:   form.categoria_id   ? Number(form.categoria_id)   : null,
       metodo_pago_id: form.metodo_pago_id ? Number(form.metodo_pago_id) : null,
-    })
-    if (!error) {
-      setForm(FORM_VACIO)
-      setMostrarForm(false)
     }
+    const { error } = editandoId
+      ? await actualizar(editandoId, datos)
+      : await agregar(datos)
+    if (!error) cerrarForm()
   }
 
   const filtradas = useMemo(() => transacciones.filter(t => {
@@ -106,7 +126,7 @@ export default function ControlGastos() {
         {/* Formulario */}
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-200">
-            <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">Nuevo Gasto</h3>
+            <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">{editandoId ? 'Editar Gasto' : 'Nuevo Gasto'}</h3>
             <div className="grid grid-cols-6 gap-3 mb-4">
               <div className="col-span-2">
                 <label className="label">Descripción</label>
@@ -146,10 +166,10 @@ export default function ControlGastos() {
                   value={form.fecha} onChange={e => setF('fecha', e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <button className="btn-primary px-6" onClick={handleAgregar} disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar Gasto'}
+                <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>
+                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar Gasto'}
                 </button>
-                <button className="btn-ghost" onClick={() => { setMostrarForm(false); setForm(FORM_VACIO) }}>
+                <button className="btn-ghost" onClick={cerrarForm}>
                   Cancelar
                 </button>
               </div>
@@ -181,7 +201,7 @@ export default function ControlGastos() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-50">
-                      {['Fecha','Descripción','Categoría','Tipo','Método','Monto',''].map(h => (
+                      {['Fecha','Descripción','Categoría','Tipo','Método','Monto','',''].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
@@ -204,7 +224,13 @@ export default function ControlGastos() {
                         </td>
                         <td className="px-4 py-3 text-xs text-gray-400">{t.metodos_pago?.nombre ?? '—'}</td>
                         <td className="px-4 py-3 font-mono font-bold text-primary-700 whitespace-nowrap">-{formatMXN(t.monto)}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-2 py-3">
+                          <button onClick={() => abrirEditar(t)}
+                            className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-300 transition-all">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                        <td className="px-2 py-3">
                           <button onClick={() => eliminar(t.id)}
                             className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -215,13 +241,13 @@ export default function ControlGastos() {
                   </tbody>
                   <tfoot className="border-t border-gray-100 bg-gray-50">
                     <tr>
-                      <td colSpan={5} className="px-4 py-3 font-bold text-gray-700 text-sm">
+                      <td colSpan={6} className="px-4 py-3 font-bold text-gray-700 text-sm">
                         {hayFiltros ? 'Subtotal filtrado' : 'TOTAL'}
                       </td>
                       <td className="px-4 py-3 font-mono font-bold text-primary-700">
                         -{formatMXN(filtradas.reduce((s, t) => s + Number(t.monto), 0))}
                       </td>
-                      <td />
+                      <td /><td />
                     </tr>
                   </tfoot>
                 </table>
