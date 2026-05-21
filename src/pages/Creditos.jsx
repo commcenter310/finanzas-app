@@ -4,39 +4,72 @@ import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
 
+function calcularFechasOptimas(fechaCorte) {
+  const buf = 5
+  return {
+    inicioOptimo: fechaCorte === 31 ? 1 : fechaCorte + 1,
+    finOptimo:    fechaCorte - buf > 0 ? fechaCorte - buf : 31 + fechaCorte - buf,
+    inicioEvitar: fechaCorte - buf + 1 > 0 ? fechaCorte - buf + 1 : 31 + fechaCorte - buf + 1,
+    finEvitar:    fechaCorte,
+  }
+}
+
+function estaEnRango(hoy, inicio, fin) {
+  return inicio <= fin
+    ? hoy >= inicio && hoy <= fin
+    : hoy >= inicio || hoy <= fin
+}
+
 function getAlerta(credito) {
   const hoy = new Date().getDate()
   const diasParaCorte = credito.fecha_corte >= hoy
-    ? credito.fecha_corte - hoy
-    : 30 - hoy + credito.fecha_corte
+    ? credito.fecha_corte - hoy : 30 - hoy + credito.fecha_corte
   const diasParaPago = credito.fecha_pago >= hoy
-    ? credito.fecha_pago - hoy
-    : 30 - hoy + credito.fecha_pago
-  const enRangoOptimo = credito.mejor_fecha_inicio && credito.mejor_fecha_fin
-    ? hoy >= credito.mejor_fecha_inicio && hoy <= credito.mejor_fecha_fin
-    : false
-  return { diasParaCorte, diasParaPago, enRangoOptimo }
+    ? credito.fecha_pago - hoy : 30 - hoy + credito.fecha_pago
+  const { inicioOptimo, finOptimo, inicioEvitar, finEvitar } = calcularFechasOptimas(credito.fecha_corte)
+  return {
+    diasParaCorte, diasParaPago,
+    enRangoOptimo: estaEnRango(hoy, inicioOptimo, finOptimo),
+    enRangoEvitar: estaEnRango(hoy, inicioEvitar, finEvitar),
+    inicioOptimo, finOptimo, inicioEvitar, finEvitar,
+  }
 }
 
-function TarjetaCredito({ credito, onEditar, onEliminar }) {
-  const { diasParaCorte, diasParaPago, enRangoOptimo } = getAlerta(credito)
+function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
+  const { diasParaCorte, diasParaPago, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
   const pctUso = credito.limite_credito > 0
     ? (credito.saldo_utilizado / credito.limite_credito) * 100 : 0
   const alertaPago  = diasParaPago <= 5
   const alertaCorte = diasParaCorte <= 5
+  const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
+
+  const fmtRango = (inicio, fin) =>
+    inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
 
   return (
     <div className={`card p-5 ${alertaPago ? 'border-red-200 border-2' : alertaCorte ? 'border-amber-200 border-2' : ''}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div>
+      <div className="flex items-start justify-between mb-3">
+        <div className="space-y-1">
           <h3 className="font-bold text-gray-900">{credito.nombre}</h3>
-          {enRangoOptimo && (
-            <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
-              ✅ Excelente fecha de uso
-            </span>
-          )}
+          <div className="flex flex-wrap gap-1">
+            {metodoVinculado && (
+              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 font-semibold">
+                via {metodoVinculado.nombre}
+              </span>
+            )}
+            {enRangoOptimo && (
+              <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
+                ✅ Úsala hoy
+              </span>
+            )}
+            {enRangoEvitar && (
+              <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200 font-semibold">
+                ⚠️ Evita usarla hoy
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           <button onClick={() => onEditar(credito)}
             className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-400">
             <Pencil className="w-3.5 h-3.5" />
@@ -65,7 +98,7 @@ function TarjetaCredito({ credito, onEditar, onEliminar }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-2 gap-3 text-sm mb-3">
         <div className={`rounded-lg p-3 ${alertaCorte ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'}`}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Corte</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_corte}</p>
@@ -86,28 +119,39 @@ function TarjetaCredito({ credito, onEditar, onEliminar }) {
         </div>
       </div>
 
-      {credito.mejor_fecha_inicio && (
-        <div className="mt-3 p-2.5 bg-primary-50 rounded-lg border border-primary-100">
-          <p className="text-xs text-primary-700 font-semibold">
-            Mejor fecha de uso: días {credito.mejor_fecha_inicio} al {credito.mejor_fecha_fin}
-          </p>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg px-3 py-2 bg-emerald-50 border border-emerald-100">
+          <p className="text-emerald-600 font-semibold mb-0.5">Óptimo</p>
+          <p className="text-emerald-700 font-mono">{fmtRango(inicioOptimo, finOptimo)}</p>
         </div>
-      )}
+        <div className="rounded-lg px-3 py-2 bg-red-50 border border-red-100">
+          <p className="text-red-500 font-semibold mb-0.5">Evitar</p>
+          <p className="text-red-600 font-mono">{fmtRango(inicioEvitar, finEvitar)}</p>
+        </div>
+      </div>
     </div>
   )
 }
 
-const FORM_VACIO = { nombre:'', fecha_corte:'', fecha_pago:'', mejor_fecha_inicio:'', mejor_fecha_fin:'', limite_credito:'', saldo_utilizado:'' }
+const FORM_VACIO = { nombre:'', fecha_corte:'', fecha_pago:'', limite_credito:'', saldo_utilizado:'', metodo_vinculado_id:'' }
 
 export default function Creditos() {
-  const { creditos, loading, saving, agregar, actualizar, eliminar } = useCreditos()
+  const { creditos, metodos, loading, saving, agregar, actualizar, eliminar, vincularMetodo } = useCreditos()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleEditar = (credito) => {
-    setForm({ ...credito, limite_credito: credito.limite_credito ?? '', saldo_utilizado: credito.saldo_utilizado ?? '' })
+    const metodoVinculado = metodos.find(m => m.credito_id === credito.id)
+    setForm({
+      nombre:             credito.nombre,
+      fecha_corte:        credito.fecha_corte ?? '',
+      fecha_pago:         credito.fecha_pago  ?? '',
+      limite_credito:     credito.limite_credito  ?? '',
+      saldo_utilizado:    credito.saldo_utilizado ?? '',
+      metodo_vinculado_id: metodoVinculado?.id ?? '',
+    })
     setEditando(credito.id)
     setMostrarForm(true)
   }
@@ -115,16 +159,22 @@ export default function Creditos() {
   const handleGuardar = async () => {
     if (!form.nombre) return
     const datos = {
-      ...form,
+      nombre:             form.nombre,
       fecha_corte:        Number(form.fecha_corte),
       fecha_pago:         Number(form.fecha_pago),
-      mejor_fecha_inicio: form.mejor_fecha_inicio ? Number(form.mejor_fecha_inicio) : null,
-      mejor_fecha_fin:    form.mejor_fecha_fin    ? Number(form.mejor_fecha_fin)    : null,
-      limite_credito:     form.limite_credito      ? Number(form.limite_credito)     : null,
-      saldo_utilizado:    form.saldo_utilizado     ? Number(form.saldo_utilizado)    : 0,
+      mejor_fecha_inicio: null,
+      mejor_fecha_fin:    null,
+      limite_credito:     form.limite_credito  ? Number(form.limite_credito)  : null,
+      saldo_utilizado:    form.saldo_utilizado ? Number(form.saldo_utilizado) : 0,
     }
-    if (editando) await actualizar(editando, datos)
-    else await agregar(datos)
+    let creditoId = editando
+    if (editando) {
+      await actualizar(editando, datos)
+    } else {
+      const { data } = await agregar(datos)
+      creditoId = data?.id
+    }
+    if (creditoId) await vincularMetodo(creditoId, form.metodo_vinculado_id ? Number(form.metodo_vinculado_id) : null)
     setForm(FORM_VACIO); setEditando(null); setMostrarForm(false)
   }
 
@@ -187,15 +237,16 @@ export default function Creditos() {
                 <input type="number" min="1" max="31" className="input font-mono" placeholder="30"
                   value={form.fecha_pago} onChange={e => setF('fecha_pago', e.target.value)} />
               </div>
-              <div>
-                <label className="label">Mejor Fecha Inicio</label>
-                <input type="number" min="1" max="31" className="input font-mono" placeholder="19"
-                  value={form.mejor_fecha_inicio} onChange={e => setF('mejor_fecha_inicio', e.target.value)} />
-              </div>
-              <div>
-                <label className="label">Mejor Fecha Fin</label>
-                <input type="number" min="1" max="31" className="input font-mono" placeholder="29"
-                  value={form.mejor_fecha_fin} onChange={e => setF('mejor_fecha_fin', e.target.value)} />
+              <div className="col-span-2">
+                <label className="label">Método de pago en Control de Gastos</label>
+                <select className="input" value={form.metodo_vinculado_id}
+                  onChange={e => setF('metodo_vinculado_id', e.target.value)}>
+                  <option value="">Sin vincular</option>
+                  {metodos.filter(m => m.tipo === 'credito').map(m => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Los gastos con este método actualizarán el saldo automáticamente.</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -212,7 +263,7 @@ export default function Creditos() {
           : creditos.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">No tienes tarjetas de crédito registradas</div>
             : <div className="grid grid-cols-3 gap-4">
-                {creditos.map(c => <TarjetaCredito key={c.id} credito={c} onEditar={handleEditar} onEliminar={eliminar} />)}
+                {creditos.map(c => <TarjetaCredito key={c.id} credito={c} metodos={metodos} onEditar={handleEditar} onEliminar={eliminar} />)}
               </div>}
 
       </div>

@@ -15,12 +15,20 @@ export function useCreditos() {
     return data ?? []
   }, [user?.id])
 
+  const { data: metodos, refetch: refetchMetodos } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('metodos_pago')
+      .select('id, nombre, tipo, credito_id')
+      .eq('user_id', user.id).eq('activo', true)
+    return data ?? []
+  }, [user?.id])
+
   const agregar = async (datos) => {
     setSaving(true)
-    const { error } = await supabase.from('creditos').insert({ ...datos, user_id: user.id })
+    const { data, error } = await supabase.from('creditos')
+      .insert({ ...datos, user_id: user.id }).select().single()
     setSaving(false)
     if (!error) refetch()
-    return { error }
+    return { data, error }
   }
 
   const actualizar = async (id, datos) => {
@@ -36,5 +44,15 @@ export function useCreditos() {
     refetch()
   }
 
-  return { creditos: creditos ?? [], loading, saving, agregar, actualizar, eliminar }
+  const vincularMetodo = async (creditoId, metodoId) => {
+    await supabase.from('metodos_pago').update({ credito_id: null })
+      .eq('credito_id', creditoId).eq('user_id', user.id)
+    if (metodoId) {
+      await supabase.from('metodos_pago').update({ credito_id: creditoId })
+        .eq('id', metodoId).eq('user_id', user.id)
+    }
+    refetchMetodos()
+  }
+
+  return { creditos: creditos ?? [], metodos: metodos ?? [], loading, saving, agregar, actualizar, eliminar, vincularMetodo }
 }

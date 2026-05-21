@@ -20,10 +20,12 @@ export default function ControlGastos() {
 
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
+  const [transaccionOriginal, setTransaccionOriginal] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const abrirEditar = (t) => {
+    setTransaccionOriginal(t)
     setForm({
       descripcion:    t.descripcion,
       monto:          t.monto,
@@ -39,6 +41,7 @@ export default function ControlGastos() {
   const cerrarForm = () => {
     setMostrarForm(false)
     setEditandoId(null)
+    setTransaccionOriginal(null)
     setForm(FORM_VACIO)
   }
 
@@ -61,7 +64,7 @@ export default function ControlGastos() {
       metodo_pago_id: form.metodo_pago_id ? Number(form.metodo_pago_id) : null,
     }
     const { error } = editandoId
-      ? await actualizar(editandoId, datos)
+      ? await actualizar(editandoId, datos, transaccionOriginal)
       : await agregar(datos)
     if (!error) cerrarForm()
   }
@@ -231,7 +234,7 @@ export default function ControlGastos() {
                           </button>
                         </td>
                         <td className="px-2 py-3">
-                          <button onClick={() => eliminar(t.id)}
+                          <button onClick={() => eliminar(t)}
                             className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

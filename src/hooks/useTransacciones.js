@@ -18,7 +18,7 @@ export function useTransacciones() {
       .select(`
         id, descripcion, monto, clasificacion, fecha, origen, created_at,
         categorias(id, nombre, icono, clasificacion),
-        metodos_pago(id, nombre)
+        metodos_pago(id, nombre, credito_id)
       `)
       .eq('user_id', user.id)
       .gte('fecha', inicioMes).lte('fecha', finMes)
@@ -38,30 +38,61 @@ export function useTransacciones() {
 
   const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo').eq('user_id', user.id).eq('activo', true)
+      .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
     return data ?? []
   }, [user?.id])
 
-  const agregar = async (datos) => {
-    setSaving(true)
-    const { data, error } = await supabase.from('transacciones')
-      .insert({ ...datos, user_id: user.id }).select().single()
-    setSaving(false)
-    if (!error) refetch()
-    return { data, error }
+  const actualizarSaldoCredito = (creditoId, delta) => {
+    if (!creditoId) return Promise.resolve({ error: null })
+    return supabase.rpc('update_saldo_credito', { p_credito_id: creditoId, p_delta: delta })
   }
 
-  const eliminar = async (id) => {
-    await supabase.from('transacciones').delete().eq('id', id)
+  const agregar = async (datos) => {
+    setSaving(true)
+    const creditoId = metodos.find(m => m.id === Number(datos.metodo_pago_id))?.credito_id ?? null
+    const [{ data, error: errTx }, { error: errSaldo }] = await Promise.all([
+      supabase.from('transacciones').insert({ ...datos, user_id: user.id }).select().single(),
+      actualizarSaldoCredito(creditoId, Number(datos.monto)),
+    ])
+    setSaving(false)
+    if (!errTx && !errSaldo) refetch()
+    return { data, error: errTx || errSaldo }
+  }
+
+  const eliminar = async (transaccion) => {
+    const metodoId = transaccion.metodos_pago?.id ?? transaccion.metodo_pago_id
+    const creditoId = metodos.find(m => m.id === metodoId)?.credito_id ?? null
+    await Promise.all([
+      supabase.from('transacciones').delete().eq('id', transaccion.id),
+      actualizarSaldoCredito(creditoId, -Number(transaccion.monto)),
+    ])
     refetch()
   }
 
-  const actualizar = async (id, datos) => {
+  const actualizar = async (id, nuevosDatos, transaccionOriginal) => {
     setSaving(true)
-    const { error } = await supabase.from('transacciones').update(datos).eq('id', id)
+    const metodoAntId = transaccionOriginal?.metodos_pago?.id ?? transaccionOriginal?.metodo_pago_id
+    const creditoAnt  = metodos.find(m => m.id === metodoAntId)?.credito_id ?? null
+    const creditoNvo  = metodos.find(m => m.id === Number(nuevosDatos.metodo_pago_id))?.credito_id ?? null
+    const montoAnt    = Number(transaccionOriginal?.monto ?? 0)
+    const montoNvo    = Number(nuevosDatos.monto)
+
+    const ajustes = []
+    if (creditoAnt !== creditoNvo) {
+      if (creditoAnt) ajustes.push(actualizarSaldoCredito(creditoAnt, -montoAnt))
+      if (creditoNvo) ajustes.push(actualizarSaldoCredito(creditoNvo, +montoNvo))
+    } else if (creditoNvo && montoAnt !== montoNvo) {
+      ajustes.push(actualizarSaldoCredito(creditoNvo, montoNvo - montoAnt))
+    }
+
+    const [{ error }, ...resAjustes] = await Promise.all([
+      supabase.from('transacciones').update(nuevosDatos).eq('id', id),
+      ...ajustes,
+    ])
     setSaving(false)
-    if (!error) refetch()
-    return { error }
+    const errorAjuste = resAjustes.find(r => r?.error)?.error ?? null
+    if (!error && !errorAjuste) refetch()
+    return { error: error || errorAjuste }
   }
 
   const totales = {

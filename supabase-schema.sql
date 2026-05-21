@@ -251,3 +251,20 @@ DROP TRIGGER IF EXISTS on_profile_created ON public.profiles;
 CREATE TRIGGER on_profile_created
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.crear_datos_default();
+
+
+-- ============================================
+-- FEATURE: Vinculación método de pago ↔ crédito
+-- Ejecutar en Supabase → SQL Editor
+-- ============================================
+
+ALTER TABLE metodos_pago
+  ADD COLUMN IF NOT EXISTS credito_id INTEGER REFERENCES creditos(id) ON DELETE SET NULL;
+
+-- RPC atómica para ajustar saldo_utilizado sin race conditions
+CREATE OR REPLACE FUNCTION update_saldo_credito(p_credito_id INTEGER, p_delta NUMERIC)
+RETURNS VOID LANGUAGE SQL SECURITY DEFINER AS $$
+  UPDATE creditos
+  SET saldo_utilizado = GREATEST(0, saldo_utilizado + p_delta)
+  WHERE id = p_credito_id;
+$$;
