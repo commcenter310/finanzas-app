@@ -39,9 +39,11 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
   const { diasParaCorte, diasParaPago, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
   const pctUso = credito.limite_credito > 0
     ? (credito.saldo_utilizado / credito.limite_credito) * 100 : 0
-  const alertaPago  = diasParaPago <= 5
-  const alertaCorte = diasParaCorte <= 5
+  const alertaPago   = diasParaPago <= 5
+  const alertaCorte  = diasParaCorte <= 5
+  const sobreLimite  = pctUso > 30
   const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
+  const colorBarra = pctUso > 80 ? '#ef4444' : pctUso > 30 ? '#f59e0b' : '#10b981'
 
   const fmtRango = (inicio, fin) =>
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
@@ -85,16 +87,30 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-1.5">
             <span className="text-gray-500">Saldo utilizado</span>
-            <span className="font-mono font-bold text-gray-800">
-              {formatMXN(credito.saldo_utilizado)}
-              <span className="text-gray-400 font-normal"> / {formatMXN(credito.limite_credito)}</span>
+            <span className="font-mono font-bold" style={{ color: colorBarra }}>
+              {pctUso.toFixed(0)}%
+              <span className="text-gray-400 font-normal ml-1">
+                ({formatMXN(credito.saldo_utilizado)} / {formatMXN(credito.limite_credito)})
+              </span>
             </span>
           </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all"
-              style={{ width: `${Math.min(pctUso, 100)}%`, backgroundColor: pctUso > 80 ? '#ef4444' : pctUso > 50 ? '#f59e0b' : '#10b981' }} />
+          {/* Barra con marcador del 30% */}
+          <div className="relative h-2 bg-gray-100 rounded-full overflow-visible mb-1">
+            <div className="h-full rounded-full transition-all overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${Math.min(pctUso, 100)}%`, backgroundColor: colorBarra }} />
+            </div>
+            {/* Marcador 30% */}
+            <div className="absolute top-0 h-full" style={{ left: '30%' }}>
+              <div className="w-0.5 h-3 -mt-0.5 bg-amber-400 rounded" />
+            </div>
           </div>
-          <p className="text-xs text-right text-gray-400 mt-1">{pctUso.toFixed(0)}% utilizado</p>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-amber-500 font-mono">30%</span>
+            {sobreLimite
+              ? <span className="text-xs text-amber-600 font-semibold">⚠️ Supera el 30% recomendado</span>
+              : <span className="text-xs text-emerald-600 font-semibold">✓ Dentro del límite recomendado</span>
+            }
+          </div>
         </div>
       )}
 
@@ -197,6 +213,17 @@ export default function Creditos() {
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Pagos Próximos</p>
             <p className="text-xl font-bold font-mono text-red-600">
               {creditos.filter(c => getAlerta(c).diasParaPago <= 5).length} alertas
+            </p>
+          </div>
+        </div>
+
+        <div className="card p-4 bg-amber-50 border border-amber-200 flex items-start gap-3">
+          <span className="text-lg mt-0.5">💡</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Recomendación de uso de crédito</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Para mantener un buen historial crediticio, se recomienda no utilizar más del <strong>30%</strong> del límite de cada tarjeta.
+              Usar más del 30% puede afectar negativamente tu score de crédito aunque pagues a tiempo.
             </p>
           </div>
         </div>
