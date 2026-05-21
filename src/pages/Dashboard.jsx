@@ -24,7 +24,8 @@ export default function Dashboard() {
   const { mes, anio } = useMes()
   const {
     loading, totalIngresos, totalGastos, porAsignar,
-    necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas
+    necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
+    totalPresupuestado, categoriasEnRiesgo,
   } = useDashboard()
 
   const datosDona = Object.entries(gastosPorCategoria)
@@ -101,6 +102,50 @@ export default function Dashboard() {
             })}
           </div>
         </div>
+
+        {/* Salud del Presupuesto */}
+        {!loading && categoriasEnRiesgo.length > 0 && (
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-gray-900">Presupuesto — Categorías en Riesgo</h2>
+              <Link to="/gastos-variables" className="text-xs text-primary-700 font-semibold flex items-center gap-1 hover:gap-1.5 transition-all">
+                Ver presupuesto <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            {totalPresupuestado > 0 && (
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>Total gastado vs presupuesto</span>
+                  <span className="font-mono">
+                    {formatMXN(gastosPorCategoria ? Object.values(gastosPorCategoria).reduce((s,v)=>s+v,0) : 0)} / {formatMXN(totalPresupuestado)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              {categoriasEnRiesgo.map(cat => (
+                <div key={cat.nombre} className="flex items-center gap-3">
+                  <span className="text-base w-5 text-center flex-shrink-0">{cat.icono ?? '📦'}</span>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-medium text-gray-700">{cat.nombre}</span>
+                      <span className={`font-mono font-semibold ${cat.pct >= 100 ? 'text-red-600' : 'text-amber-600'}`}>
+                        {cat.pct.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(cat.pct, 100)}%`, backgroundColor: cat.pct >= 100 ? '#ef4444' : '#f59e0b' }} />
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400 font-mono w-20 text-right flex-shrink-0">
+                    {formatMXN(cat.gastado)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Gráficas */}
         <div className="grid grid-cols-2 gap-4">

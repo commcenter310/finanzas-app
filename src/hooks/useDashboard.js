@@ -80,6 +80,17 @@ export function useDashboard() {
     return acc
   }, {}) ?? {}
 
+  const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
+
+  const categoriasEnRiesgo = presupuestos
+    ?.map(p => {
+      const gastado = gastosPorCategoria[p.categorias?.nombre] ?? 0
+      const pct = p.monto_limite > 0 ? (gastado / p.monto_limite) * 100 : 0
+      return { nombre: p.categorias?.nombre, icono: p.categorias?.icono, monto_limite: p.monto_limite, gastado, pct }
+    })
+    .filter(p => p.pct >= 70)
+    .sort((a, b) => b.pct - a.pct) ?? []
+
   return {
     loading: loadingIngresos || loadingFijos || loadingTx,
     totalIngresos,
@@ -91,6 +102,8 @@ export function useDashboard() {
     gastosPorCategoria,
     transacciones: transacciones ?? [],
     presupuestos: presupuestos ?? [],
+    totalPresupuestado,
+    categoriasEnRiesgo,
     reglas: profile
       ? { regla_necesidad: profile.regla_necesidad ?? 0.5, regla_deseo: profile.regla_deseo ?? 0.3, regla_ahorro: profile.regla_ahorro ?? 0.2 }
       : { regla_necesidad: 0.5, regla_deseo: 0.3, regla_ahorro: 0.2 },

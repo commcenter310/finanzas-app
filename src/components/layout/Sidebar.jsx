@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { to: '/',                 icon: LayoutDashboard, label: 'Dashboard'        },
   { to: '/ingresos',         icon: TrendingUp,      label: 'Ingresos'         },
   { to: '/gastos-fijos',     icon: Receipt,         label: 'Gastos Fijos'     },
-  { to: '/gastos-variables', icon: BarChart3,       label: 'Gastos Variables' },
+  { to: '/gastos-variables', icon: BarChart3,       label: 'Presupuesto'      },
   { to: '/control-gastos',   icon: List,            label: 'Control de Gastos'},
   { to: '/creditos',         icon: CreditCard,      label: 'Créditos'         },
   { to: '/deudas',           icon: AlertCircle,     label: 'Deudas'           },
