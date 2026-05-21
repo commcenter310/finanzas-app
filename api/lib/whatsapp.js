@@ -6,11 +6,14 @@ const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
 
 // ── Enviar mensaje ──────────────────────────────────────────────────────────────
 export async function sendMessage(to, text) {
-  await fetch(`https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`, {
+  console.log('📤 Enviando mensaje a:', to, '| PhoneNumberID:', PHONE_NUMBER_ID)
+  const r = await fetch(`https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } }),
   })
+  const data = await r.json()
+  console.log('📤 Respuesta de Meta al enviar:', JSON.stringify(data))
 }
 
 // ── Procesar mensaje entrante ──────────────────────────────────────────────────
@@ -20,7 +23,10 @@ export async function processMessage(telefono, texto) {
     .from('profiles').select('id, regla_necesidad, regla_deseo, regla_ahorro')
     .eq('telefono', telefono).single()
 
+  console.log('🔍 Buscando perfil para teléfono:', telefono, '| Resultado:', profile ? 'ENCONTRADO' : 'NO ENCONTRADO')
+
   if (!profile) {
+    console.log('❌ Número no registrado, enviando mensaje de ayuda')
     await sendMessage(telefono,
       '❌ Tu número no está registrado.\n\nVe a la app web → Perfil → y vincula tu número de WhatsApp.')
     await logMessage(telefono, texto, null, null, false, 'Número no registrado')

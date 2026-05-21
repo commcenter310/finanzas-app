@@ -32,9 +32,12 @@ export default async function handler(req, res) {
       const telefono = message.from   // Ej: "5216681234567"
       const texto    = message.text.body.trim()
 
+      console.log('📱 Mensaje recibido de:', telefono, '| Texto:', texto)
+
       if (!texto) return
 
       await processMessage(telefono, texto)
+      console.log('✅ processMessage completado')
     } catch (error) {
       console.error('Error procesando mensaje WhatsApp:', error)
     }
