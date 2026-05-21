@@ -18,30 +18,29 @@ export default async function handler(req, res) {
 
   // POST — Mensaje entrante de WhatsApp
   if (req.method === 'POST') {
-    // Siempre responder 200 a Meta inmediatamente (tienen timeout de 20s)
-    res.status(200).send('OK')
-
     try {
       const entry   = req.body?.entry?.[0]
       const change  = entry?.changes?.[0]
       const message = change?.value?.messages?.[0]
 
       // Solo procesar mensajes de texto (ignorar imágenes, stickers, etc.)
-      if (!message || message.type !== 'text') return
+      if (message && message.type === 'text') {
+        const telefono = message.from   // Ej: "5216681234567"
+        const texto    = message.text.body.trim()
 
-      const telefono = message.from   // Ej: "5216681234567"
-      const texto    = message.text.body.trim()
+        console.log('📱 Mensaje recibido de:', telefono, '| Texto:', texto)
 
-      console.log('📱 Mensaje recibido de:', telefono, '| Texto:', texto)
-
-      if (!texto) return
-
-      await processMessage(telefono, texto)
-      console.log('✅ processMessage completado')
+        if (texto) {
+          await processMessage(telefono, texto)
+          console.log('✅ processMessage completado')
+        }
+      }
     } catch (error) {
       console.error('Error procesando mensaje WhatsApp:', error)
     }
-    return
+
+    // Responder 200 DESPUÉS de procesar (Meta espera hasta 20s)
+    return res.status(200).send('OK')
   }
 
   return res.status(405).json({ error: 'Method Not Allowed' })
