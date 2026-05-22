@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet
+  Settings, MessageSquare, LogOut, Wallet, Landmark
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { to: '/deudas',           icon: AlertCircle,     label: 'Deudas'           },
   { to: '/ahorros',          icon: PiggyBank,       label: 'Ahorros'          },
   { to: '/tendencias',       icon: LineChart,       label: 'Tendencias'       },
+  { to: '/patrimonio',       icon: Landmark,        label: 'Patrimonio'       },
   { to: '/whatsapp',         icon: MessageSquare,   label: 'WhatsApp Log'     },
   { to: '/perfil',           icon: Settings,        label: 'Perfil'           },
 ]
