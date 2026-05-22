@@ -20,8 +20,10 @@ function TarjetaCategoria({ cat, onActualizar }) {
     setEditandoLimite(false)
   }
 
+  const sinLimite = cat.limite === 0
+
   return (
-    <div className={`card p-4 border ${cat.sobre ? 'border-red-200' : (clasifColors[cat.clasificacion] ?? 'border-gray-100')}`}>
+    <div className={`card p-4 border ${cat.sobre ? 'border-red-200' : sinLimite ? 'border-dashed border-gray-200' : (clasifColors[cat.clasificacion] ?? 'border-gray-100')}`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{cat.icono}</span>
@@ -30,7 +32,8 @@ function TarjetaCategoria({ cat, onActualizar }) {
             <span className={`badge-${cat.clasificacion} text-xs`}>{cat.clasificacion}</span>
           </div>
         </div>
-        {cat.sobre && <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />}
+        {cat.sobre   && <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />}
+        {sinLimite && !cat.sobre && <span className="text-xs text-amber-500 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">Sin límite</span>}
       </div>
 
       <div className="flex items-end justify-between mb-2">
@@ -96,13 +99,13 @@ export default function GastosVariables() {
   const [filtro, setFiltro] = useState('todas')
   const [mensajeCopia, setMensajeCopia] = useState('')
 
-  const catsSinLimite = categorias.filter(c => c.limite === 0 && c.gastado > 0)
   const catsConLimite = categorias.filter(c => c.limite > 0)
-  const filtradas     = filtro === 'todas' ? catsConLimite : catsConLimite.filter(c => c.clasificacion === filtro)
+  const filtradas     = filtro === 'todas' ? categorias : categorias.filter(c => c.clasificacion === filtro)
 
   const totalGastado = catsConLimite.reduce((s, c) => s + c.gastado, 0)
   const totalLimite  = catsConLimite.reduce((s, c) => s + c.limite, 0)
   const excedidas    = catsConLimite.filter(c => c.sobre).length
+  const sinLimite    = categorias.filter(c => c.limite === 0).length
   const pctTotal     = totalLimite > 0 ? (totalGastado / totalLimite) * 100 : 0
   const colorTotal   = pctTotal >= 100 ? '#ef4444' : pctTotal >= 80 ? '#f59e0b' : '#10b981'
 
@@ -192,6 +195,9 @@ export default function GastosVariables() {
               <p className={`text-xl font-bold font-mono ${excedidas > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                 {excedidas} {excedidas > 0 ? '⚠️' : '✅'}
               </p>
+              {sinLimite > 0 && (
+                <p className="text-xs text-amber-500 mt-0.5">{sinLimite} sin límite</p>
+              )}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 pt-1">
@@ -225,7 +231,7 @@ export default function GastosVariables() {
         {loading
           ? <div className="grid grid-cols-4 gap-4">{Array(8).fill(0).map((_,i) => <div key={i} className="card p-4 h-32 animate-pulse bg-gray-50" />)}</div>
           : filtradas.length === 0
-            ? <div className="card p-12 text-center text-gray-300 text-sm">Sin categorías con presupuesto asignado</div>
+            ? <div className="card p-12 text-center text-gray-300 text-sm">No hay categorías activas</div>
             : (
               <div className="grid grid-cols-4 gap-4">
                 {filtradas.map(cat => (
@@ -253,21 +259,6 @@ export default function GastosVariables() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        )}
-
-        {/* Categorías sin límite */}
-        {!loading && catsSinLimite.length > 0 && (
-          <details className="card p-4">
-            <summary className="cursor-pointer text-sm font-semibold text-amber-700 flex items-center gap-2 select-none list-none">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              {catsSinLimite.length} categoría(s) con gastos sin límite asignado — haz click para ver
-            </summary>
-            <div className="grid grid-cols-4 gap-3 mt-4">
-              {catsSinLimite.map(cat => (
-                <TarjetaCategoria key={cat.id} cat={cat} onActualizar={actualizarPresupuesto} />
-              ))}
-            </div>
-          </details>
         )}
 
         <p className="text-xs text-gray-400 text-center">
