@@ -15,10 +15,16 @@ REGLAS DE CLASIFICACIÓN:
 PATRONES DE INTERPRETACIÓN:
 - "350 gasolina costco" → monto=350, descripcion="Gasolina Costco", categoria="Transporte", clasificacion="necesidad"
 - "89 starbucks bbva" → monto=89, descripcion="Starbucks", categoria="Café", clasificacion="deseo", metodo_pago="BBVA"
-- "tacos 120" → monto=120, descripcion="Tacos", categoria="Restaurante", clasificacion="deseo"
+- "tacos 120 nu" → monto=120, descripcion="Tacos", categoria="Restaurante", clasificacion="deseo", metodo_pago="NU"
+- "120 tacos efectivo" → monto=120, descripcion="Tacos", metodo_pago="Efectivo"
 - "cómo voy" o "resumen" o "balance" → {"comando": "resumen"}
 - "mis deudas" o "cuánto debo" → {"comando": "deudas"}
 - "créditos" o "fecha de corte" o "tarjetas" → {"comando": "creditos"}
+
+DETECCIÓN DE MÉTODO DE PAGO:
+- La última palabra del mensaje suele ser el método si es un banco, tarjeta o tipo de pago
+- Ejemplos de métodos: bbva, nu, nu card, hsbc, banamex, liverpool, efectivo, débito, crédito
+- Si detectas el nombre parcial de un método disponible, extráelo tal cual el usuario lo escribió
 
 RESPONDE SOLO JSON, sin markdown, sin explicación:
 {"monto": 350, "descripcion": "Gasolina Costco", "categoria": "Transporte", "clasificacion": "necesidad", "metodo_pago": "BBVA"}

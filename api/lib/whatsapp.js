@@ -75,9 +75,22 @@ export async function processMessage(telefono, texto) {
     return
   }
 
-  // 6. Buscar IDs de categoría y método
-  const cat = categorias?.find(c => c.nombre.toLowerCase() === result.categoria?.toLowerCase())
-  const met = metodos?.find(m => m.nombre.toLowerCase() === result.metodo_pago?.toLowerCase())
+  // 6. Buscar IDs de categoría y método (matching flexible)
+  const norm = s => s?.toLowerCase().trim() ?? ''
+
+  const cat = categorias?.find(c =>
+    norm(c.nombre) === norm(result.categoria) ||
+    norm(c.nombre).includes(norm(result.categoria)) ||
+    norm(result.categoria).includes(norm(c.nombre))
+  )
+
+  const met = result.metodo_pago
+    ? metodos?.find(m =>
+        norm(m.nombre) === norm(result.metodo_pago) ||
+        norm(m.nombre).includes(norm(result.metodo_pago)) ||
+        norm(result.metodo_pago).includes(norm(m.nombre))
+      )
+    : null
 
   // 7. Insertar transacción
   const hoy = new Date().toISOString().split('T')[0]
@@ -104,12 +117,13 @@ export async function processMessage(telefono, texto) {
 
   // 8. Respuesta de confirmación
   const clasifEmoji = { necesidad: '🔵', deseo: '🟡', ahorro: '🟢' }
+  const metNombres = metodos?.map(m => m.nombre).join(', ') ?? ''
   const respuesta = [
     `✅ *Gasto registrado*`,
     `💸 -$${Number(result.monto).toLocaleString('es-MX')} — ${cat?.nombre ?? 'Sin categoría'}`,
     `📝 ${result.descripcion || texto}`,
     `${clasifEmoji[result.clasificacion ?? 'deseo']} ${(result.clasificacion ?? 'deseo').toUpperCase()}`,
-    met ? `💳 ${met.nombre}` : null,
+    met ? `💳 ${met.nombre}` : `💳 Sin método · escríbelo al final, ej: _"${result.monto} ${result.descripcion ?? 'café'} ${metodos?.[0]?.nombre ?? 'BBVA'}"_`,
     `📅 ${hoy}`,
   ].filter(Boolean).join('\n')
 
