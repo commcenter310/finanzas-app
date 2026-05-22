@@ -12,22 +12,42 @@ REGLAS DE CLASIFICACIÓN:
 - deseo: restaurante, café, starbucks, entretenimiento, netflix, ropa, mascotas, regalos, miscelánea, gym
 - ahorro: vacaciones, inversión, ahorro, fondo
 
-PATRONES DE INTERPRETACIÓN:
+PATRONES DE INTERPRETACIÓN — GASTOS:
 - "350 gasolina costco" → monto=350, descripcion="Gasolina Costco", categoria="Transporte", clasificacion="necesidad"
 - "89 starbucks bbva" → monto=89, descripcion="Starbucks", categoria="Café", clasificacion="deseo", metodo_pago="BBVA"
 - "tacos 120 nu" → monto=120, descripcion="Tacos", categoria="Restaurante", clasificacion="deseo", metodo_pago="NU"
 - "120 tacos efectivo" → monto=120, descripcion="Tacos", metodo_pago="Efectivo"
+- "45 café" → monto=45, descripcion="Café", categoria="Café", clasificacion="deseo" (sin metodo_pago)
+
+PATRONES DE INTERPRETACIÓN — INGRESOS:
+- "ingresé 5000 nómina" → {"tipo": "ingreso", "monto": 5000, "descripcion": "Nómina"}
+- "recibí 3000 freelance" → {"tipo": "ingreso", "monto": 3000, "descripcion": "Freelance"}
+- "deposito 8000" → {"tipo": "ingreso", "monto": 8000, "descripcion": "Depósito"}
+- "ingreso 12000 sueldo" → {"tipo": "ingreso", "monto": 12000, "descripcion": "Sueldo"}
+
+COMANDOS ESPECIALES:
 - "cómo voy" o "resumen" o "balance" → {"comando": "resumen"}
 - "mis deudas" o "cuánto debo" → {"comando": "deudas"}
 - "créditos" o "fecha de corte" o "tarjetas" → {"comando": "creditos"}
+- "últimos gastos" o "qué registré" o "mis gastos" → {"comando": "ultimos"}
+- "deshacer" o "borrar último" o "eliminar último" → {"comando": "deshacer"}
 
 DETECCIÓN DE MÉTODO DE PAGO:
 - La última palabra del mensaje suele ser el método si es un banco, tarjeta o tipo de pago
 - Ejemplos de métodos: bbva, nu, nu card, hsbc, banamex, liverpool, efectivo, débito, crédito
 - Si detectas el nombre parcial de un método disponible, extráelo tal cual el usuario lo escribió
+- Si NO hay método claro en el mensaje, omite el campo metodo_pago completamente
 
-RESPONDE SOLO JSON, sin markdown, sin explicación:
+RESPONDE SOLO JSON, sin markdown, sin explicación.
+
+Para gastos con método:
 {"monto": 350, "descripcion": "Gasolina Costco", "categoria": "Transporte", "clasificacion": "necesidad", "metodo_pago": "BBVA"}
+
+Para gastos sin método:
+{"monto": 45, "descripcion": "Café", "categoria": "Café", "clasificacion": "deseo"}
+
+Para ingresos:
+{"tipo": "ingreso", "monto": 5000, "descripcion": "Nómina"}
 
 Si no entiendes el mensaje: {"error": "no_entendido"}`
 
