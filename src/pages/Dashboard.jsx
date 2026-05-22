@@ -25,7 +25,7 @@ export default function Dashboard() {
   const {
     loading, totalIngresos, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
-    totalPresupuestado, categoriasEnRiesgo,
+    totalPresupuestado, categoriasEnRiesgo, gastosHormiga,
   } = useDashboard()
 
   const datosDona = Object.entries(gastosPorCategoria)
@@ -184,6 +184,25 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Gastos Hormiga */}
+        {!loading && gastosHormiga.count > 0 && (
+          <div className="card p-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🐜</span>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Gastos Hormiga del Mes</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Transacciones ≤ {formatMXN(gastosHormiga.umbral)} · {gastosHormiga.count} movimientos pequeños
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold font-mono text-amber-600">{formatMXN(gastosHormiga.total)}</p>
+              <p className="text-xs text-gray-400">acumulado este mes</p>
+            </div>
+          </div>
+        )}
 
         {/* Últimos movimientos */}
         <div className="card">

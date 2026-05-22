@@ -82,6 +82,14 @@ export function useDashboard() {
 
   const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
 
+  const umbral = profile?.umbral_hormiga ?? 100
+  const hormigaTx = transacciones?.filter(t => Number(t.monto) <= umbral) ?? []
+  const gastosHormiga = {
+    count: hormigaTx.length,
+    total: hormigaTx.reduce((s, t) => s + Number(t.monto), 0),
+    umbral,
+  }
+
   const categoriasEnRiesgo = presupuestos
     ?.map(p => {
       const gastado = gastosPorCategoria[p.categorias?.nombre] ?? 0
@@ -104,6 +112,7 @@ export function useDashboard() {
     presupuestos: presupuestos ?? [],
     totalPresupuestado,
     categoriasEnRiesgo,
+    gastosHormiga,
     reglas: profile
       ? { regla_necesidad: profile.regla_necesidad ?? 0.5, regla_deseo: profile.regla_deseo ?? 0.3, regla_ahorro: profile.regla_ahorro ?? 0.2 }
       : { regla_necesidad: 0.5, regla_deseo: 0.3, regla_ahorro: 0.2 },

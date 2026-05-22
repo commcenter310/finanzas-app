@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
+import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
 
@@ -16,7 +17,9 @@ const FORM_VACIO = {
 }
 
 export default function ControlGastos() {
+  const { profile } = useAuth()
   const { transacciones, categorias, metodos, loading, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
+  const umbral = profile?.umbral_hormiga ?? 100
 
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
@@ -48,6 +51,7 @@ export default function ControlGastos() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroClasif, setFiltroClasif] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [soloHormiga, setSoloHormiga] = useState(false)
 
   const onCategoriaChange = (catId) => {
     setF('categoria_id', catId)
@@ -73,10 +77,11 @@ export default function ControlGastos() {
     const matchBusqueda = !busqueda       || t.descripcion.toLowerCase().includes(busqueda.toLowerCase())
     const matchClasif   = !filtroClasif   || t.clasificacion === filtroClasif
     const matchCat      = !filtroCategoria || t.categoria_id === Number(filtroCategoria)
-    return matchBusqueda && matchClasif && matchCat
-  }), [transacciones, busqueda, filtroClasif, filtroCategoria])
+    const matchHormiga  = !soloHormiga    || Number(t.monto) <= umbral
+    return matchBusqueda && matchClasif && matchCat && matchHormiga
+  }), [transacciones, busqueda, filtroClasif, filtroCategoria, soloHormiga, umbral])
 
-  const hayFiltros = busqueda || filtroClasif || filtroCategoria
+  const hayFiltros = busqueda || filtroClasif || filtroCategoria || soloHormiga
 
   return (
     <Layout titulo="Control de Gastos">
@@ -114,8 +119,14 @@ export default function ControlGastos() {
             <option value="">Todas las categorías</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
           </select>
+          <button
+            onClick={() => setSoloHormiga(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all
+              ${soloHormiga ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-white border-gray-200 text-gray-600 hover:border-amber-300'}`}>
+            🐜 Solo hormiga
+          </button>
           {hayFiltros && (
-            <button onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria('') }}
+            <button onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria(''); setSoloHormiga(false) }}
               className="btn-ghost flex items-center gap-1 text-sm">
               <X className="w-4 h-4" /> Limpiar
             </button>

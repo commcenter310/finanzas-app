@@ -13,7 +13,8 @@ import Ahorros         from './pages/Ahorros'
 import Tendencias      from './pages/Tendencias'
 import Perfil          from './pages/Perfil'
 import WhatsappLog     from './pages/WhatsappLog'
-import Patrimonio      from './pages/Patrimonio'
+import Patrimonio       from './pages/Patrimonio'
+import SimuladorCredito from './pages/SimuladorCredito'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -39,6 +40,7 @@ function ProtectedRoutes() {
         <Route path="/ahorros"          element={<Ahorros />}    />
         <Route path="/tendencias"       element={<Tendencias />} />
         <Route path="/patrimonio"       element={<Patrimonio />} />
+        <Route path="/simulador"        element={<SimuladorCredito />} />
         <Route path="/whatsapp"         element={<WhatsappLog />} />
         <Route path="/perfil"           element={<Perfil />}     />
       </Routes>

@@ -10,19 +10,21 @@ export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
 
   // Datos básicos
-  const [nombre, setNombre] = useState(profile?.nombre ?? '')
-  const [telefono, setTelefono] = useState(profile?.telefono ?? '')
+  const [nombre,         setNombre]         = useState(profile?.nombre          ?? '')
+  const [telefono,       setTelefono]       = useState(profile?.telefono        ?? '')
+  const [umbralHormiga,  setUmbralHormiga]  = useState(profile?.umbral_hormiga  ?? 100)
   const [savingBasico, setSavingBasico] = useState(false)
   const [msgBasico, setMsgBasico] = useState('')
 
   useEffect(() => {
     setNombre(profile?.nombre ?? '')
     setTelefono(profile?.telefono ?? '')
+    setUmbralHormiga(profile?.umbral_hormiga ?? 100)
   }, [profile])
 
   const guardarBasico = async () => {
     setSavingBasico(true)
-    await supabase.from('profiles').update({ nombre, telefono }).eq('id', user.id)
+    await supabase.from('profiles').update({ nombre, telefono, umbral_hormiga: Number(umbralHormiga) }).eq('id', user.id)
     await refreshProfile()
     setSavingBasico(false)
     setMsgBasico('Guardado ✅')
@@ -126,6 +128,12 @@ export default function Perfil() {
             <div>
               <label className="label">Teléfono WhatsApp</label>
               <input className="input font-mono" placeholder="+52 55 1234 5678" value={telefono} onChange={e => setTelefono(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Umbral de gastos hormiga ($)</label>
+              <input type="number" className="input font-mono w-40" placeholder="100"
+                value={umbralHormiga} onChange={e => setUmbralHormiga(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">Transacciones por debajo de este monto se contarán como "gastos hormiga"</p>
             </div>
             <div className="flex items-center gap-3">
               <button className="btn-primary flex items-center gap-2 text-sm" onClick={guardarBasico} disabled={savingBasico}>
