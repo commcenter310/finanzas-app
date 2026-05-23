@@ -71,7 +71,7 @@ export default function SimuladorCredito() {
     <Layout titulo="Simulador de Crédito">
       <div className="space-y-6">
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Inputs */}
           <div className="card p-5 space-y-4">
             <div className="flex items-center gap-2 mb-2">
@@ -173,7 +173,7 @@ export default function SimuladorCredito() {
               <h2 className="font-bold text-gray-900">¿Qué pasa si pago más?</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[480px]">
                 <thead>
                   <tr className="border-b border-gray-50">
                     {['Pago mensual','Meses','Intereses totales','Costo total','Ahorro vs. base'].map(h => (
@@ -220,7 +220,7 @@ export default function SimuladorCredito() {
             </button>
             {verTabla && (
               <div className="overflow-x-auto max-h-72 overflow-y-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[380px]">
                   <thead className="sticky top-0 bg-white">
                     <tr className="border-b border-gray-100">
                       {['#','Pago','Interés','Amortización','Saldo'].map(h => (

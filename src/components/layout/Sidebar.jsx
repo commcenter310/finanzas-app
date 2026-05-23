@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator
+  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -22,21 +22,36 @@ const NAV_ITEMS = [
   { to: '/perfil',           icon: Settings,        label: 'Perfil'           },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const { signOut } = useAuth()
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 z-10">
+    <aside className={`
+      w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col
+      fixed left-0 top-0 z-30
+      transition-transform duration-300 ease-in-out
+      ${open ? 'translate-x-0' : '-translate-x-full'}
+      lg:translate-x-0 lg:z-10
+    `}>
       {/* Logo */}
       <div className="p-5 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Wallet className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 leading-none text-sm">Mis Finanzas</p>
+              <p className="text-xs text-gray-400 font-mono">Control Personal</p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-gray-900 leading-none text-sm">Mis Finanzas</p>
-            <p className="text-xs text-gray-400 font-mono">Control Personal</p>
-          </div>
+          {/* Botón cerrar — solo mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -44,6 +59,7 @@ export default function Sidebar() {
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} end={to === '/'}
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
                ${isActive

@@ -39,7 +39,7 @@ export default function Deudas() {
       <div className="space-y-4">
 
         {/* Tarjetas */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           <div className="card p-4 border border-red-100">
             <p className="text-xs text-red-400 font-semibold uppercase tracking-wide mb-1">Total Deuda</p>
             <p className="text-2xl font-bold font-mono text-red-600">{formatMXN(totalDeuda)}</p>
@@ -76,7 +76,7 @@ export default function Deudas() {
           <>
             {mostrarForm && (
               <div className="card p-5 border-2 border-red-200">
-                <div className="grid grid-cols-4 gap-3 mb-3">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                   <div className="col-span-2">
                     <label className="label">Nombre</label>
                     <input className="input" placeholder="Ej: Mercado Pago, DIDI..."
@@ -166,7 +166,7 @@ export default function Deudas() {
                           )}
 
                           <div className="flex items-center gap-2">
-                            <input type="number" className="input text-sm py-1.5 font-mono w-36" placeholder="Monto abono"
+                            <input type="number" className="input text-sm py-1.5 font-mono w-full sm:w-36" placeholder="Monto abono"
                               value={montoAbono[d.id] ?? ''} onChange={e => setMontoAbono(m => ({ ...m, [d.id]: e.target.value }))} />
                             <button onClick={() => handleAbonar(d.id)} className="btn-secondary text-sm py-1.5 px-3">
                               Abonar
@@ -204,7 +204,7 @@ export default function Deudas() {
         )}
 
         {tab === 'calculadora' && (
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { title: '❄️ Método Snowball', subtitle: 'Paga primero la deuda más pequeña (motivación)', lista: snowball, bgHeader: 'bg-blue-50' },
               { title: '🏔️ Método Avalanche', subtitle: 'Paga primero la deuda con mayor tasa (ahorra más)', lista: avalanche, bgHeader: 'bg-amber-50' },

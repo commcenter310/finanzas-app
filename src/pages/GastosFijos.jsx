@@ -38,7 +38,7 @@ export default function GastosFijos() {
       <div className="space-y-4">
 
         {/* Tarjetas */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {[
             { label: 'Total Previsto', value: formatMXN(totales.previsto) },
             { label: 'Total Pagado',   value: formatMXN(totales.actual)   },
@@ -68,7 +68,7 @@ export default function GastosFijos() {
         )}
 
         {/* Tabla */}
-        <div className="card overflow-hidden">
+        <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-50">
             <h2 className="font-bold text-gray-900">Facturas del Mes</h2>
             <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function GastosFijos() {
           {/* Formulario */}
           {mostrarForm && (
             <div className="p-4 bg-primary-50 border-b border-primary-100">
-              <div className="grid grid-cols-5 gap-3 mb-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
                 <div className="col-span-2">
                   <label className="label">Concepto</label>
                   <input className="input text-sm" placeholder="Ej: Gimnasio, Spotify..."
@@ -132,7 +132,8 @@ export default function GastosFijos() {
           )}
 
           {/* Lista */}
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px]">
             <thead>
               <tr className="border-b border-gray-50">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide w-8">✓</th>
@@ -194,6 +195,7 @@ export default function GastosFijos() {
               </tfoot>
             )}
           </table>
+          </div>
         </div>
 
       </div>

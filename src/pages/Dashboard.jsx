@@ -51,7 +51,7 @@ export default function Dashboard() {
       <div className="space-y-6">
 
         {/* Tarjetas principales */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {loading
             ? Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
             : tarjetas.map(({ label, value, icon: Icon, color, bg, border }) => (
@@ -148,7 +148,7 @@ export default function Dashboard() {
         )}
 
         {/* Gráficas */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Dona por categoría */}
           <div className="card p-5">
             <h2 className="font-bold text-gray-900 mb-4">Gastos por Categoría</h2>

@@ -88,7 +88,7 @@ export default function ControlGastos() {
       <div className="space-y-4">
 
         {/* Tarjetas */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {[
             { label: 'Total Gastos',  value: totales.total,     color: 'text-primary-700' },
             { label: '🔵 Necesidad', value: totales.necesidad, color: 'text-blue-600'    },
@@ -103,18 +103,18 @@ export default function ControlGastos() {
         </div>
 
         {/* Controles */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[160px]">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input className="input pl-9 text-sm" placeholder="Buscar por descripción..."
               value={busqueda} onChange={e => setBusqueda(e.target.value)} />
           </div>
-          <select className="input text-sm w-44" value={filtroClasif}
+          <select className="input text-sm w-full sm:w-44" value={filtroClasif}
             onChange={e => setFiltroClasif(e.target.value)}>
             <option value="">Todas las clases</option>
             {CLASIF_OPTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <select className="input text-sm w-44" value={filtroCategoria}
+          <select className="input text-sm w-full sm:w-44" value={filtroCategoria}
             onChange={e => setFiltroCategoria(e.target.value)}>
             <option value="">Todas las categorías</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -141,7 +141,7 @@ export default function ControlGastos() {
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-200">
             <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">{editandoId ? 'Editar Gasto' : 'Nuevo Gasto'}</h3>
-            <div className="grid grid-cols-6 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
               <div className="col-span-2">
                 <label className="label">Descripción</label>
                 <input className="input" placeholder="Ej: Starbucks, Gasolina..."
@@ -173,10 +173,10 @@ export default function ControlGastos() {
                 </select>
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <label className="label">Fecha</label>
-                <input type="date" className="input text-sm w-40"
+                <input type="date" className="input text-sm w-full sm:w-40"
                   value={form.fecha} onChange={e => setF('fecha', e.target.value)} />
               </div>
               <div className="flex gap-2">
@@ -192,7 +192,7 @@ export default function ControlGastos() {
         )}
 
         {/* Tabla */}
-        <div className="card overflow-hidden">
+        <div className="card">
           <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50">
             <p className="text-sm text-gray-500">
               {filtradas.length} movimiento{filtradas.length !== 1 ? 's' : ''}
@@ -212,7 +212,8 @@ export default function ControlGastos() {
                 </div>
               )
               : (
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px]">
                   <thead>
                     <tr className="border-b border-gray-50">
                       {['Fecha','Descripción','Categoría','Tipo','Método','Monto','',''].map(h => (
@@ -265,6 +266,7 @@ export default function ControlGastos() {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               )}
         </div>
 

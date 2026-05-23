@@ -180,8 +180,8 @@ export default function GastosVariables() {
         )}
 
         {/* Resumen + Copiar */}
-        <div className="flex items-start gap-4">
-          <div className="grid grid-cols-3 gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row items-start gap-3">
+          <div className="grid grid-cols-3 gap-3 flex-1 w-full sm:w-auto">
             <div className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total Gastado</p>
               <p className="text-xl font-bold font-mono text-primary-700">{formatMXN(totalGastado)}</p>
@@ -212,7 +212,7 @@ export default function GastosVariables() {
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {[
             { key: 'todas',     label: 'Todas' },
             { key: 'necesidad', label: '🔵 Necesidad' },
@@ -229,11 +229,11 @@ export default function GastosVariables() {
 
         {/* Grid de categorías */}
         {loading
-          ? <div className="grid grid-cols-4 gap-4">{Array(8).fill(0).map((_,i) => <div key={i} className="card p-4 h-32 animate-pulse bg-gray-50" />)}</div>
+          ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">{Array(8).fill(0).map((_,i) => <div key={i} className="card p-4 h-32 animate-pulse bg-gray-50" />)}</div>
           : filtradas.length === 0
             ? <div className="card p-12 text-center text-gray-300 text-sm">No hay categorías activas</div>
             : (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {filtradas.map(cat => (
                   <TarjetaCategoria key={cat.id} cat={cat} onActualizar={actualizarPresupuesto} />
                 ))}

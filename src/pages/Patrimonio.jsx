@@ -76,7 +76,7 @@ export default function Patrimonio() {
       <div className="space-y-6">
 
         {/* Resumen + Snapshot */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <div className="card p-5 border border-emerald-100 bg-emerald-50">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Activos</p>
@@ -99,7 +99,7 @@ export default function Patrimonio() {
             <p className={`text-2xl font-bold font-mono ${colorPN}`}>{formatMXN(patrimonioNeto)}</p>
             <p className="text-xs text-gray-400 mt-0.5">Activos − Deudas</p>
           </div>
-          <div className="card p-5 flex flex-col items-center justify-center gap-2 border border-dashed border-gray-200">
+          <div className="card p-5 flex flex-col items-center justify-center gap-2 border border-dashed border-gray-200 col-span-2 lg:col-span-1">
             <button onClick={handleSnapshot} disabled={saving}
               className="btn-primary flex items-center gap-2 text-sm w-full justify-center">
               <Save className="w-4 h-4" />
@@ -122,7 +122,7 @@ export default function Patrimonio() {
 
           {mostrarForm && (
             <div className="px-5 py-4 border-b border-gray-50 bg-gray-50">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="col-span-2">
                   <label className="label">Nombre</label>
                   <input className="input" placeholder="Ej: Casa, CETES, BBVA..."
@@ -154,7 +154,8 @@ export default function Patrimonio() {
             : activos.length === 0
               ? <div className="py-12 text-center text-gray-300 text-sm">No tienes activos registrados · Agrega tu primera propiedad, inversión o cuenta</div>
               : (
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[400px]">
                   <thead>
                     <tr className="border-b border-gray-50">
                       {['Tipo','Nombre','Valor',''].map(h => (
@@ -194,17 +195,19 @@ export default function Patrimonio() {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               )}
         </div>
 
         {/* Deudas (readonly) */}
         {creditos.length > 0 && (
-          <div className="card overflow-hidden">
+          <div className="card">
             <div className="px-5 py-4 border-b border-gray-50">
               <h2 className="font-bold text-gray-900">Deudas Actuales</h2>
               <p className="text-xs text-gray-400 mt-0.5">Saldo utilizado de tus tarjetas de crédito — se gestiona en la sección Créditos</p>
             </div>
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[400px]">
               <thead>
                 <tr className="border-b border-gray-50">
                   {['Tarjeta','Saldo Utilizado','Límite','Uso'].map(h => (
@@ -243,6 +246,7 @@ export default function Patrimonio() {
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
         )}
 

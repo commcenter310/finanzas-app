@@ -200,7 +200,7 @@ export default function Creditos() {
     <Layout titulo="Créditos">
       <div className="space-y-5">
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Tarjetas Activas</p>
             <p className="text-xl font-bold font-mono text-primary-700">{creditos.length}</p>
@@ -238,7 +238,7 @@ export default function Creditos() {
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-200">
             <h3 className="font-bold text-gray-900 mb-4">{editando ? 'Editar Tarjeta' : 'Nueva Tarjeta'}</h3>
-            <div className="grid grid-cols-4 gap-3 mb-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div className="col-span-2">
                 <label className="label">Nombre</label>
                 <input className="input" placeholder="NU, Simplicity, Liverpool..."
@@ -286,10 +286,10 @@ export default function Creditos() {
         )}
 
         {loading
-          ? <div className="grid grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-48 animate-pulse bg-gray-50" />)}</div>
+          ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-48 animate-pulse bg-gray-50" />)}</div>
           : creditos.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">No tienes tarjetas de crédito registradas</div>
-            : <div className="grid grid-cols-3 gap-4">
+            : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {creditos.map(c => <TarjetaCredito key={c.id} credito={c} metodos={metodos} onEditar={handleEditar} onEliminar={eliminar} />)}
               </div>}
 

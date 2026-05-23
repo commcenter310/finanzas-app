@@ -114,7 +114,7 @@ export default function Ingresos() {
       <div className="space-y-4">
 
         {/* Tarjetas resumen */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           {[
             { label: 'Presupuestado', value: totales.presupuesto, color: 'text-gray-600' },
             { label: 'Recibido',      value: totales.actual,      color: 'text-emerald-600' },
@@ -129,7 +129,7 @@ export default function Ingresos() {
         </div>
 
         {/* Tabla */}
-        <div className="card overflow-hidden">
+        <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-50">
             <h2 className="font-bold text-gray-900">Fuentes de Ingreso</h2>
             <button className="btn-primary flex items-center gap-2 text-sm py-1.5 px-3"
@@ -141,7 +141,7 @@ export default function Ingresos() {
           {/* Formulario inline */}
           {mostrarForm && (
             <div className="p-4 bg-primary-50 border-b border-primary-100">
-              <div className="grid grid-cols-4 gap-3 mb-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                 <div>
                   <label className="label">Concepto</label>
                   <input className="input text-sm" placeholder="Ej: Nómina 15"
@@ -173,7 +173,8 @@ export default function Ingresos() {
           )}
 
           {/* Tabla */}
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-50">
                 {['Concepto','Presupuestado','Recibido','Diferencia','Fecha',''].map(h => (
@@ -203,6 +204,7 @@ export default function Ingresos() {
               </tfoot>
             )}
           </table>
+          </div>
         </div>
 
       </div>
