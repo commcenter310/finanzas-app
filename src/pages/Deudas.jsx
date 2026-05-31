@@ -77,7 +77,7 @@ export default function Deudas() {
         {tab === 'deudas' && (
           <>
             {mostrarForm && (
-              <div className="card p-5 border-2 border-red-200">
+              <div className="card p-5 border-2" style={{ borderColor: 'var(--negative-bg)' }}>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                   <div className="col-span-2">
                     <label className="label">Nombre</label>
@@ -147,7 +147,7 @@ export default function Deudas() {
                             </div>
                             <div className="flex items-center gap-3">
                               <div className="text-right">
-                                <p className="font-bold font-mono text-red-600 text-lg">{formatMXN(d.saldo_actual)}</p>
+                                <p className="font-bold font-mono text-lg" style={{ color: 'var(--negative-fg)' }}>{formatMXN(d.saldo_actual)}</p>
                                 {d.saldo_original > 0 && <p className="text-xs text-gray-400">de {formatMXN(d.saldo_original)}</p>}
                               </div>
                               <button onClick={() => setConfirmDelete(d.id)}
@@ -187,7 +187,7 @@ export default function Deudas() {
                               {[...d.abonos_deuda].sort((a,b) => b.fecha.localeCompare(a.fecha)).map(a => (
                                 <div key={a.id} className="flex justify-between text-sm">
                                   <span className="text-gray-500 font-mono">{a.fecha}</span>
-                                  <span className="font-semibold text-emerald-600">-{formatMXN(a.monto)}</span>
+                                  <span className="font-semibold" style={{ color: 'var(--ahorro-fg)' }}>-{formatMXN(a.monto)}</span>
                                 </div>
                               ))}
                             </div>
@@ -208,11 +208,11 @@ export default function Deudas() {
         {tab === 'calculadora' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { title: '❄️ Método Snowball', subtitle: 'Paga primero la deuda más pequeña (motivación)', lista: snowball, bgHeader: 'bg-blue-50' },
-              { title: '🏔️ Método Avalanche', subtitle: 'Paga primero la deuda con mayor tasa (ahorra más)', lista: avalanche, bgHeader: 'bg-amber-50' },
-            ].map(({ title, subtitle, lista, bgHeader }) => (
+              { title: '❄️ Método Snowball', subtitle: 'Paga primero la deuda más pequeña (motivación)', lista: snowball, headerStyle: { background: 'var(--primary-50)' } },
+              { title: '🏔️ Método Avalanche', subtitle: 'Paga primero la deuda con mayor tasa (ahorra más)', lista: avalanche, headerStyle: { background: 'var(--warning-bg)' } },
+            ].map(({ title, subtitle, lista, headerStyle }) => (
               <div key={title} className="card overflow-hidden">
-                <div className={`px-5 py-4 border-b border-gray-100 ${bgHeader}`}>
+                <div className="px-5 py-4 border-b border-gray-100" style={headerStyle}>
                   <h3 className="font-bold text-gray-900">{title}</h3>
                   <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
                 </div>

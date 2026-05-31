@@ -56,7 +56,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
         <td className="px-4 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
             <button onClick={guardar}
-              className="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center hover:bg-emerald-600">
+              className="w-7 h-7 text-white rounded-lg flex items-center justify-center" style={{ background: 'var(--ahorro)' }}>
               <Check className="w-3.5 h-3.5" />
             </button>
             <button onClick={cancelar}

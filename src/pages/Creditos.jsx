@@ -50,7 +50,7 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
 
   return (
-    <div className={`card p-5 ${alertaPago ? 'border-red-200 border-2' : alertaCorte ? 'border-amber-200 border-2' : ''}`}>
+    <div className="card p-5" style={alertaPago ? { border: '2px solid var(--negative-bg)' } : alertaCorte ? { border: '2px solid var(--warning-bg)' } : {}}>
       <div className="flex items-start justify-between mb-3">
         <div className="space-y-1">
           <h3 className="font-bold text-gray-900">{credito.nombre}</h3>
@@ -62,12 +62,14 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
               </span>
             )}
             {enRangoOptimo && (
-              <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)', border: '1px solid var(--ahorro-bg)' }}>
                 ✅ Úsala hoy
               </span>
             )}
             {enRangoEvitar && (
-              <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200 font-semibold">
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: 'var(--negative-bg)', color: 'var(--negative-fg)', border: '1px solid var(--negative-bg)' }}>
                 ⚠️ Evita usarla hoy
               </span>
             )}
@@ -103,33 +105,35 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
             </div>
             {/* Marcador 30% */}
             <div className="absolute top-0 h-full" style={{ left: '30%' }}>
-              <div className="w-0.5 h-3 -mt-0.5 bg-amber-400 rounded" />
+              <div className="w-0.5 h-3 -mt-0.5 rounded" style={{ background: 'var(--warning)' }} />
             </div>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-amber-500 font-mono">30%</span>
+            <span className="text-xs font-mono" style={{ color: 'var(--warning-fg)' }}>30%</span>
             {sobreLimite
-              ? <span className="text-xs text-amber-600 font-semibold">⚠️ Supera el 30% recomendado</span>
-              : <span className="text-xs text-emerald-600 font-semibold">✓ Dentro del límite recomendado</span>
+              ? <span className="text-xs font-semibold" style={{ color: 'var(--warning-fg)' }}>⚠️ Supera el 30% recomendado</span>
+              : <span className="text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>✓ Dentro del límite recomendado</span>
             }
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-        <div className={`rounded-lg p-3 ${alertaCorte ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'}`}>
+        <div className="rounded-lg p-3"
+          style={alertaCorte ? { background: 'var(--warning-bg)', border: '1px solid var(--warning-bg)' } : { background: 'var(--surface-2)' }}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Corte</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_corte}</p>
-          <p className={`text-xs mt-0.5 ${alertaCorte ? 'text-amber-600 font-semibold' : 'text-gray-400'}`}>
+          <p className="text-xs mt-0.5" style={alertaCorte ? { color: 'var(--warning-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
             {alertaCorte
               ? <span className="flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" />Faltan {diasParaCorte} días</span>
               : `En ${diasParaCorte} días`}
           </p>
         </div>
-        <div className={`rounded-lg p-3 ${alertaPago ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+        <div className="rounded-lg p-3"
+          style={alertaPago ? { background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' } : { background: 'var(--surface-2)' }}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Pago</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_pago}</p>
-          <p className={`text-xs mt-0.5 ${alertaPago ? 'text-red-600 font-semibold' : 'text-gray-400'}`}>
+          <p className="text-xs mt-0.5" style={alertaPago ? { color: 'var(--negative-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
             {alertaPago
               ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />¡{diasParaPago} días!</span>
               : `En ${diasParaPago} días`}
@@ -138,13 +142,13 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg px-3 py-2 bg-emerald-50 border border-emerald-100">
-          <p className="text-emerald-600 font-semibold mb-0.5">Óptimo</p>
-          <p className="text-emerald-700 font-mono">{fmtRango(inicioOptimo, finOptimo)}</p>
+        <div className="rounded-lg px-3 py-2" style={{ background: 'var(--ahorro-bg)', border: '1px solid var(--ahorro-bg)' }}>
+          <p className="font-semibold mb-0.5" style={{ color: 'var(--ahorro-fg)' }}>Óptimo</p>
+          <p className="font-mono" style={{ color: 'var(--ahorro-fg)' }}>{fmtRango(inicioOptimo, finOptimo)}</p>
         </div>
-        <div className="rounded-lg px-3 py-2 bg-red-50 border border-red-100">
-          <p className="text-red-500 font-semibold mb-0.5">Evitar</p>
-          <p className="text-red-600 font-mono">{fmtRango(inicioEvitar, finEvitar)}</p>
+        <div className="rounded-lg px-3 py-2" style={{ background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' }}>
+          <p className="font-semibold mb-0.5" style={{ color: 'var(--negative-fg)' }}>Evitar</p>
+          <p className="font-mono" style={{ color: 'var(--negative-fg)' }}>{fmtRango(inicioEvitar, finEvitar)}</p>
         </div>
       </div>
     </div>
@@ -220,11 +224,12 @@ export default function Creditos() {
           </div>
         </div>
 
-        <div className="card p-4 bg-amber-50 border border-amber-200 flex items-start gap-3">
+        <div className="card p-4 flex items-start gap-3"
+          style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
           <span className="text-lg mt-0.5">💡</span>
           <div>
-            <p className="text-sm font-semibold text-amber-800">Recomendación de uso de crédito</p>
-            <p className="text-xs text-amber-700 mt-0.5">
+            <p className="text-sm font-semibold" style={{ color: 'var(--warning-fg)' }}>Recomendación de uso de crédito</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--warning-fg)' }}>
               Para mantener un buen historial crediticio, se recomienda no utilizar más del <strong>30%</strong> del límite de cada tarjeta.
               Usar más del 30% puede afectar negativamente tu score de crédito aunque pagues a tiempo.
             </p>
