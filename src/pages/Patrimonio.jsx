@@ -228,7 +228,7 @@ export default function Patrimonio() {
                           <div className="flex items-center gap-2">
                             <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
                               <div className="h-full rounded-full"
-                                style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pct > 80 ? '#ef4444' : pct > 30 ? '#f59e0b' : '#10b981' }} />
+                                style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pct > 80 ? 'var(--negative)' : pct > 30 ? 'var(--warning)' : 'var(--ahorro)' }} />
                             </div>
                             <span className="text-xs font-mono text-gray-400">{pct.toFixed(0)}%</span>
                           </div>
@@ -256,15 +256,15 @@ export default function Patrimonio() {
             <h2 className="font-bold text-gray-900 mb-4">Historial de Patrimonio</h2>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={datosHistorial}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={v => formatMXN(v)} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#79839B' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#A6AEC1' }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={v => formatMXN(v)} contentStyle={{ borderRadius: 12, border: '1px solid #E6E4F3', boxShadow: '0 6px 20px rgba(74,48,165,.10)' }} />
                 <Legend />
-                <ReferenceLine y={0} stroke="#e5e7eb" strokeWidth={1} />
-                <Line type="monotone" dataKey="activos"    name="Activos"    stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="deudas"     name="Deudas"     stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="patrimonio" name="Patrimonio" stroke="#1a3faa" strokeWidth={2.5} dot={{ r: 4 }} />
+                <ReferenceLine y={0} stroke="#E6E4F3" strokeWidth={1} />
+                <Line type="monotone" dataKey="activos"    name="Activos"    stroke="#0FA978" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="deudas"     name="Deudas"     stroke="#EE4D63" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="patrimonio" name="Patrimonio" stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

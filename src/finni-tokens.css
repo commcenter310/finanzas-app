@@ -1,0 +1,116 @@
+/* ============================================================================
+   FINNI APOYO — Design Tokens
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap');
+
+:root {
+  /* ---- Type ---------------------------------------------------------------- */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* ---- Canvas & surfaces --------------------------------------------------- */
+  --bg-app:        #EFEEFB;
+  --bg-app-2:      #E8E7F6;
+  --bg-subtle:     #F6F5FD;
+  --surface:       #FFFFFF;
+  --surface-2:     #F7F6FC;
+  --surface-3:     #EFEDF8;
+  --surface-glass: rgba(255, 255, 255, 0.72);
+  --surface-glass-strong: rgba(255, 255, 255, 0.85);
+
+  /* ---- Text ---------------------------------------------------------------- */
+  --fg-1: #182032;
+  --fg-2: #46506A;
+  --fg-3: #79839B;
+  --fg-4: #A6AEC1;
+  --fg-on-primary: #FFFFFF;
+
+  /* ---- Borders ------------------------------------------------------------- */
+  --border:        #E6E4F3;
+  --border-strong: #D2CFE6;
+  --divider:       #EFEDF7;
+
+  /* ---- Primary — Finni Iris ------------------------------------------------ */
+  --primary-50:  #F1EFFE;
+  --primary-100: #E6E1FD;
+  --primary-200: #D2C9FB;
+  --primary-300: #B5A4F6;
+  --primary-400: #977FF0;
+  --primary-500: #7E5DE9;
+  --primary-600: #6A45DD;
+  --primary-700: #5832C2;
+  --primary-800: #45269A;
+  --primary-900: #361E78;
+  --primary:     var(--primary-600);
+
+  /* ---- Classification system (50 / 30 / 20) -------------------------------- */
+  --necesidad:     #2F6BEA;
+  --necesidad-bg:  #E6EEFD;
+  --necesidad-fg:  #1A52C4;
+  --deseo:         #F2913E;
+  --deseo-bg:      #FDEEDF;
+  --deseo-fg:      #B25E15;
+  --ahorro:        #0FA978;
+  --ahorro-bg:     #DAF4EA;
+  --ahorro-fg:     #0A805C;
+
+  /* ---- Status -------------------------------------------------------------- */
+  --positive:      #0FA978;
+  --positive-bg:   #DAF4EA;
+  --positive-fg:   #0A805C;
+  --negative:      #EE4D63;
+  --negative-bg:   #FDE7EC;
+  --negative-fg:   #C8334B;
+  --warning:       #F2913E;
+  --warning-bg:    #FDEEDF;
+  --warning-fg:    #B25E15;
+  --info:          var(--primary-600);
+  --info-bg:       var(--primary-50);
+
+  /* ---- Chart colors -------------------------------------------------------- */
+  --chart-1: #6A45DD;
+  --chart-2: #2F6BEA;
+  --chart-3: #0FA978;
+  --chart-4: #F2913E;
+  --chart-5: #EE4D63;
+  --chart-6: #12B5C4;
+  --chart-7: #F472B6;
+  --chart-8: #38BDF8;
+
+  /* ---- Gradients ----------------------------------------------------------- */
+  --grad-primary: linear-gradient(135deg, #8A5BF0 0%, #6A45DD 52%, #5430C8 100%);
+  --grad-fresh:   linear-gradient(135deg, #6A45DD 0%, #2F6BEA 48%, #12B5C4 100%);
+  --grad-ahorro:  linear-gradient(135deg, #0FA978 0%, #12B5C4 100%);
+  --grad-sunset:  linear-gradient(135deg, #F2913E 0%, #EE4D63 100%);
+  --grad-canvas:  linear-gradient(180deg, #F1F0FC 0%, #E8E7F6 100%);
+
+  /* ---- Radii --------------------------------------------------------------- */
+  --r-xs:   8px;
+  --r-sm:   12px;
+  --r-md:   16px;
+  --r-lg:   20px;
+  --r-xl:   28px;
+  --r-2xl:  36px;
+  --r-full: 999px;
+
+  /* ---- Shadows ------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(24, 32, 50, 0.05);
+  --shadow-sm: 0 1px 3px rgba(24, 32, 50, 0.06), 0 1px 2px rgba(24, 32, 50, 0.04);
+  --shadow-md: 0 6px 20px rgba(74, 48, 165, 0.10), 0 2px 6px rgba(24, 32, 50, 0.04);
+  --shadow-lg: 0 16px 44px rgba(74, 48, 165, 0.14), 0 6px 14px rgba(24, 32, 50, 0.05);
+  --shadow-xl: 0 28px 70px rgba(74, 48, 165, 0.18), 0 10px 24px rgba(24, 32, 50, 0.06);
+  --shadow-primary: 0 10px 26px rgba(106, 69, 221, 0.38);
+  --shadow-ahorro:  0 10px 26px rgba(15, 169, 120, 0.30);
+  --ring-focus: 0 0 0 4px rgba(106, 69, 221, 0.18);
+
+  /* ---- Glass --------------------------------------------------------------- */
+  --glass-blur: blur(20px) saturate(180%);
+
+  /* ---- Motion -------------------------------------------------------------- */
+  --ease-ios:  cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast:  150ms;
+  --dur-base:  240ms;
+  --dur-slow:  420ms;
+}

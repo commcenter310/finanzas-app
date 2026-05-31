@@ -7,76 +7,120 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/',                 icon: LayoutDashboard, label: 'Dashboard'        },
-  { to: '/ingresos',         icon: TrendingUp,      label: 'Ingresos'         },
-  { to: '/gastos-fijos',     icon: Receipt,         label: 'Gastos Fijos'     },
-  { to: '/gastos-variables', icon: BarChart3,       label: 'Presupuesto'      },
-  { to: '/control-gastos',   icon: List,            label: 'Control de Gastos'},
-  { to: '/creditos',         icon: CreditCard,      label: 'Créditos'         },
-  { to: '/deudas',           icon: AlertCircle,     label: 'Deudas'           },
-  { to: '/ahorros',          icon: PiggyBank,       label: 'Ahorros'          },
-  { to: '/tendencias',       icon: LineChart,       label: 'Tendencias'       },
-  { to: '/patrimonio',       icon: Landmark,        label: 'Patrimonio'       },
-  { to: '/simulador',        icon: Calculator,      label: 'Simulador'        },
-  { to: '/whatsapp',         icon: MessageSquare,   label: 'WhatsApp Log'     },
-  { to: '/perfil',           icon: Settings,        label: 'Perfil'           },
+  { to: '/',                 icon: LayoutDashboard, label: 'Dashboard'         },
+  { to: '/ingresos',         icon: TrendingUp,      label: 'Ingresos'          },
+  { to: '/gastos-fijos',     icon: Receipt,         label: 'Gastos Fijos'      },
+  { to: '/gastos-variables', icon: BarChart3,        label: 'Presupuesto'       },
+  { to: '/control-gastos',   icon: List,            label: 'Control de Gastos' },
+  { to: '/creditos',         icon: CreditCard,      label: 'Créditos'          },
+  { to: '/deudas',           icon: AlertCircle,     label: 'Deudas'            },
+  { to: '/ahorros',          icon: PiggyBank,       label: 'Ahorros'           },
+  { to: '/tendencias',       icon: LineChart,       label: 'Tendencias'        },
+  { to: '/patrimonio',       icon: Landmark,        label: 'Patrimonio'        },
+  { to: '/simulador',        icon: Calculator,      label: 'Simulador'         },
+  { to: '/whatsapp',         icon: MessageSquare,   label: 'WhatsApp Log'      },
+  { to: '/perfil',           icon: Settings,        label: 'Perfil'            },
 ]
+
+const GLASS_SIDEBAR = {
+  background: 'rgba(255,255,255,0.85)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+}
 
 export default function Sidebar({ open, onClose }) {
   const { signOut } = useAuth()
 
   return (
-    <aside className={`
-      w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col
-      fixed left-0 top-0 z-30
-      transition-transform duration-300 ease-in-out
-      ${open ? 'translate-x-0' : '-translate-x-full'}
-      lg:translate-x-0 lg:z-10
-    `}>
-      {/* Logo */}
-      <div className="p-5 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Wallet className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-gray-900 leading-none text-sm">Mis Finanzas</p>
-              <p className="text-xs text-gray-400 font-mono">Control Personal</p>
-            </div>
-          </div>
-          {/* Botón cerrar — solo mobile */}
-          <button
-            onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <aside
+      style={GLASS_SIDEBAR}
+      className={`
+        w-[248px] min-h-screen flex flex-col
+        fixed left-0 top-0 z-30
+        border-r border-[var(--border)]
+        transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+        ${open ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:z-10
+      `}
+    >
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-4 pt-5 pb-5 border-b border-[var(--divider)]">
+        {/* Brand mark — gradient squircle */}
+        <div
+          className="w-10 h-10 rounded-[13px] flex items-center justify-center flex-shrink-0"
+          style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}
+        >
+          <Wallet className="w-5 h-5 text-white" strokeWidth={2} />
         </div>
+
+        <div className="min-w-0">
+          <p className="font-bold leading-none text-sm truncate" style={{ color: 'var(--fg-1)' }}>
+            Finni Apoyo
+          </p>
+          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums' }}>
+            Control Personal
+          </p>
+        </div>
+
+        {/* Botón cerrar — solo mobile */}
+        <button
+          onClick={onClose}
+          className="lg:hidden ml-auto p-1.5 rounded-[var(--r-sm)] flex items-center justify-center"
+          style={{ color: 'var(--fg-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} end={to === '/'}
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
+              `flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm transition-all w-full
                ${isActive
-                ? 'bg-primary-50 text-primary-700'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`
-            }>
-            <Icon className="w-4 h-4 flex-shrink-0" />
+                ? 'font-bold'
+                : 'font-medium'}`
+            }
+            style={({ isActive }) => isActive
+              ? { background: 'var(--primary-50)', color: 'var(--primary-700)' }
+              : { color: 'var(--fg-2)' }
+            }
+            onMouseEnter={e => {
+              if (!e.currentTarget.classList.contains('font-bold')) {
+                e.currentTarget.style.background = 'var(--surface-3)'
+                e.currentTarget.style.color = 'var(--fg-1)'
+              }
+            }}
+            onMouseLeave={e => {
+              if (!e.currentTarget.classList.contains('font-bold')) {
+                e.currentTarget.style.background = ''
+                e.currentTarget.style.color = 'var(--fg-2)'
+              }
+            }}
+          >
+            <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
             {label}
           </NavLink>
         ))}
       </nav>
 
       {/* Logout */}
-      <div className="p-3 border-t border-gray-100">
-        <button onClick={signOut}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 w-full transition-all">
-          <LogOut className="w-4 h-4" />
+      <div className="px-3 pb-4 pt-2 border-t border-[var(--divider)]">
+        <button
+          onClick={signOut}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm font-medium w-full transition-all"
+          style={{ color: 'var(--fg-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+        >
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
           Cerrar Sesión
         </button>
       </div>

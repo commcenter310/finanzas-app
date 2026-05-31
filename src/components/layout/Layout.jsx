@@ -18,9 +18,9 @@ export default function Layout({ titulo, children }) {
         />
       )}
 
-      <div className="flex-1 lg:ml-60 min-h-screen">
+      <div className="flex-1 lg:ml-[248px] min-h-screen">
         <Header titulo={titulo} onMenuClick={() => setIsSidebarOpen(v => !v)} />
-        <main className="p-4 lg:p-6">
+        <main className="p-4 lg:p-7">
           {children}
         </main>
       </div>

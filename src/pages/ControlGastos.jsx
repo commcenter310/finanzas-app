@@ -90,14 +90,14 @@ export default function ControlGastos() {
         {/* Tarjetas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {[
-            { label: 'Total Gastos',  value: totales.total,     color: 'text-primary-700' },
-            { label: '🔵 Necesidad', value: totales.necesidad, color: 'text-blue-600'    },
-            { label: '🟡 Deseo',     value: totales.deseo,     color: 'text-amber-600'   },
-            { label: '🟢 Ahorro',    value: totales.ahorro,    color: 'text-emerald-600' },
-          ].map(({ label, value, color }) => (
+            { label: 'Total Gastos',  value: totales.total,     valueColor: 'var(--negative-fg)'  },
+            { label: '🔵 Necesidad', value: totales.necesidad, valueColor: 'var(--necesidad-fg)' },
+            { label: '🟡 Deseo',     value: totales.deseo,     valueColor: 'var(--deseo-fg)'     },
+            { label: '🟢 Ahorro',    value: totales.ahorro,    valueColor: 'var(--ahorro-fg)'    },
+          ].map(({ label, value, valueColor }) => (
             <div key={label} className="card p-4">
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{label}</p>
-              <p className={`text-xl font-bold font-mono ${color}`}>{formatMXN(value)}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--fg-3)' }}>{label}</p>
+              <p className="text-xl font-bold tabular" style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}>{formatMXN(value)}</p>
             </div>
           ))}
         </div>
@@ -121,8 +121,10 @@ export default function ControlGastos() {
           </select>
           <button
             onClick={() => setSoloHormiga(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all
-              ${soloHormiga ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-white border-gray-200 text-gray-600 hover:border-amber-300'}`}>
+            className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--r-md)] text-sm font-medium border transition-all"
+            style={soloHormiga
+              ? { background: 'var(--warning-bg)', borderColor: 'var(--deseo)', color: 'var(--deseo-fg)', fontWeight: 700 }
+              : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--fg-2)' }}>
             🐜 Solo hormiga
           </button>
           {hayFiltros && (
@@ -238,7 +240,7 @@ export default function ControlGastos() {
                           <span className={`badge-${t.clasificacion}`}>{t.clasificacion}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-gray-400">{t.metodos_pago?.nombre ?? '—'}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-primary-700 whitespace-nowrap">-{formatMXN(t.monto)}</td>
+                        <td className="px-4 py-3 font-bold tabular whitespace-nowrap" style={{ color: 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>-{formatMXN(t.monto)}</td>
                         <td className="px-2 py-3">
                           <button onClick={() => abrirEditar(t)}
                             className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-300 transition-all">
