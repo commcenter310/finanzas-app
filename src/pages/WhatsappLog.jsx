@@ -21,11 +21,11 @@ export default function WhatsappLog() {
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Procesados</p>
-            <p className="text-xl font-bold font-mono text-emerald-600">{procesados}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{procesados}</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Errores</p>
-            <p className="text-xl font-bold font-mono text-red-500">{errores}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{errores}</p>
           </div>
         </div>
 
@@ -71,8 +71,8 @@ export default function WhatsappLog() {
                       <tr key={log.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
                           {log.procesado
-                            ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                            : <XCircle className="w-4 h-4 text-red-400" />}
+                            ? <CheckCircle className="w-4 h-4" style={{ color: 'var(--positive-fg)' }} />
+                            : <XCircle className="w-4 h-4" style={{ color: 'var(--negative-fg)' }} />}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">
                           {new Date(log.created_at).toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

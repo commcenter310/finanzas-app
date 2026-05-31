@@ -139,7 +139,7 @@ export default function Perfil() {
               <button className="btn-primary flex items-center gap-2 text-sm" onClick={guardarBasico} disabled={savingBasico}>
                 <Save className="w-4 h-4" /> {savingBasico ? 'Guardando...' : 'Guardar'}
               </button>
-              {msgBasico && <span className="text-sm text-emerald-600">{msgBasico}</span>}
+              {msgBasico && <span className="text-sm" style={{ color: 'var(--positive-fg)' }}>{msgBasico}</span>}
             </div>
           </div>
         </div>
@@ -150,14 +150,14 @@ export default function Perfil() {
           <p className="text-xs text-gray-400 mb-4">Los valores deben sumar 100%</p>
           <div className="grid grid-cols-3 gap-4 mb-4">
             {[
-              { key: 'necesidad', label: '🔵 Necesidad', color: 'text-blue-600' },
-              { key: 'deseo',     label: '🟡 Deseo',     color: 'text-amber-600' },
-              { key: 'ahorro',    label: '🟢 Ahorro',    color: 'text-emerald-600' },
+              { key: 'necesidad', label: '🔵 Necesidad', color: 'var(--necesidad-fg)' },
+              { key: 'deseo',     label: '🟡 Deseo',     color: 'var(--deseo-fg)' },
+              { key: 'ahorro',    label: '🟢 Ahorro',    color: 'var(--ahorro-fg)' },
             ].map(({ key, label, color }) => (
               <div key={key}>
                 <label className="label">{label}</label>
                 <div className="relative">
-                  <input type="number" step="0.01" min="0" max="1" className={`input font-mono pr-8 ${color}`}
+                  <input type="number" step="0.01" min="0" max="1" className="input font-mono pr-8" style={{ color }}
                     value={regla[key]}
                     onChange={e => setRegla(r => ({ ...r, [key]: e.target.value }))} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
@@ -167,12 +167,12 @@ export default function Perfil() {
               </div>
             ))}
           </div>
-          {errorRegla && <p className="text-red-500 text-sm mb-3">{errorRegla}</p>}
+          {errorRegla && <p className="text-sm mb-3" style={{ color: 'var(--negative-fg)' }}>{errorRegla}</p>}
           <div className="flex items-center gap-3">
             <button className="btn-primary flex items-center gap-2 text-sm" onClick={guardarRegla} disabled={savingRegla}>
               <Save className="w-4 h-4" /> {savingRegla ? 'Guardando...' : 'Guardar Regla'}
             </button>
-            <span className={`text-sm font-mono ${Math.abs((Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)) - 1) < 0.01 ? 'text-emerald-600' : 'text-red-500'}`}>
+            <span className="text-sm font-mono" style={{ color: Math.abs((Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)) - 1) < 0.01 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
               Total: {((Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)) * 100).toFixed(0)}%
             </span>
           </div>
@@ -266,7 +266,8 @@ export default function Perfil() {
                   <span className={`badge-${c.clasificacion} text-xs`}>{c.clasificacion}</span>
                 </div>
                 <button onClick={() => toggleCategoria(c.id, c.activa)}
-                  className={`text-xs px-2 py-1 rounded-full font-semibold transition-all ${c.activa ? 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                  className="text-xs px-2 py-1 rounded-full font-semibold transition-all"
+                  style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
                   {c.activa ? 'Desactivar' : 'Activar'}
                 </button>
               </div>

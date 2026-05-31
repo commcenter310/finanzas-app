@@ -115,8 +115,8 @@ export default function SimuladorCredito() {
 
             {listo && resultado?.imposible && (
               <div className="text-center py-8">
-                <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-red-400" />
-                <p className="font-bold text-red-600 text-lg mb-1">Pago insuficiente</p>
+                <AlertTriangle className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--negative)' }} />
+                <p className="font-bold text-lg mb-1" style={{ color: 'var(--negative-fg)' }}>Pago insuficiente</p>
                 <p className="text-sm text-gray-500">
                   El pago mensual no cubre ni los intereses.<br />
                   Interés mensual: {formatMXN(montoNum * (tasaNum / 100 / 12))}
@@ -140,16 +140,16 @@ export default function SimuladorCredito() {
                     </p>
                     <p className="text-xs text-gray-400 mt-1">~{resultado.fechaFin}</p>
                   </div>
-                  <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                  <div className="rounded-xl p-4 border" style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
                     <p className="text-xs text-gray-400 mb-1">Intereses totales</p>
-                    <p className="text-2xl font-bold font-mono text-amber-600">{formatMXN(resultado.totalIntereses)}</p>
+                    <p className="text-2xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(resultado.totalIntereses)}</p>
                     <p className="text-xs text-gray-400 mt-1">
                       {((resultado.totalIntereses / montoNum) * 100).toFixed(0)}% del monto original
                     </p>
                   </div>
-                  <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                  <div className="rounded-xl p-4 border" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
                     <p className="text-xs text-gray-400 mb-1">Costo total</p>
-                    <p className="text-2xl font-bold font-mono text-red-600">{formatMXN(resultado.totalPagado)}</p>
+                    <p className="text-2xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(resultado.totalPagado)}</p>
                     <p className="text-xs text-gray-400 mt-1">Capital + intereses</p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -169,7 +169,7 @@ export default function SimuladorCredito() {
         {listo && resultado && !resultado.imposible && (
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingDown className="w-5 h-5 text-emerald-600" />
+              <TrendingDown className="w-5 h-5" style={{ color: 'var(--ahorro-fg)' }} />
               <h2 className="font-bold text-gray-900">¿Qué pasa si pago más?</h2>
             </div>
             <div className="overflow-x-auto">
@@ -195,9 +195,9 @@ export default function SimuladorCredito() {
                         <td className="px-4 py-3 font-mono text-gray-700">
                           {meses < 12 ? `${meses}m` : `${Math.floor(meses/12)}a ${meses%12}m`}
                         </td>
-                        <td className="px-4 py-3 font-mono text-amber-600">{formatMXN(totalIntereses)}</td>
-                        <td className="px-4 py-3 font-mono text-red-600">{formatMXN(totalPagado)}</td>
-                        <td className="px-4 py-3 font-mono font-semibold text-emerald-600">
+                        <td className="px-4 py-3 font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(totalIntereses)}</td>
+                        <td className="px-4 py-3 font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalPagado)}</td>
+                        <td className="px-4 py-3 font-mono font-semibold" style={{ color: 'var(--ahorro-fg)' }}>
                           {ahorro > 0 ? `+${formatMXN(ahorro)}` : '—'}
                         </td>
                       </tr>
@@ -233,8 +233,8 @@ export default function SimuladorCredito() {
                       <tr key={row.mes} className="hover:bg-gray-50">
                         <td className="px-4 py-2 text-gray-400 font-mono">{row.mes}</td>
                         <td className="px-4 py-2 font-mono text-gray-700">{formatMXN(row.pago)}</td>
-                        <td className="px-4 py-2 font-mono text-amber-600">{formatMXN(row.interes)}</td>
-                        <td className="px-4 py-2 font-mono text-emerald-600">{formatMXN(row.amortizacion)}</td>
+                        <td className="px-4 py-2 font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(row.interes)}</td>
+                        <td className="px-4 py-2 font-mono" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(row.amortizacion)}</td>
                         <td className="px-4 py-2 font-mono text-gray-600">{formatMXN(row.saldo)}</td>
                       </tr>
                     ))}

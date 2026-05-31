@@ -97,7 +97,7 @@ export default function Tendencias() {
     ?.filter(c => creditoTendencia.datos?.some(d => d[c.nombre] !== undefined))
     .map(c => c.nombre) ?? []
 
-  const COLORES_TARJETA = ['#1a3faa','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4']
+  const COLORES_TARJETA = ['#6A45DD','#F2913E','#0FA978','#EE4D63','#8A5BF0','#12B5C4']
 
   const mesConMasGastos = tendencias?.reduce((max, t) => t.gastos > (max?.gastos ?? 0) ? t : max, null)
   const promGastos = tendencias?.length ? tendencias.reduce((s, t) => s + t.gastos, 0) / tendencias.length : 0
@@ -111,7 +111,7 @@ export default function Tendencias() {
         <div className="grid grid-cols-3 gap-4">
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Promedio Ingresos</p>
-            <p className="text-xl font-bold font-mono text-emerald-600">{formatMXN(promIngresos)}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(promIngresos)}</p>
             <p className="text-xs text-gray-400 mt-0.5">últimos 6 meses</p>
           </div>
           <div className="card p-4">
@@ -121,7 +121,7 @@ export default function Tendencias() {
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Mes con Más Gastos</p>
-            <p className="text-xl font-bold font-mono text-amber-600">{mesConMasGastos?.mes ?? '—'}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{mesConMasGastos?.mes ?? '—'}</p>
             <p className="text-xs text-gray-400 mt-0.5">{mesConMasGastos ? formatMXN(mesConMasGastos.gastos) : ''}</p>
           </div>
         </div>
@@ -134,13 +134,13 @@ export default function Tendencias() {
             : (
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={tendencias ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={v => formatMXN(v)} />
                   <Legend />
-                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="#1a3faa" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="#0FA978" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -154,14 +154,14 @@ export default function Tendencias() {
             : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={tendencias ?? []} barSize={28}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={v => formatMXN(v)} />
                   <Legend />
-                  <Bar dataKey="necesidad" name="Necesidad" stackId="a" fill="#2563eb" radius={[0,0,0,0]} />
-                  <Bar dataKey="deseo"     name="Deseo"     stackId="a" fill="#f59e0b" radius={[0,0,0,0]} />
-                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="#10b981" radius={[4,4,0,0]} />
+                  <Bar dataKey="necesidad" name="Necesidad" stackId="a" fill="#2F6BEA" radius={[0,0,0,0]} />
+                  <Bar dataKey="deseo"     name="Deseo"     stackId="a" fill="#F2913E" radius={[0,0,0,0]} />
+                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="#0FA978" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -186,14 +186,14 @@ export default function Tendencias() {
               : (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={creditoTendencia.datos}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
                     <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                     <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 'auto']} />
                     <Tooltip formatter={(v, name) => [`${v}%`, name === 'pctTotal' ? 'Utilización total' : name]} />
                     <Legend formatter={name => name === 'pctTotal' ? 'Total' : name} />
-                    <ReferenceLine y={30} stroke="#f59e0b" strokeDasharray="5 5"
-                      label={{ value: '30% recomendado', position: 'insideTopRight', fontSize: 11, fill: '#f59e0b' }} />
-                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="#1a3faa" strokeWidth={2.5} dot={{ r: 4 }} />
+                    <ReferenceLine y={30} stroke="#F2913E" strokeDasharray="5 5"
+                      label={{ value: '30% recomendado', position: 'insideTopRight', fontSize: 11, fill: '#F2913E' }} />
+                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
                     {nombresTarjetas.map((nombre, i) => (
                       <Line key={nombre} type="monotone" dataKey={nombre} stroke={COLORES_TARJETA[i % COLORES_TARJETA.length]}
                         strokeWidth={1.5} dot={{ r: 3 }} strokeDasharray="4 2" />
@@ -223,16 +223,16 @@ export default function Tendencias() {
                 return (
                   <tr key={t.mes} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-semibold text-gray-800">{t.mes}</td>
-                    <td className="px-4 py-3 font-mono text-emerald-600">{formatMXN(t.ingresos)}</td>
+                    <td className="px-4 py-3 font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(t.ingresos)}</td>
                     <td className="px-4 py-3 font-mono text-primary-700">{formatMXN(t.gastos)}</td>
                     <td className="px-4 py-3 font-mono font-bold">
-                      <span className={balance >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                      <span style={{ color: balance >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
                         {balance >= 0 ? '+' : ''}{formatMXN(balance)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-blue-600 text-sm">{formatMXN(t.necesidad)}</td>
-                    <td className="px-4 py-3 font-mono text-amber-600 text-sm">{formatMXN(t.deseo)}</td>
-                    <td className="px-4 py-3 font-mono text-emerald-600 text-sm">{formatMXN(t.ahorro)}</td>
+                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--necesidad-fg)' }}>{formatMXN(t.necesidad)}</td>
+                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--deseo-fg)' }}>{formatMXN(t.deseo)}</td>
+                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(t.ahorro)}</td>
                   </tr>
                 )
               })}

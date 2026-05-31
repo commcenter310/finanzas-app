@@ -36,10 +36,11 @@ export default function Auth() {
       <div className="card w-full max-w-sm p-8">
         {/* Logo / Título */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-primary-700 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-white text-2xl">₱</span>
+          <div className="w-12 h-12 rounded-[13px] flex items-center justify-center mx-auto mb-3"
+            style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}>
+            <span className="text-white text-2xl font-bold">F</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Mis Finanzas</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--fg-1)' }}>Finni Apoyo</h1>
           <p className="text-gray-500 text-sm mt-1">
             {modo === 'login' ? 'Inicia sesión en tu cuenta' : 'Crea tu cuenta'}
           </p>
@@ -60,8 +61,8 @@ export default function Auth() {
               onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
           </div>
 
-          {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
-          {info  && <p className="text-emerald-600 text-sm bg-emerald-50 rounded-lg p-3">{info}</p>}
+          {error && <p className="text-sm rounded-lg p-3" style={{ color: 'var(--negative-fg)', background: 'var(--negative-bg)' }}>{error}</p>}
+          {info  && <p className="text-sm rounded-lg p-3" style={{ color: 'var(--positive-fg)', background: 'var(--positive-bg)' }}>{info}</p>}
 
           <button className="btn-primary w-full py-3" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Cargando...' : modo === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}

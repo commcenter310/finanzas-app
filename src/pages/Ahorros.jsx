@@ -7,7 +7,7 @@ import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
 
-const barColors = { necesidad: '#2563eb', deseo: '#f59e0b', ahorro: '#10b981' }
+const barColors = { necesidad: '#2F6BEA', deseo: '#F2913E', ahorro: '#0FA978' }
 
 const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: new Date().toISOString().split('T')[0] }
 
@@ -45,7 +45,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
           </select>
         </div>
         <div className="flex gap-2">
-          <button onClick={guardar} className="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center hover:bg-emerald-600"><Check className="w-3.5 h-3.5" /></button>
+          <button onClick={guardar} className="w-7 h-7 text-white rounded-lg flex items-center justify-center" style={{ background: 'var(--ahorro)' }}><Check className="w-3.5 h-3.5" /></button>
           <button onClick={() => setEditando(false)} className="w-7 h-7 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-300"><X className="w-3.5 h-3.5" /></button>
         </div>
       </div>
@@ -53,16 +53,17 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
   }
 
   return (
-    <div className={`card p-4 ${completado ? 'border-emerald-200 border-2' : ''}`}>
+    <div className="card p-4" style={completado ? { borderWidth: 2, borderColor: 'var(--ahorro-bg)' } : {}}>
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-bold text-gray-900 text-sm">{ahorro.concepto}</p>
           <span className={`badge-${ahorro.clasificacion} text-xs`}>{ahorro.clasificacion}</span>
-          {completado && <span className="ml-1 text-xs text-emerald-600 font-semibold">✅ Meta alcanzada</span>}
+          {completado && <span className="ml-1 text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>✅ Meta alcanzada</span>}
         </div>
         <div className="flex gap-1">
           <button onClick={() => { setDepositando(v => !v); setEditando(false) }}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${depositando ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-50 hover:bg-emerald-50 hover:text-emerald-600 text-gray-400'}`}>
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors bg-gray-50 text-gray-400"
+            style={depositando ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' } : {}}>
             <PiggyBank className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => { setEditando(true); setDepositando(false) }} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-400">
@@ -77,7 +78,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
       <div className="flex justify-between mb-2">
         <div>
           <p className="text-xs text-gray-400">Ahorrado</p>
-          <p className="text-lg font-bold font-mono text-emerald-600">{formatMXN(ahorro.monto_actual)}</p>
+          <p className="text-lg font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(ahorro.monto_actual)}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-400">Meta</p>
@@ -87,7 +88,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
 
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, backgroundColor: completado ? '#10b981' : (barColors[ahorro.clasificacion] ?? '#1a3faa') }} />
+          style={{ width: `${pct}%`, backgroundColor: completado ? '#0FA978' : (barColors[ahorro.clasificacion] ?? '#6A45DD') }} />
       </div>
       <p className="text-xs text-right text-gray-400 mt-1 font-mono">{pct.toFixed(0)}%</p>
 
@@ -147,7 +148,7 @@ export default function Ahorros() {
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total Ahorrado</p>
-            <p className="text-xl font-bold font-mono text-emerald-600">{formatMXN(totales.actual)}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(totales.actual)}</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Progreso General</p>
@@ -162,7 +163,7 @@ export default function Ahorros() {
         </div>
 
         {mostrarForm && (
-          <div className="card p-5 border-2 border-emerald-200">
+          <div className="card p-5 border-2" style={{ borderColor: 'var(--ahorro-bg)' }}>
             <h3 className="font-bold text-gray-900 mb-3">Nueva Meta de Ahorro</h3>
             <div className="grid grid-cols-4 gap-3 mb-3">
               <div className="col-span-2">
