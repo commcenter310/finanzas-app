@@ -4,11 +4,18 @@ import { useGastosFijos } from '../hooks/useGastosFijos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Repeat, CheckCircle2, Circle, Copy } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import FilterSelect from '../components/ui/FilterSelect'
+import { useToast } from '../components/ui/Toast'
 
-const CLASIFICACIONES = ['necesidad','deseo','ahorro']
+const CLASIF_OPTS = [
+  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
+  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
+  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
+]
 
 export default function GastosFijos() {
   const { gastos, loading, saving, totales, agregar, togglePagado, eliminar, copiarRecurrentes } = useGastosFijos()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
   const [copiando, setCopiando] = useState(false)
@@ -22,6 +29,7 @@ export default function GastosFijos() {
     await agregar(form)
     setForm({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
     setMostrarForm(false)
+    toast('Factura guardada ✓', 'success')
   }
 
   const handleCopiar = async () => {
@@ -108,12 +116,13 @@ export default function GastosFijos() {
                 </div>
                 <div>
                   <label className="label">Tipo</label>
-                  <select className="input text-sm" value={form.clasificacion}
-                    onChange={e => setF('clasificacion', e.target.value)}>
-                    {CLASIFICACIONES.map(c => (
-                      <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-                    ))}
-                  </select>
+                  <FilterSelect
+                    value={form.clasificacion}
+                    onChange={v => setF('clasificacion', v)}
+                    options={CLASIF_OPTS}
+                    placeholder="Tipo"
+                    showClear={false}
+                  />
                 </div>
               </div>
               <div className="flex items-center justify-between">

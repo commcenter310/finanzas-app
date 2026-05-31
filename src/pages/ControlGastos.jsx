@@ -7,6 +7,7 @@ import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
+import { useToast } from '../components/ui/Toast'
 
 const CLASIF_OPTS = [
   { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
@@ -23,6 +24,7 @@ export default function ControlGastos() {
   const { profile } = useAuth()
   const { transacciones, categorias, metodos, loading, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
   const umbral = profile?.umbral_hormiga ?? 100
+  const toast  = useToast()
 
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
@@ -75,7 +77,12 @@ export default function ControlGastos() {
     const { error } = editandoId
       ? await actualizar(editandoId, datos, transaccionOriginal)
       : await agregar(datos)
-    if (!error) cerrarForm()
+    if (!error) {
+      cerrarForm()
+      toast(editandoId ? 'Gasto actualizado ✓' : 'Gasto guardado ✓', 'success')
+    } else {
+      toast('Error al guardar el gasto', 'error')
+    }
   }
 
   const filtradas = useMemo(() => transacciones.filter(t => {
@@ -165,23 +172,31 @@ export default function ControlGastos() {
               </div>
               <div>
                 <label className="label">Categoría</label>
-                <select className="input" value={form.categoria_id} onChange={e => onCategoriaChange(e.target.value)}>
-                  <option value="">Sin categoría</option>
-                  {categorias.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                </select>
+                <FilterSelect
+                  value={form.categoria_id}
+                  onChange={onCategoriaChange}
+                  options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
+                  placeholder="Sin categoría"
+                />
               </div>
               <div>
                 <label className="label">Tipo</label>
-                <select className="input" value={form.clasificacion} onChange={e => setF('clasificacion', e.target.value)}>
-                  {CLASIF_OPTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <FilterSelect
+                  value={form.clasificacion}
+                  onChange={v => setF('clasificacion', v)}
+                  options={CLASIF_OPTS}
+                  placeholder="Tipo"
+                  showClear={false}
+                />
               </div>
               <div>
                 <label className="label">Método de Pago</label>
-                <select className="input" value={form.metodo_pago_id} onChange={e => setF('metodo_pago_id', e.target.value)}>
-                  <option value="">No especificado</option>
-                  {metodos.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-                </select>
+                <FilterSelect
+                  value={form.metodo_pago_id}
+                  onChange={v => setF('metodo_pago_id', v)}
+                  options={metodos.map(m => ({ value: m.id, label: m.nombre }))}
+                  placeholder="No especificado"
+                />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -289,7 +304,7 @@ export default function ControlGastos() {
         open={!!confirmDelete}
         titulo="¿Eliminar gasto?"
         descripcion={confirmDelete ? `${confirmDelete.descripcion} — ${confirmDelete.fecha}` : ''}
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null); toast('Gasto eliminado', 'info') }}
         onCancel={() => setConfirmDelete(null)}
       />
     </Layout>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { MesProvider } from './context/MesContext'
+import { ToastProvider } from './components/ui/Toast'
 import Auth from './pages/Auth'
 import Dashboard       from './pages/Dashboard'
 import Ingresos        from './pages/Ingresos'
@@ -52,10 +53,12 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/*"    element={<ProtectedRoutes />} />
-        </Routes>
+        <ToastProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/*"    element={<ProtectedRoutes />} />
+          </Routes>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   )

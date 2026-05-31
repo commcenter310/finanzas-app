@@ -12,7 +12,7 @@ import { ChevronDown } from 'lucide-react'
  *   placeholder  — texto cuando value está vacío (default "Todas")
  *   className    — clases extra para el trigger
  */
-export default function FilterSelect({ value, onChange, options, placeholder = 'Todas', className = '' }) {
+export default function FilterSelect({ value, onChange, options, placeholder = 'Todas', className = '', showClear = true }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -75,12 +75,14 @@ export default function FilterSelect({ value, onChange, options, placeholder = '
             boxShadow:   'var(--shadow-lg)',
           }}
         >
-          {/* Opción "Todas" */}
-          <DropItem
-            label={placeholder}
-            active={!value}
-            onClick={() => { onChange(''); setOpen(false) }}
-          />
+          {/* Opción "Todas / limpiar" */}
+          {showClear && (
+            <DropItem
+              label={placeholder}
+              active={!value}
+              onClick={() => { onChange(''); setOpen(false) }}
+            />
+          )}
 
           {options.map(opt => (
             <DropItem
