@@ -52,7 +52,7 @@ export default function FilterSelect({ value, onChange, options, placeholder = '
               <span className="truncate" style={{ color: 'var(--fg-1)' }}>{selected.label}</span>
             </>
           ) : (
-            <span style={{ color: 'var(--fg-4)' }}>{placeholder}</span>
+            <span className="truncate" style={{ color: 'var(--fg-4)' }}>{placeholder}</span>
           )}
         </span>
         <ChevronDown
@@ -68,7 +68,7 @@ export default function FilterSelect({ value, onChange, options, placeholder = '
       {/* ── Panel ── */}
       {open && (
         <div
-          className="absolute left-0 top-full mt-1.5 z-30 min-w-full rounded-[var(--r-md)] overflow-hidden"
+          className="absolute left-0 top-full mt-1.5 z-30 min-w-full rounded-[var(--r-md)] overflow-x-hidden overflow-y-auto max-h-60"
           style={{
             background:  'var(--surface)',
             border:      '1px solid var(--border)',
