@@ -36,6 +36,13 @@ const norm = s => s?.toLowerCase().trim() ?? ''
 // ── Formatear moneda ──────────────────────────────────────────────────────────
 const fmx = n => `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
 
+// ── Calcular fecha con días de retroceso ──────────────────────────────────────
+function calcularFecha(diasAtras = 0) {
+  const d = new Date()
+  d.setDate(d.getDate() - diasAtras)
+  return d.toISOString().split('T')[0]
+}
+
 // ── Procesar mensaje entrante ─────────────────────────────────────────────────
 export async function processMessage(telefono, texto) {
   // 1. Buscar usuario
@@ -192,6 +199,12 @@ export async function processMessage(telefono, texto) {
     await logMessage(telefono, texto, msg, null, false, null)
     return
   }
+  if (result.comando === 'presupuesto') {
+    const msg = await buildPresupuesto(profile.id, result.categoria, categorias)
+    await sendMessage(telefono, msg)
+    await logMessage(telefono, texto, msg, null, true, null)
+    return
+  }
 
   // 6. No entendido
   if (result.error || (!result.monto && result.tipo !== 'ingreso')) {
@@ -199,10 +212,12 @@ export async function processMessage(telefono, texto) {
       '🤔 No entendí. Ejemplos:',
       '• *89 starbucks* — registrar gasto',
       '• *350 gasolina bbva* — gasto con método',
+      '• *ayer 200 gasolina* — gasto de fecha pasada',
       '• *ingresé 5000 nómina* — registrar ingreso',
       '• *cómo voy este mes*',
       '• *últimos gastos*',
       '• *mis deudas*',
+      '• *cuánto me queda en café* — ver presupuesto restante',
       '• *deshacer* — borra el último gasto',
     ].join('\n')
     await sendMessage(telefono, ayuda)
@@ -256,7 +271,7 @@ export async function processMessage(telefono, texto) {
       )
     : null
 
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = calcularFecha(result.dias_atras ?? 0)
 
   // 10. Sin método → guardar estado y preguntar
   if (!met) {
@@ -363,6 +378,56 @@ async function buildUltimos(userId) {
   }).join('\n')
 
   return `📋 *Últimos 5 gastos:*\n\n${lista}`
+}
+
+// ── Consultar presupuesto por categoría ──────────────────────────────────────
+async function buildPresupuesto(userId, catNombre, categorias) {
+  const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+  const ahora = new Date()
+  const mes   = ahora.getMonth() + 1
+  const anio  = ahora.getFullYear()
+  const inicio = `${anio}-${String(mes).padStart(2, '0')}-01`
+  const fin    = new Date(anio, mes, 0).toISOString().split('T')[0]
+
+  // Matching flexible de categoría
+  const cat = catNombre
+    ? categorias?.find(c =>
+        norm(c.nombre) === norm(catNombre) ||
+        norm(c.nombre).includes(norm(catNombre)) ||
+        norm(catNombre).includes(norm(c.nombre))
+      )
+    : null
+
+  if (!cat) {
+    const lista = categorias?.map(c => c.nombre).join(', ') ?? 'ninguna'
+    return `❓ No encontré la categoría *"${catNombre}"*.\n\nCategorías disponibles: ${lista}`
+  }
+
+  const [{ data: presu }, { data: txs }] = await Promise.all([
+    supabaseAdmin.from('presupuestos').select('monto_limite')
+      .eq('user_id', userId).eq('categoria_id', cat.id).eq('mes', mes).eq('anio', anio).single(),
+    supabaseAdmin.from('transacciones').select('monto')
+      .eq('user_id', userId).eq('categoria_id', cat.id).gte('fecha', inicio).lte('fecha', fin),
+  ])
+
+  const gastado = txs?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+  const mesLabel = `${MESES_ES[mes - 1]} ${anio}`
+
+  if (!presu?.monto_limite || presu.monto_limite <= 0) {
+    return `⚪ Sin límite configurado para *${cat.nombre}*.\nGastado este mes (${mesLabel}): ${fmx(gastado)}`
+  }
+
+  const limite     = presu.monto_limite
+  const disponible = limite - gastado
+  const pct        = Math.min((gastado / limite) * 100, 100).toFixed(0)
+  const emoji      = gastado >= limite ? '🔴' : gastado / limite >= 0.8 ? '🟡' : '✅'
+
+  return [
+    `📊 *${cat.nombre} — ${mesLabel}*`,
+    `💸 Gastado: ${fmx(gastado)}`,
+    `🎯 Presupuesto: ${fmx(limite)}`,
+    `${emoji} ${disponible >= 0 ? `Disponible: ${fmx(disponible)} (${pct}% usado)` : `Excedido por ${fmx(-disponible)}`}`,
+  ].join('\n')
 }
 
 // ── Deshacer último gasto — paso 1: buscar y pedir confirmación ───────────────
