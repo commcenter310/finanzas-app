@@ -108,7 +108,7 @@ export default function ControlGastos() {
 
         {/* Controles */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[160px]">
+          <div className="relative flex-1 min-w-[160px] max-w-[260px]">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input className="input pl-9 text-sm" placeholder="Buscar por descripción..."
               value={busqueda} onChange={e => setBusqueda(e.target.value)} />
@@ -121,7 +121,7 @@ export default function ControlGastos() {
             placeholder="Todas las clases"
           />
           <FilterSelect
-            className="w-full sm:w-44"
+            className="w-full sm:w-52"
             value={filtroCategoria}
             onChange={setFiltroCategoria}
             options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
