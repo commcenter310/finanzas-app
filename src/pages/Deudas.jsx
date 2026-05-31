@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
 import { Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
@@ -14,6 +15,7 @@ export default function Deudas() {
   const [expandida, setExpandida] = useState(null)
   const [montoAbono, setMontoAbono] = useState({})
   const [tab, setTab] = useState('deudas')
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
     if (!form.nombre || !form.saldo_actual) return
@@ -148,7 +150,7 @@ export default function Deudas() {
                                 <p className="font-bold font-mono text-red-600 text-lg">{formatMXN(d.saldo_actual)}</p>
                                 {d.saldo_original > 0 && <p className="text-xs text-gray-400">de {formatMXN(d.saldo_original)}</p>}
                               </div>
-                              <button onClick={() => eliminar(d.id)}
+                              <button onClick={() => setConfirmDelete(d.id)}
                                 className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -237,6 +239,13 @@ export default function Deudas() {
         )}
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar deuda?"
+        descripcion="Esta acción no se puede deshacer."
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }

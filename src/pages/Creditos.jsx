@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 function calcularFechasOptimas(fechaCorte) {
   const buf = 5
@@ -158,6 +159,7 @@ export default function Creditos() {
   const [editando, setEditando] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleEditar = (credito) => {
     const metodoVinculado = metodos.find(m => m.credito_id === credito.id)
@@ -291,10 +293,17 @@ export default function Creditos() {
           : creditos.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">No tienes tarjetas de crédito registradas</div>
             : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {creditos.map(c => <TarjetaCredito key={c.id} credito={c} metodos={metodos} onEditar={handleEditar} onEliminar={eliminar} />)}
+                {creditos.map(c => <TarjetaCredito key={c.id} credito={c} metodos={metodos} onEditar={handleEditar} onEliminar={(id) => setConfirmDelete(id)} />)}
               </div>}
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar tarjeta?"
+        descripcion="Esta acción no se puede deshacer."
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }

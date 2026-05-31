@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useAhorros } from '../hooks/useAhorros'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
@@ -128,6 +129,7 @@ export default function Ahorros() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
     if (!form.concepto || !form.monto_meta) return
@@ -202,10 +204,17 @@ export default function Ahorros() {
           : ahorros.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">Sin metas de ahorro este mes. ¡Crea la primera!</div>
             : <div className="grid grid-cols-3 gap-4">
-                {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={eliminar} onDepositar={depositar} />)}
+                {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} />)}
               </div>}
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar meta de ahorro?"
+        descripcion="Esta acción no se puede deshacer."
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }

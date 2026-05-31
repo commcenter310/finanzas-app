@@ -3,7 +3,7 @@ import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
 import { formatMXN } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // Finni chart palette
@@ -369,6 +369,16 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* FAB — solo mobile */}
+      <Link
+        to="/control-gastos"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center lg:hidden"
+        style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}
+        aria-label="Registrar gasto"
+      >
+        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+      </Link>
     </Layout>
   )
 }

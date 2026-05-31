@@ -4,6 +4,7 @@ import { useTransacciones } from '../hooks/useTransacciones'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 const CLASIF_OPTS = [
   { value: 'necesidad', label: '🔵 Necesidad' },
@@ -47,6 +48,8 @@ export default function ControlGastos() {
     setTransaccionOriginal(null)
     setForm(FORM_VACIO)
   }
+
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroClasif, setFiltroClasif] = useState('')
@@ -248,7 +251,7 @@ export default function ControlGastos() {
                           </button>
                         </td>
                         <td className="px-2 py-3">
-                          <button onClick={() => eliminar(t)}
+                          <button onClick={() => setConfirmDelete(t)}
                             className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -273,6 +276,13 @@ export default function ControlGastos() {
         </div>
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar gasto?"
+        descripcion={confirmDelete ? `${confirmDelete.descripcion} — ${confirmDelete.fecha}` : ''}
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }

@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useIngresos } from '../hooks/useIngresos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   const [editando, setEditando] = useState(false)
@@ -99,6 +100,7 @@ export default function Ingresos() {
   const { ingresos, loading, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '' })
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
     if (!form.concepto || !form.monto_presupuesto) return
@@ -190,7 +192,7 @@ export default function Ingresos() {
                 : ingresos.length === 0
                   ? <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-300 text-sm">Sin ingresos este mes. Agrega el primero.</td></tr>
                   : ingresos.map(i => (
-                    <FilaIngreso key={i.id} ingreso={i} onUpdate={actualizar} onDelete={eliminar} />
+                    <FilaIngreso key={i.id} ingreso={i} onUpdate={actualizar} onDelete={(id) => setConfirmDelete(id)} />
                   ))}
             </tbody>
             {ingresos.length > 0 && (
@@ -208,6 +210,13 @@ export default function Ingresos() {
         </div>
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar ingreso?"
+        descripcion="Esta acción no se puede deshacer."
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }

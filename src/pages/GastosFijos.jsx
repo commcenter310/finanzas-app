@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Repeat, CheckCircle2, Circle, Copy } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 const CLASIFICACIONES = ['necesidad','deseo','ahorro']
 
@@ -12,6 +13,7 @@ export default function GastosFijos() {
   const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
   const [copiando, setCopiando] = useState(false)
   const [msgCopia, setMsgCopia] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const setF = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
@@ -176,7 +178,7 @@ export default function GastosFijos() {
                       <td className="px-4 py-3"><span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span></td>
                       <td className="px-4 py-3 text-gray-400 text-sm">{g.fecha_pago ?? '—'}</td>
                       <td className="px-4 py-3">
-                        <button onClick={() => eliminar(g.id)}
+                        <button onClick={() => setConfirmDelete(g.id)}
                           className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all text-gray-300">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -199,6 +201,13 @@ export default function GastosFijos() {
         </div>
 
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar factura?"
+        descripcion="Esta acción no se puede deshacer."
+        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }
