@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_log (
   telefono TEXT NOT NULL,
   mensaje_entrante TEXT NOT NULL,
   respuesta_bot TEXT,
-  transaccion_id INTEGER REFERENCES public.transacciones(id),
+  transaccion_id INTEGER REFERENCES public.transacciones(id) ON DELETE SET NULL,
   procesado BOOLEAN DEFAULT false,
   error TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
