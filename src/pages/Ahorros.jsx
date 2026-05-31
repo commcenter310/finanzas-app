@@ -4,6 +4,7 @@ import { useAhorros } from '../hooks/useAhorros'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import DatePicker   from '../components/ui/DatePicker'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
@@ -99,8 +100,11 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
           <div className="flex gap-2 mb-2">
             <input type="number" className="input text-sm font-mono flex-1" placeholder="Monto ($)"
               value={formDep.monto} onChange={e => setFormDep(f => ({ ...f, monto: e.target.value }))} />
-            <input type="date" className="input text-sm w-36"
-              value={formDep.fecha} onChange={e => setFormDep(f => ({ ...f, fecha: e.target.value }))} />
+            <DatePicker
+              className="w-36"
+              value={formDep.fecha}
+              onChange={v => setFormDep(f => ({ ...f, fecha: v }))}
+            />
           </div>
           <select className="input text-sm mb-2 w-full" value={formDep.metodo_pago_id}
             onChange={e => setFormDep(f => ({ ...f, metodo_pago_id: e.target.value }))}>

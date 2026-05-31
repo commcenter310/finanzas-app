@@ -6,6 +6,7 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
+import DatePicker   from '../components/ui/DatePicker'
 
 const CLASIF_OPTS = [
   { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
@@ -186,8 +187,11 @@ export default function ControlGastos() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <label className="label">Fecha</label>
-                <input type="date" className="input text-sm w-full sm:w-40"
-                  value={form.fecha} onChange={e => setF('fecha', e.target.value)} />
+                <DatePicker
+                  className="w-full sm:w-40"
+                  value={form.fecha}
+                  onChange={v => setF('fecha', v)}
+                />
               </div>
               <div className="flex gap-2">
                 <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>

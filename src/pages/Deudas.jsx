@@ -4,6 +4,7 @@ import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
 import { Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import DatePicker   from '../components/ui/DatePicker'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
@@ -106,8 +107,10 @@ export default function Deudas() {
                   </div>
                   <div>
                     <label className="label">Próximo Pago</label>
-                    <input type="date" className="input"
-                      value={form.fecha_proximo_pago} onChange={e => setF('fecha_proximo_pago', e.target.value)} />
+                    <DatePicker
+                      value={form.fecha_proximo_pago}
+                      onChange={v => setF('fecha_proximo_pago', v)}
+                    />
                   </div>
                   <div>
                     <label className="label">Notas</label>

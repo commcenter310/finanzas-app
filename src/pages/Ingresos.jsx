@@ -4,6 +4,7 @@ import { useIngresos } from '../hooks/useIngresos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import DatePicker   from '../components/ui/DatePicker'
 
 function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   const [editando, setEditando] = useState(false)
@@ -50,8 +51,11 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
         </td>
         <td className="px-4 py-2" />
         <td className="px-4 py-2">
-          <input type="date" className="input text-sm py-1.5" value={form.fecha_recepcion}
-            onChange={e => setForm(f => ({ ...f, fecha_recepcion: e.target.value }))} />
+          <DatePicker
+            className="w-full"
+            value={form.fecha_recepcion}
+            onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}
+          />
         </td>
         <td className="px-4 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
@@ -161,8 +165,10 @@ export default function Ingresos() {
                 </div>
                 <div>
                   <label className="label">Fecha</label>
-                  <input type="date" className="input text-sm"
-                    value={form.fecha_recepcion} onChange={e => setForm(f => ({ ...f, fecha_recepcion: e.target.value }))} />
+                  <DatePicker
+                    value={form.fecha_recepcion}
+                    onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}
+                  />
                 </div>
               </div>
               <div className="flex gap-2">
