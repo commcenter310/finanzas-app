@@ -72,9 +72,9 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
     <tr className="hover:bg-gray-50 group">
       <td className="px-4 py-3 font-medium text-gray-800">{ingreso.concepto}</td>
       <td className="px-4 py-3 font-mono text-gray-500 text-sm">{formatMXN(ingreso.monto_presupuesto)}</td>
-      <td className="px-4 py-3 font-mono font-bold text-emerald-600">{formatMXN(ingreso.monto_actual)}</td>
+      <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(ingreso.monto_actual)}</td>
       <td className="px-4 py-3">
-        <span className={`text-sm font-mono ${diff >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+        <span className={`text-sm font-mono ${diff >= 0 ? 'text-positive' : 'text-negative'}`}>
           {diff >= 0 ? '+' : ''}{formatMXN(diff)}
         </span>
       </td>
@@ -116,10 +116,10 @@ export default function Ingresos() {
         {/* Tarjetas resumen */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           {[
-            { label: 'Presupuestado', value: totales.presupuesto, color: 'text-gray-600' },
-            { label: 'Recibido',      value: totales.actual,      color: 'text-emerald-600' },
+            { label: 'Presupuestado', value: totales.presupuesto, color: 'text-fg-2' },
+            { label: 'Recibido',      value: totales.actual,      color: 'text-positive' },
             { label: 'Diferencia',    value: totales.actual - totales.presupuesto,
-              color: (totales.actual - totales.presupuesto) >= 0 ? 'text-emerald-600' : 'text-red-500' },
+              color: (totales.actual - totales.presupuesto) >= 0 ? 'text-positive' : 'text-negative' },
           ].map(({ label, value, color }) => (
             <div key={label} className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{label}</p>
@@ -198,7 +198,7 @@ export default function Ingresos() {
                 <tr>
                   <td className="px-4 py-3 font-bold text-gray-700 text-sm">TOTAL</td>
                   <td className="px-4 py-3 font-mono font-bold text-gray-500">{formatMXN(totales.presupuesto)}</td>
-                  <td className="px-4 py-3 font-mono font-bold text-emerald-600">{formatMXN(totales.actual)}</td>
+                  <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(totales.actual)}</td>
                   <td colSpan={3} />
                 </tr>
               </tfoot>

@@ -157,7 +157,7 @@ export default function GastosFijos() {
                       <td className="px-4 py-3">
                         <button onClick={() => togglePagado(g.id, g.pagado, g.monto_previsto)}>
                           {g.pagado
-                            ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                            ? <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--ahorro)' }} />
                             : <Circle className="w-5 h-5 text-gray-300 hover:text-primary-400" />}
                         </button>
                       </td>
@@ -170,7 +170,7 @@ export default function GastosFijos() {
                       <td className="px-4 py-3 font-mono text-gray-500 text-sm">{formatMXN(g.monto_previsto)}</td>
                       <td className="px-4 py-3 font-mono font-semibold text-sm">
                         {Number(g.monto_actual) > Number(g.monto_previsto)
-                          ? <span className="text-red-500">{formatMXN(g.monto_actual)}</span>
+                          ? <span style={{ color: 'var(--negative-fg)' }}>{formatMXN(g.monto_actual)}</span>
                           : <span className="text-gray-700">{formatMXN(g.monto_actual)}</span>}
                       </td>
                       <td className="px-4 py-3"><span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span></td>

@@ -43,7 +43,7 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
   const alertaCorte  = diasParaCorte <= 5
   const sobreLimite  = pctUso > 30
   const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
-  const colorBarra = pctUso > 80 ? '#ef4444' : pctUso > 30 ? '#f59e0b' : '#10b981'
+  const colorBarra = pctUso > 80 ? '#EE4D63' : pctUso > 30 ? '#F2913E' : '#0FA978'
 
   const fmtRango = (inicio, fin) =>
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
@@ -55,7 +55,8 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
           <h3 className="font-bold text-gray-900">{credito.nombre}</h3>
           <div className="flex flex-wrap gap-1">
             {metodoVinculado && (
-              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 font-semibold">
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: 'var(--primary-50)', color: 'var(--primary-700)', border: '1px solid var(--primary-200)' }}>
                 via {metodoVinculado.nombre}
               </span>
             )}
@@ -207,11 +208,11 @@ export default function Creditos() {
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Saldo Total Utilizado</p>
-            <p className="text-xl font-bold font-mono text-amber-600">{formatMXN(totalSaldo)}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(totalSaldo)}</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Pagos Próximos</p>
-            <p className="text-xl font-bold font-mono text-red-600">
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>
               {creditos.filter(c => getAlerta(c).diasParaPago <= 5).length} alertas
             </p>
           </div>

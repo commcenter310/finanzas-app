@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 
 const clasifColors = { necesidad: 'bg-blue-50 border-blue-100', deseo: 'bg-amber-50 border-amber-100', ahorro: 'bg-emerald-50 border-emerald-100' }
-const barColors    = { necesidad: '#2563eb', deseo: '#f59e0b', ahorro: '#10b981' }
+const barColors    = { necesidad: '#2F6BEA', deseo: '#F2913E', ahorro: '#0FA978' }
 
 function TarjetaCategoria({ cat, onActualizar }) {
   const [editandoLimite, setEditandoLimite] = useState(false)
@@ -71,7 +71,7 @@ function TarjetaCategoria({ cat, onActualizar }) {
         <div className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${cat.pct}%`,
-            backgroundColor: cat.sobre ? '#ef4444' : (barColors[cat.clasificacion] ?? '#1a3faa')
+            backgroundColor: cat.sobre ? 'var(--negative)' : (barColors[cat.clasificacion] ?? '#6A45DD')
           }} />
       </div>
 
@@ -81,7 +81,7 @@ function TarjetaCategoria({ cat, onActualizar }) {
             {cat.pct.toFixed(0)}%{cat.sobre && ' ⚠️ Excedido'}
           </p>
           {!cat.sobre && (
-            <p className="text-xs text-emerald-600 font-mono">
+            <p className="text-xs font-mono" style={{ color: 'var(--ahorro-fg)' }}>
               Disponible: {formatMXN(cat.limite - cat.gastado)}
             </p>
           )}
@@ -107,7 +107,7 @@ export default function GastosVariables() {
   const excedidas    = catsConLimite.filter(c => c.sobre).length
   const sinLimite    = categorias.filter(c => c.limite === 0).length
   const pctTotal     = totalLimite > 0 ? (totalGastado / totalLimite) * 100 : 0
-  const colorTotal   = pctTotal >= 100 ? '#ef4444' : pctTotal >= 80 ? '#f59e0b' : '#10b981'
+  const colorTotal   = pctTotal >= 100 ? 'var(--negative)' : pctTotal >= 80 ? 'var(--warning)' : 'var(--ahorro)'
 
   const handleCopiar = async () => {
     const { copiados } = await copiarDelMesAnterior()
@@ -152,9 +152,9 @@ export default function GastosVariables() {
             </p>
             <div className="grid grid-cols-3 gap-3 border-t border-gray-50 pt-3">
               {[
-                { key: 'necesidad', label: 'Necesidad', color: '#2563eb' },
-                { key: 'deseo',     label: 'Deseo',     color: '#f59e0b' },
-                { key: 'ahorro',    label: 'Ahorro',    color: '#10b981' },
+                { key: 'necesidad', label: 'Necesidad', color: '#2F6BEA' },
+                { key: 'deseo',     label: 'Deseo',     color: '#F2913E' },
+                { key: 'ahorro',    label: 'Ahorro',    color: '#0FA978' },
               ].map(({ key, label, color }) => {
                 const g = catsConLimite.filter(c => c.clasificacion === key).reduce((s,c) => s + c.gastado, 0)
                 const l = catsConLimite.filter(c => c.clasificacion === key).reduce((s,c) => s + c.limite, 0)
@@ -168,7 +168,7 @@ export default function GastosVariables() {
                         <p className="text-xs text-gray-400">de {formatMXN(l)}</p>
                         <div className="h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
                           <div className="h-full rounded-full"
-                            style={{ width: `${Math.min(p, 100)}%`, backgroundColor: p >= 100 ? '#ef4444' : color }} />
+                            style={{ width: `${Math.min(p, 100)}%`, backgroundColor: p >= 100 ? 'var(--negative)' : color }} />
                         </div>
                       </>
                     )}
@@ -192,7 +192,7 @@ export default function GastosVariables() {
             </div>
             <div className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Categorías Excedidas</p>
-              <p className={`text-xl font-bold font-mono ${excedidas > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+              <p className="text-xl font-bold font-mono" style={{ color: excedidas > 0 ? 'var(--negative-fg)' : 'var(--ahorro-fg)' }}>
                 {excedidas} {excedidas > 0 ? '⚠️' : '✅'}
               </p>
               {sinLimite > 0 && (
@@ -250,10 +250,10 @@ export default function GastosVariables() {
                 <XAxis type="number" tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v, name) => [formatMXN(v), name === 'limite' ? 'Límite' : 'Gastado']} />
-                <Bar dataKey="limite"  name="limite"  fill="#e8edf8" radius={[0,4,4,0]} />
+                <Bar dataKey="limite"  name="limite"  fill="#EFEDF8" radius={[0,4,4,0]} />
                 <Bar dataKey="gastado" name="gastado" radius={[0,4,4,0]}>
                   {datosGrafico.map((entry, i) => (
-                    <Cell key={i} fill={entry.sobre ? '#ef4444' : (barColors[entry.clasificacion] ?? '#1a3faa')} />
+                    <Cell key={i} fill={entry.sobre ? '#EE4D63' : (barColors[entry.clasificacion] ?? '#6A45DD')} />
                   ))}
                 </Bar>
               </BarChart>
