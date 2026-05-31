@@ -60,8 +60,38 @@ export async function processMessage(telefono, texto) {
   const catNames = categorias?.map(c => c.nombre).join(', ') ?? ''
   const metNames = metodos?.map(m => m.nombre).join(', ') ?? ''
 
-  // 3. Verificar estado pendiente (esperando método de pago)
+  // 3. Verificar estado pendiente
   const estadoPendiente = await getEstado(telefono)
+
+  // 3a. Confirmación de deshacer (2º paso)
+  if (estadoPendiente?.estado === 'esperando_confirmacion_deshacer') {
+    const respTexto = norm(texto)
+    if (['sí', 'si', 'yes', 'confirmar', 'confirma'].includes(respTexto)) {
+      const { tx_id, descripcion, monto, fecha } = estadoPendiente.datos
+      await clearEstado(telefono)
+      const { error } = await supabaseAdmin.from('transacciones').delete().eq('id', tx_id)
+      if (error) {
+        await sendMessage(telefono, '❌ Error al eliminar el gasto. Intenta de nuevo.')
+        await logMessage(telefono, texto, null, null, false, error.message)
+        return
+      }
+      const respuesta = `🗑️ *Gasto eliminado*\n📝 ${descripcion} — ${fmx(monto)}\n📅 ${fecha}`
+      await sendMessage(telefono, respuesta)
+      await logMessage(telefono, texto, respuesta, null, true, null)
+      return
+    }
+    if (['no', 'cancelar', 'cancel', 'omitir'].includes(respTexto)) {
+      await clearEstado(telefono)
+      await sendMessage(telefono, '❌ Cancelado. El gasto no fue eliminado.')
+      await logMessage(telefono, texto, 'Deshacer cancelado', null, true, null)
+      return
+    }
+    // Respuesta no reconocida — recordar opciones
+    await sendMessage(telefono, 'Responde *sí* para confirmar la eliminación o *no* para cancelar.')
+    return
+  }
+
+  // 3b. Esperando método de pago
   if (estadoPendiente?.estado === 'esperando_metodo') {
     const respTexto = texto.trim().toLowerCase()
 
@@ -157,9 +187,9 @@ export async function processMessage(telefono, texto) {
     return
   }
   if (result.comando === 'deshacer') {
-    const msg = await buildDeshacer(profile.id)
+    const msg = await buildDeshacer(profile.id, telefono)
     await sendMessage(telefono, msg)
-    await logMessage(telefono, texto, msg, null, true, null)
+    await logMessage(telefono, texto, msg, null, false, null)
     return
   }
 
@@ -335,8 +365,8 @@ async function buildUltimos(userId) {
   return `📋 *Últimos 5 gastos:*\n\n${lista}`
 }
 
-// ── Deshacer último gasto ─────────────────────────────────────────────────────
-async function buildDeshacer(userId) {
+// ── Deshacer último gasto — paso 1: buscar y pedir confirmación ───────────────
+async function buildDeshacer(userId, telefono) {
   const { data: tx } = await supabaseAdmin
     .from('transacciones')
     .select('id, descripcion, monto, fecha')
@@ -348,10 +378,21 @@ async function buildDeshacer(userId) {
 
   if (!tx) return '❌ No encontré ningún gasto registrado por WhatsApp para eliminar.'
 
-  const { error } = await supabaseAdmin.from('transacciones').delete().eq('id', tx.id)
-  if (error) return '❌ Error al eliminar el gasto. Intenta de nuevo.'
+  // Guardar estado para el 2º paso (confirmación)
+  await setEstado(telefono, 'esperando_confirmacion_deshacer', {
+    tx_id:       tx.id,
+    descripcion: tx.descripcion,
+    monto:       tx.monto,
+    fecha:       tx.fecha,
+  })
 
-  return `🗑️ *Gasto eliminado*\n📝 ${tx.descripcion} — ${fmx(tx.monto)}\n📅 ${tx.fecha}`
+  return [
+    `🗑️ *¿Confirmas borrar este gasto?*`,
+    `📝 ${tx.descripcion} — ${fmx(tx.monto)}`,
+    `📅 ${tx.fecha}`,
+    ``,
+    `Responde *sí* para confirmar o *no* para cancelar.`,
+  ].join('\n')
 }
 
 // ── Resumen del mes ───────────────────────────────────────────────────────────

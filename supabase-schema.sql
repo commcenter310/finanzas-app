@@ -261,6 +261,17 @@ CREATE TRIGGER on_profile_created
 ALTER TABLE metodos_pago
   ADD COLUMN IF NOT EXISTS credito_id INTEGER REFERENCES creditos(id) ON DELETE SET NULL;
 
+-- Estado conversacional del bot de WhatsApp
+-- Usado por la máquina de estados para el flujo de método de pago y confirmación de "deshacer"
+CREATE TABLE IF NOT EXISTS public.whatsapp_estado (
+  telefono   TEXT PRIMARY KEY,
+  estado     TEXT NOT NULL,
+  datos      JSONB,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.whatsapp_estado ENABLE ROW LEVEL SECURITY;
+-- Solo service_role (el bot usa supabaseAdmin) puede leer/escribir esta tabla
+
 -- RPC atómica para ajustar saldo_utilizado sin race conditions
 CREATE OR REPLACE FUNCTION update_saldo_credito(p_credito_id INTEGER, p_delta NUMERIC)
 RETURNS VOID LANGUAGE SQL SECURITY DEFINER AS $$
