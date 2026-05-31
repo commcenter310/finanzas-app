@@ -5,11 +5,12 @@ import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import FilterSelect from '../components/ui/FilterSelect'
 
 const CLASIF_OPTS = [
-  { value: 'necesidad', label: '🔵 Necesidad' },
-  { value: 'deseo',     label: '🟡 Deseo' },
-  { value: 'ahorro',    label: '🟢 Ahorro' },
+  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
+  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
+  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
 ]
 
 const FORM_VACIO = {
@@ -112,16 +113,20 @@ export default function ControlGastos() {
             <input className="input pl-9 text-sm" placeholder="Buscar por descripción..."
               value={busqueda} onChange={e => setBusqueda(e.target.value)} />
           </div>
-          <select className="input text-sm w-full sm:w-44" value={filtroClasif}
-            onChange={e => setFiltroClasif(e.target.value)}>
-            <option value="">Todas las clases</option>
-            {CLASIF_OPTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
-          <select className="input text-sm w-full sm:w-44" value={filtroCategoria}
-            onChange={e => setFiltroCategoria(e.target.value)}>
-            <option value="">Todas las categorías</option>
-            {categorias.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-          </select>
+          <FilterSelect
+            className="w-full sm:w-44"
+            value={filtroClasif}
+            onChange={setFiltroClasif}
+            options={CLASIF_OPTS}
+            placeholder="Todas las clases"
+          />
+          <FilterSelect
+            className="w-full sm:w-44"
+            value={filtroCategoria}
+            onChange={setFiltroCategoria}
+            options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
+            placeholder="Todas las categorías"
+          />
           <button
             onClick={() => setSoloHormiga(v => !v)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--r-md)] text-sm font-medium border transition-all"
