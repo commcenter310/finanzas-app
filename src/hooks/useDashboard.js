@@ -10,6 +10,12 @@ export function useDashboard() {
   const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
   const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
 
+  // Mes anterior (para calcular saldo arrastrado)
+  const mesPrev  = mes === 1 ? 12 : mes - 1
+  const anioPrev = mes === 1 ? anio - 1 : anio
+  const inicioMesPrev = `${anioPrev}-${String(mesPrev).padStart(2,'0')}-01`
+  const finMesPrev    = new Date(anioPrev, mesPrev, 0).toISOString().split('T')[0]
+
   const { data: ingresos, loading: loadingIngresos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
@@ -43,6 +49,35 @@ export function useDashboard() {
     if (error) throw error
     return data || []
   }, [user?.id, mes, anio])
+
+  // ── Queries del mes anterior (se cargan en paralelo, sin bloquear el skeleton principal) ──
+  const { data: ingresosPrev } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('ingresos')
+      .select('monto_actual')
+      .eq('user_id', user.id).eq('mes', mesPrev).eq('anio', anioPrev)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mesPrev, anioPrev])
+
+  const { data: gastosFijosPrev } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('gastos_fijos')
+      .select('monto_actual')
+      .eq('user_id', user.id).eq('mes', mesPrev).eq('anio', anioPrev)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mesPrev, anioPrev])
+
+  const { data: transaccionesPrev } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('transacciones')
+      .select('monto')
+      .eq('user_id', user.id)
+      .gte('fecha', inicioMesPrev).lte('fecha', finMesPrev)
+    if (error) throw error
+    return data || []
+  }, [user?.id, mesPrev, anioPrev])
 
   const { data: presupuestos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -82,6 +117,16 @@ export function useDashboard() {
 
   const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
 
+  // Saldo arrastrado del mes anterior: cuánto sobró (o se pasó) el mes pasado
+  const saldoAnterior = (() => {
+    const prevIng   = ingresosPrev?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
+    const prevFijos = gastosFijosPrev?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
+    const prevTx    = transaccionesPrev?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+    // Solo emitir cuando los datos ya cargaron (evitar 0 engañoso al inicio)
+    if (!ingresosPrev && !gastosFijosPrev && !transaccionesPrev) return null
+    return prevIng - prevFijos - prevTx
+  })()
+
   const umbral = profile?.umbral_hormiga ?? 100
   const hormigaTx = transacciones?.filter(t => Number(t.monto) <= umbral) ?? []
   const gastosHormiga = {
@@ -101,6 +146,9 @@ export function useDashboard() {
 
   return {
     loading: loadingIngresos || loadingFijos || loadingTx,
+    saldoAnterior,
+    mesPrev,
+    anioPrev,
     totalIngresos,
     totalGastos,
     porAsignar,

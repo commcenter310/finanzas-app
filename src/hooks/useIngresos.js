@@ -26,8 +26,14 @@ export function useIngresos() {
 
   const agregar = async (datos) => {
     setSaving(true)
+    // mes/anio pueden venir del form (cuando el usuario elige "Aplica en otro mes")
+    // Si no vienen, se usa el mes/anio actualmente visible
+    const { mes: mesDatos, anio: anioDatos, ...campos } = datos
     const { error } = await supabase.from('ingresos').insert({
-      ...datos, user_id: user.id, mes, anio
+      ...campos,
+      user_id: user.id,
+      mes:  mesDatos  ?? mes,
+      anio: anioDatos ?? anio,
     })
     setSaving(false)
     if (!error) refetch()
