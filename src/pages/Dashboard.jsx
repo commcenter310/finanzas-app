@@ -423,21 +423,14 @@ export default function Dashboard() {
 
       {/* Mascota Husky */}
       {!loading && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none"
-          style={{ height: '110px' }}
-        >
-          <div style={{ pointerEvents: 'auto' }}>
-            <HuskyMascot
-              porAsignar={porAsignar}
-              totalIngresos={totalIngresos}
-              totalGastos={totalGastos}
-              categoriasEnRiesgo={categoriasEnRiesgo}
-              gastosHormiga={gastosHormiga}
-              ahorro={ahorro}
-            />
-          </div>
-        </div>
+        <HuskyMascot
+          porAsignar={porAsignar}
+          totalIngresos={totalIngresos}
+          totalGastos={totalGastos}
+          categoriasEnRiesgo={categoriasEnRiesgo}
+          gastosHormiga={gastosHormiga}
+          ahorro={ahorro}
+        />
       )}
     </Layout>
   )

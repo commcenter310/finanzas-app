@@ -131,10 +131,13 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
 
   return (
     <div style={{
-      position: "relative",
-      width: "100%",
-      height: `${DISPLAY_H + 60}px`,
-      overflow: "hidden",
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: `${DISPLAY_H + 70}px`,
+      zIndex: 30,
+      pointerEvents: "none",
       userSelect: "none",
     }}>
       {speech && (
@@ -172,6 +175,7 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
           position: "absolute",
           bottom: "0px",
           left: `${posX}px`,
+          pointerEvents: "auto",
           width: `${Math.round(DISPLAY_W)}px`,
           height: `${Math.round(DISPLAY_H)}px`,
           cursor: "pointer",
