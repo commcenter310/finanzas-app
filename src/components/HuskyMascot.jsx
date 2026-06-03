@@ -25,7 +25,36 @@ const SPEECHES_GENERICOS = [
 
 function getMensajes({ porAsignar = 0, totalIngresos = 0, totalGastos = 0, categoriasEnRiesgo = [], gastosHormiga = {}, ahorro = 0 }) {
   const mensajes = [];
-  const fmt = (n) => '
+  const fmt = (n) => String.fromCharCode(36) + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const pctGastado = totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0;
+
+  if (totalIngresos === 0) {
+    mensajes.push('Registra tus ingresos del mes! 📋');
+    mensajes.push('Aun no hay ingresos este mes 🐾');
+  }
+  if (porAsignar > 0 && totalIngresos > 0) {
+    mensajes.push('Tienes ' + fmt(porAsignar) + ' disponibles 💰');
+    if (pctGastado < 50) mensajes.push('Vas muy bien con el presupuesto! 🎉');
+    if (pctGastado >= 50 && pctGastado < 80) mensajes.push('Llevas el ' + pctGastado.toFixed(0) + '% gastado 📊');
+  }
+  if (porAsignar < 0) {
+    mensajes.push('Ojo! Estas ' + fmt(Math.abs(porAsignar)) + ' en negativo 😬');
+    mensajes.push('Cuidado con los gastos de este mes 🚨');
+  }
+  if (categoriasEnRiesgo.length > 0) {
+    const cat = categoriasEnRiesgo[0];
+    mensajes.push(cat.nombre + ' esta al ' + (cat.pct != null ? cat.pct.toFixed(0) : '?') + '% del presupuesto ⚠️');
+    if (categoriasEnRiesgo.length > 1) mensajes.push(categoriasEnRiesgo.length + ' categorias en riesgo 🔴');
+  }
+  if (gastosHormiga != null && gastosHormiga.count > 0) {
+    mensajes.push(gastosHormiga.count + ' gastos pequenos suman ' + fmt(gastosHormiga.total) + ' 🐜');
+  }
+  if (ahorro > 0) {
+    mensajes.push('Genial! Ya ahorraste ' + fmt(ahorro) + ' este mes 🐷');
+  }
+  if (mensajes.length === 0) return SPEECHES_GENERICOS;
+  return [...mensajes, ...SPEECHES_GENERICOS.slice(0, 3)];
+}
 
 export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, totalIngresos = 0, totalGastos = 0, categoriasEnRiesgo = [], gastosHormiga = {}, ahorro = 0 }) {
   const [frame, setFrame] = useState(0);
@@ -165,189 +194,7 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
         />
       </div>
 
-      <style>{\`
-        @keyframes popIn {
-          from { transform: translateX(-50%) scale(0.5); opacity: 0; }
-          to   { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-      \`}</style>
-    </div>
-  );
-}
- + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  const pctGastado = totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0;
-
-  if (totalIngresos === 0) {
-    mensajes.push('Registra tus ingresos del mes! 📋');
-    mensajes.push('Aun no hay ingresos este mes 🐾');
-  }
-  if (porAsignar > 0 && totalIngresos > 0) {
-    mensajes.push('Tienes ' + fmt(porAsignar) + ' disponibles 💰');
-    if (pctGastado < 50) mensajes.push('Vas muy bien con el presupuesto! 🎉');
-    if (pctGastado >= 50 && pctGastado < 80) mensajes.push('Llevas el ' + pctGastado.toFixed(0) + '% gastado del mes 📊');
-  }
-  if (porAsignar < 0) {
-    mensajes.push('Ojo! Estas ' + fmt(Math.abs(porAsignar)) + ' en negativo 😬');
-    mensajes.push('Cuidado con los gastos de este mes 🚨');
-  }
-  if (categoriasEnRiesgo.length > 0) {
-    const cat = categoriasEnRiesgo[0];
-    mensajes.push(cat.nombre + ' esta al ' + (cat.pct != null ? cat.pct.toFixed(0) : '?') + '% del presupuesto ⚠️');
-    if (categoriasEnRiesgo.length > 1) mensajes.push(categoriasEnRiesgo.length + ' categorias en riesgo este mes 🔴');
-  }
-  if (gastosHormiga != null && gastosHormiga.count > 0) {
-    mensajes.push(gastosHormiga.count + ' gastos pequenos suman ' + fmt(gastosHormiga.total) + ' 🐜');
-  }
-  if (ahorro > 0) {
-    mensajes.push('Genial! Ya ahorraste ' + fmt(ahorro) + ' este mes 🐷');
-  }
-  if (mensajes.length === 0) return SPEECHES_GENERICOS;
-  return [...mensajes, ...SPEECHES_GENERICOS.slice(0, 3)];
-}
-
-export default function HuskyMascot({ containerWidth = 800 }) {
-  const [frame, setFrame] = useState(0);
-  const [anim, setAnim] = useState("idle");
-  const [posX, setPosX] = useState(100);
-  const [dir, setDir] = useState(1);
-  const [isHovered, setIsHovered] = useState(false);
-  const [speech, setSpeech] = useState(null);
-
-  const animRef = useRef("idle");
-  const dirRef = useRef(1);
-  const frameIdxRef = useRef(0);
-
-  animRef.current = anim;
-  dirRef.current = dir;
-
-  useEffect(() => {
-    const currentAnim = ANIMATIONS[anim];
-    const interval = 1000 / currentAnim.fps;
-    frameIdxRef.current = 0;
-    const tick = setInterval(() => {
-      frameIdxRef.current++;
-      if (frameIdxRef.current >= currentAnim.frames.length) {
-        if (currentAnim.loop) frameIdxRef.current = 0;
-        else { frameIdxRef.current = currentAnim.frames.length - 1; return; }
-      }
-      setFrame(currentAnim.frames[frameIdxRef.current]);
-    }, interval);
-    return () => clearInterval(tick);
-  }, [anim]);
-
-  useEffect(() => {
-    const move = setInterval(() => {
-      if (animRef.current !== "walk" && animRef.current !== "run") return;
-      const speed = animRef.current === "run" ? 4 : 2;
-      const maxX = containerWidth - DISPLAY_W - 20;
-      setPosX(prev => {
-        let next = prev + dirRef.current * speed;
-        if (next >= maxX) { next = maxX; setDir(-1); }
-        else if (next <= 20) { next = 20; setDir(1); }
-        return next;
-      });
-    }, 16);
-    return () => clearInterval(move);
-  }, [anim, containerWidth]);
-
-  useEffect(() => {
-    const behaviors = ["idle", "walk", "walk", "walk", "run", "sit", "idle", "walk"];
-    const timer = setInterval(() => {
-      if (!isHovered) {
-        setAnim(behaviors[Math.floor(Math.random() * behaviors.length)]);
-      }
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [isHovered]);
-
-  const handleHover = () => {
-    setIsHovered(true);
-    setAnim("wag");
-    setTimeout(() => { setAnim("idle"); setIsHovered(false); }, 2000);
-  };
-
-  const handleClick = () => {
-    const msg = SPEECHES[Math.floor(Math.random() * SPEECHES.length)];
-    setSpeech(msg);
-    setAnim("run");
-    setTimeout(() => setSpeech(null), 2500);
-    setTimeout(() => { setAnim("idle"); setIsHovered(false); }, 3000);
-  };
-
-  const spriteX = -(frame * FRAME_W * DISPLAY_SCALE);
-
-  return (
-    <div style={{
-      position: "relative",
-      width: "100%",
-      height: `${DISPLAY_H + 60}px`,
-      overflow: "hidden",
-      userSelect: "none",
-    }}>
-      {speech && (
-        <div style={{
-          position: "absolute",
-          left: `${posX + DISPLAY_W / 2}px`,
-          bottom: `${DISPLAY_H + 15}px`,
-          transform: "translateX(-50%)",
-          background: "white",
-          border: "2.5px solid #5C3317",
-          borderRadius: "14px",
-          padding: "6px 14px",
-          fontSize: "13px",
-          fontWeight: "700",
-          color: "#5C3317",
-          whiteSpace: "nowrap",
-          boxShadow: "3px 3px 0 #5C3317",
-          zIndex: 10,
-          animation: "popIn 0.2s ease",
-        }}>
-          {speech}
-          <div style={{
-            position: "absolute", bottom: "-11px", left: "50%",
-            transform: "translateX(-50%)", width: 0, height: 0,
-            borderLeft: "8px solid transparent", borderRight: "8px solid transparent",
-            borderTop: "11px solid #5C3317",
-          }}/>
-        </div>
-      )}
-
-      <div
-        onMouseEnter={handleHover}
-        onClick={handleClick}
-        style={{
-          position: "absolute",
-          bottom: "0px",
-          left: `${posX}px`,
-          width: `${DISPLAY_W}px`,
-          height: `${DISPLAY_H}px`,
-          cursor: "pointer",
-          transform: `scaleX(${dir})`,
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src={SPRITE_SRC}
-          alt="Husky mascota"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: `${spriteX}px`,
-            width: `${FRAME_W * TOTAL_FRAMES * DISPLAY_SCALE}px`,
-            height: `${FRAME_H * DISPLAY_SCALE}px`,
-            imageRendering: "pixelated",
-            pointerEvents: "none",
-          }}
-          draggable={false}
-        />
-      </div>
-
-      <style>{\`
-        @keyframes popIn {
-          from { transform: translateX(-50%) scale(0.5); opacity: 0; }
-          to   { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-      \`}</style>
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes popIn { from { transform: translateX(-50%) scale(0.5); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }` }} />
     </div>
   );
 }
