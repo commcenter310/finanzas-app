@@ -1,4 +1,5 @@
 import Layout from '../components/layout/Layout'
+import HuskyMascot from '../components/HuskyMascot'
 import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
 import { formatMXN } from '../utils/constantes'
@@ -379,6 +380,25 @@ export default function Dashboard() {
       >
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </Link>
+
+      {/* Mascota Husky */}
+      {!loading && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none"
+          style={{ height: '110px' }}
+        >
+          <div style={{ pointerEvents: 'auto' }}>
+            <HuskyMascot
+              porAsignar={porAsignar}
+              totalIngresos={totalIngresos}
+              totalGastos={totalGastos}
+              categoriasEnRiesgo={categoriasEnRiesgo}
+              gastosHormiga={gastosHormiga}
+              ahorro={ahorro}
+            />
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
