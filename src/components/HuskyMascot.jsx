@@ -25,7 +25,8 @@ const SPEECHES_GENERICOS = [
 
 function getMensajes({ porAsignar = 0, totalIngresos = 0, totalGastos = 0, categoriasEnRiesgo = [], gastosHormiga = {}, ahorro = 0 }) {
   const mensajes = [];
-  const fmt = (n) => String.fromCharCode(36) + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const SIGNO = String.fromCharCode(36);
+  const fmt = (n) => SIGNO + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const pctGastado = totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0;
 
   if (totalIngresos === 0) {
@@ -194,7 +195,7 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
         />
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes popIn { from { transform: translateX(-50%) scale(0.5); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }` }} />
+      <style dangerouslySetInnerHTML={{ __html: "@keyframes popIn { from { transform: translateX(-50%) scale(0.5); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }" }} />
     </div>
   );
 }
