@@ -1,12 +1,52 @@
 import { useState } from 'react'
 import Layout from '../components/layout/Layout'
 import { useIngresos } from '../hooks/useIngresos'
-import { formatMXN } from '../utils/constantes'
+import { useMes } from '../context/MesContext'
+import { formatMXN, MESES } from '../utils/constantes'
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 
+// ── Selector de mes al que aplica el ingreso ─────────────────────────────────
+// Muestra 3 opciones: mes anterior / mes actual / mes siguiente
+function MesPicker({ mesVal, anioVal, onChange, mesBase, anioBase }) {
+  const prevMes  = mesBase === 1  ? 12 : mesBase - 1
+  const prevAnio = mesBase === 1  ? anioBase - 1 : anioBase
+  const nextMes  = mesBase === 12 ? 1  : mesBase + 1
+  const nextAnio = mesBase === 12 ? anioBase + 1 : anioBase
+
+  const opciones = [
+    { mes: prevMes,  anio: prevAnio,  short: MESES[prevMes - 1].slice(0, 3) },
+    { mes: mesBase,  anio: anioBase,  short: MESES[mesBase - 1].slice(0, 3)  },
+    { mes: nextMes,  anio: nextAnio,  short: MESES[nextMes - 1].slice(0, 3) },
+  ]
+
+  return (
+    <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+      {opciones.map(op => {
+        const active = mesVal === op.mes && anioVal === op.anio
+        return (
+          <button
+            key={`${op.mes}-${op.anio}`}
+            type="button"
+            className="flex-1 py-2 transition-colors leading-tight"
+            style={{
+              background: active ? 'var(--primary)' : 'var(--surface-2)',
+              color:      active ? '#fff'            : 'var(--fg-3)',
+            }}
+            onClick={() => onChange(op.mes, op.anio)}
+          >
+            <div className="text-[11px] font-bold">{op.short}</div>
+            <div style={{ fontSize: 10, fontWeight: 400, opacity: active ? 0.85 : 0.7 }}>{op.anio}</div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function FilaIngreso({ ingreso, onUpdate, onDelete }) {
+  const { mes: mesCtx, anio: anioCtx } = useMes()
   const [editando, setEditando] = useState(false)
   const [form, setForm] = useState({
     concepto:          ingreso.concepto,
@@ -14,6 +54,8 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
     monto_actual:      ingreso.monto_actual,
     fecha_recepcion:   ingreso.fecha_recepcion ?? '',
     notas:             ingreso.notas ?? '',
+    mes:               ingreso.mes,
+    anio:              ingreso.anio,
   })
 
   const guardar = async () => {
@@ -28,6 +70,8 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
       monto_actual:      ingreso.monto_actual,
       fecha_recepcion:   ingreso.fecha_recepcion ?? '',
       notas:             ingreso.notas ?? '',
+      mes:               ingreso.mes,
+      anio:              ingreso.anio,
     })
     setEditando(false)
   }
@@ -57,6 +101,15 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
             onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}
           />
         </td>
+        <td className="px-4 py-2">
+          <MesPicker
+            mesVal={form.mes}
+            anioVal={form.anio}
+            onChange={(m, a) => setForm(f => ({ ...f, mes: m, anio: a }))}
+            mesBase={mesCtx}
+            anioBase={anioCtx}
+          />
+        </td>
         <td className="px-4 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
             <button onClick={guardar}
@@ -84,6 +137,14 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
         </span>
       </td>
       <td className="px-4 py-3 text-gray-400 text-sm">{ingreso.fecha_recepcion ?? '—'}</td>
+      <td className="px-4 py-3">
+        <span
+          className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
+          style={{ background: 'var(--primary-soft-bg)', color: 'var(--primary-soft-fg)' }}
+        >
+          {MESES[(ingreso.mes ?? mesCtx) - 1]} {ingreso.anio ?? anioCtx}
+        </span>
+      </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => setEditando(true)}
@@ -101,16 +162,17 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
 }
 
 export default function Ingresos() {
+  const { mes, anio } = useMes()
   const { ingresos, loading, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
-  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '' })
+  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '', mes, anio })
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
     if (!form.concepto || !form.monto_presupuesto) return
     const { error } = await agregar(form)
     if (!error) {
-      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '' })
+      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '', mes, anio })
       setMostrarForm(false)
     }
   }
@@ -147,6 +209,22 @@ export default function Ingresos() {
           {/* Formulario inline */}
           {mostrarForm && (
             <div className="p-4 bg-primary-50 border-b border-primary-100">
+              {/* ── ¿A qué mes aplica? ─────────────────────────────── */}
+              <div className="mb-3">
+                <label className="label mb-1.5">¿A qué mes aplica este ingreso?</label>
+                <MesPicker
+                  mesVal={form.mes}
+                  anioVal={form.anio}
+                  onChange={(m, a) => setForm(f => ({ ...f, mes: m, anio: a }))}
+                  mesBase={mes}
+                  anioBase={anio}
+                />
+                {(form.mes !== mes || form.anio !== anio) && (
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: 'var(--primary-700)' }}>
+                    Este ingreso aparecerá en <strong>{MESES[form.mes - 1]} {form.anio}</strong>, no en el mes que estás viendo.
+                  </p>
+                )}
+              </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                 <div>
                   <label className="label">Concepto</label>
@@ -164,7 +242,7 @@ export default function Ingresos() {
                     value={form.monto_actual} onChange={e => setForm(f => ({ ...f, monto_actual: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Fecha</label>
+                  <label className="label">Fecha de recepción</label>
                   <DatePicker
                     value={form.fecha_recepcion}
                     onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}
@@ -185,7 +263,7 @@ export default function Ingresos() {
           <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-50">
-                {['Concepto','Presupuestado','Recibido','Diferencia','Fecha',''].map(h => (
+                {['Concepto','Presupuestado','Recibido','Diferencia','Fecha recibido','Aplica en',''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -193,10 +271,10 @@ export default function Ingresos() {
             <tbody>
               {loading
                 ? Array(3).fill(0).map((_, i) => (
-                  <tr key={i}><td colSpan={6} className="px-4 py-3"><div className="h-5 bg-gray-50 rounded animate-pulse" /></td></tr>
+                  <tr key={i}><td colSpan={7} className="px-4 py-3"><div className="h-5 bg-gray-50 rounded animate-pulse" /></td></tr>
                 ))
                 : ingresos.length === 0
-                  ? <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-300 text-sm">Sin ingresos este mes. Agrega el primero.</td></tr>
+                  ? <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-300 text-sm">Sin ingresos este mes. Agrega el primero.</td></tr>
                   : ingresos.map(i => (
                     <FilaIngreso key={i.id} ingreso={i} onUpdate={actualizar} onDelete={(id) => setConfirmDelete(id)} />
                   ))}
@@ -207,7 +285,7 @@ export default function Ingresos() {
                   <td className="px-4 py-3 font-bold text-gray-700 text-sm">TOTAL</td>
                   <td className="px-4 py-3 font-mono font-bold text-gray-500">{formatMXN(totales.presupuesto)}</td>
                   <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(totales.actual)}</td>
-                  <td colSpan={3} />
+                  <td colSpan={4} />
                 </tr>
               </tfoot>
             )}

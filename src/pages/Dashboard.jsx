@@ -1,7 +1,7 @@
 import Layout from '../components/layout/Layout'
 import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
-import { formatMXN } from '../utils/constantes'
+import { formatMXN, MESES } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -71,6 +71,7 @@ export default function Dashboard() {
     loading, totalIngresos, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
     totalPresupuestado, categoriasEnRiesgo, gastosHormiga,
+    saldoAnterior, mesPrev, anioPrev,
   } = useDashboard()
 
   const datosDona = Object.entries(gastosPorCategoria)
@@ -120,6 +121,45 @@ export default function Dashboard() {
               </div>
             ))}
         </div>
+
+        {/* ── Saldo arrastrado del mes anterior ── */}
+        {saldoAnterior !== null && Math.abs(saldoAnterior) > 0.5 && (
+          <div
+            className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
+            style={{
+              background: saldoAnterior >= 0 ? 'var(--positive-bg)' : 'var(--warning-bg)',
+              borderLeft: `3px solid ${saldoAnterior >= 0 ? 'var(--positive)' : 'var(--warning)'}`,
+            }}
+          >
+            <div className="min-w-0">
+              <p
+                className="text-[11px] font-bold uppercase tracking-[0.06em] mb-0.5"
+                style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)' }}
+              >
+                {saldoAnterior >= 0 ? '✓ Saldo sobrante de' : '⚠ Déficit de'} {MESES[mesPrev - 1]} {anioPrev}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
+                {saldoAnterior >= 0
+                  ? 'Puedes contarlo como ingreso disponible este mes.'
+                  : 'El mes pasado se gastó más de lo que entró.'}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p
+                className="text-xl font-bold tabular"
+                style={{
+                  color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--fg-3)' }}>
+                Balance total: {formatMXN(saldoAnterior + porAsignar)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Regla 50/30/20 ── */}
         <div className="card p-5">
