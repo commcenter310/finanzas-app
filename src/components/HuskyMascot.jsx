@@ -130,16 +130,18 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
   const spriteX = -(Math.round(frame * FRAME_W * DISPLAY_SCALE));
 
   return (
-    <div style={{
-      position: "fixed",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: `${DISPLAY_H + 70}px`,
-      zIndex: 30,
-      pointerEvents: "none",
-      userSelect: "none",
-    }}>
+    <div
+      className="lg:pl-[248px]"
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: `${DISPLAY_H + 70}px`,
+        zIndex: 20,
+        pointerEvents: "none",
+        userSelect: "none",
+      }}>
       {speech && (
         <div style={{
           position: "absolute",
