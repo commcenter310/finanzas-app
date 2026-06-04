@@ -33,6 +33,11 @@ export default function Deudas() {
   const handleAbonar = async (deudaId) => {
     const monto = montoAbono[deudaId]
     if (!monto || Number(monto) <= 0) return
+    const deuda = deudas.find(d => d.id === deudaId)
+    if (deuda && Number(monto) > Number(deuda.saldo_actual)) {
+      alert(`El abono ($${Number(monto).toLocaleString('es-MX')}) no puede ser mayor al saldo actual ($${Number(deuda.saldo_actual).toLocaleString('es-MX')})`)
+      return
+    }
     await abonar(deudaId, monto)
     setMontoAbono(m => ({ ...m, [deudaId]: '' }))
   }

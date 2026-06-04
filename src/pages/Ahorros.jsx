@@ -136,7 +136,8 @@ export default function Ahorros() {
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
-    if (!form.concepto || !form.monto_meta) return
+    if (!form.concepto) return
+    if (!form.monto_meta || Number(form.monto_meta) <= 0) return
     await agregar({ ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) || 0 })
     setForm(FORM_VACIO); setMostrarForm(false)
   }

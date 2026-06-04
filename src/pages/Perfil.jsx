@@ -49,7 +49,9 @@ export default function Perfil() {
   }, [profile])
 
   const guardarRegla = async () => {
-    const total = Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)
+    const n = Number(regla.necesidad), d = Number(regla.deseo), a = Number(regla.ahorro)
+    if ([n, d, a].some(v => v < 0 || v > 1)) return setErrorRegla('Cada valor debe estar entre 0% y 100%')
+    const total = n + d + a
     if (Math.abs(total - 1) > 0.01) return setErrorRegla('Los porcentajes deben sumar 100%')
     setSavingRegla(true)
     setErrorRegla('')
