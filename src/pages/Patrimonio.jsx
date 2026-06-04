@@ -29,8 +29,14 @@ export default function Patrimonio() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId]   = useState(null)
   const [form, setForm]               = useState(FORM_VACIO)
-  const [snapshotMsg, setSnapshotMsg] = useState('')
+  const [snapshotMsg, setSnapshotMsg]       = useState('')
+  const [confirmSnap, setConfirmSnap]       = useState(false)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const hoy = new Date()
+  const mesActual  = hoy.getMonth() + 1
+  const anioActual = hoy.getFullYear()
+  const snapExistente = snapshots.find(s => s.mes === mesActual && s.anio === anioActual)
 
   const abrirEditar = (activo) => {
     setForm({ nombre: activo.nombre, tipo: activo.tipo, monto: activo.monto })
@@ -54,9 +60,15 @@ export default function Patrimonio() {
   }
 
   const handleSnapshot = async () => {
+    // Si ya existe uno este mes, pedir confirmación antes de sobreescribir
+    if (snapExistente && !confirmSnap) {
+      setConfirmSnap(true)
+      return
+    }
+    setConfirmSnap(false)
     const { error } = await guardarSnapshot()
     if (!error) {
-      setSnapshotMsg('✓ Snapshot guardado')
+      setSnapshotMsg(snapExistente ? '✓ Snapshot actualizado' : '✓ Snapshot guardado')
       setTimeout(() => setSnapshotMsg(''), 3000)
     }
   }
@@ -100,13 +112,37 @@ export default function Patrimonio() {
             <p className="text-xs text-gray-400 mt-0.5">Activos − Deudas</p>
           </div>
           <div className="card p-5 flex flex-col items-center justify-center gap-2 border border-dashed border-gray-200 col-span-2 lg:col-span-1">
-            <button onClick={handleSnapshot} disabled={saving}
-              className="btn-primary flex items-center gap-2 text-sm w-full justify-center">
-              <Save className="w-4 h-4" />
-              {saving ? 'Guardando...' : 'Guardar snapshot del mes'}
-            </button>
-            {snapshotMsg && <p className="text-xs text-emerald-600 font-semibold">{snapshotMsg}</p>}
-            <p className="text-xs text-gray-400 text-center">Guarda una foto del patrimonio actual para el historial</p>
+            {confirmSnap
+              ? (
+                <div className="w-full text-center space-y-2">
+                  <p className="text-xs font-semibold" style={{ color: 'var(--warning-fg)' }}>
+                    ⚠️ Ya tienes un snapshot de este mes. ¿Sobreescribir?
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <button onClick={handleSnapshot} disabled={saving}
+                      className="btn-primary text-xs py-1.5 px-3">
+                      {saving ? 'Guardando...' : 'Sí, actualizar'}
+                    </button>
+                    <button onClick={() => setConfirmSnap(false)} className="btn-ghost text-xs py-1.5 px-3">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )
+              : (
+                <button onClick={handleSnapshot} disabled={saving}
+                  className="btn-primary flex items-center gap-2 text-sm w-full justify-center">
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Guardando...' : snapExistente ? 'Actualizar snapshot del mes' : 'Guardar snapshot del mes'}
+                </button>
+              )
+            }
+            {snapshotMsg && <p className="text-xs font-semibold" style={{ color: 'var(--positive-fg)' }}>{snapshotMsg}</p>}
+            <p className="text-xs text-gray-400 text-center">
+              {snapExistente
+                ? `Ya tienes snapshot de ${MESES[mesActual - 1]} ${anioActual}`
+                : 'Guarda una foto del patrimonio actual para el historial'}
+            </p>
           </div>
         </div>
 
