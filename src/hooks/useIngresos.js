@@ -9,12 +9,18 @@ export function useIngresos() {
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
 
+  // Filtrar por fecha_recepcion (rango del mes) en vez de mes/anio
+  const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`
+  const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+
   const { data: ingresos, loading, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
       .select('*')
-      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
-      .order('created_at', { ascending: true })
+      .eq('user_id', user.id)
+      .gte('fecha_recepcion', inicioMes)
+      .lte('fecha_recepcion', finMes)
+      .order('fecha_recepcion', { ascending: true })
     if (error) throw error
     return data ?? []
   }, [user?.id, mes, anio])
@@ -26,14 +32,18 @@ export function useIngresos() {
 
   const agregar = async (datos) => {
     setSaving(true)
-    // mes/anio pueden venir del form (cuando el usuario elige "Aplica en otro mes")
-    // Si no vienen, se usa el mes/anio actualmente visible
-    const { mes: mesDatos, anio: anioDatos, ...campos } = datos
+    // fecha_recepcion requerida; si no viene, usar hoy
+    const hoy = new Date().toISOString().split('T')[0]
+    const fecha = datos.fecha_recepcion || hoy
+    // Derivar mes/anio de la fecha para mantener compatibilidad
+    const [anioFecha, mesFecha] = fecha.split('-').map(Number)
+    const { mes: _mes, anio: _anio, ...campos } = datos
     const { error } = await supabase.from('ingresos').insert({
       ...campos,
       user_id: user.id,
-      mes:  mesDatos  ?? mes,
-      anio: anioDatos ?? anio,
+      fecha_recepcion: fecha,
+      mes: mesFecha,
+      anio: anioFecha,
     })
     setSaving(false)
     if (!error) refetch()
@@ -42,7 +52,14 @@ export function useIngresos() {
 
   const actualizar = async (id, datos) => {
     setSaving(true)
-    const { error } = await supabase.from('ingresos').update(datos).eq('id', id)
+    const updates = { ...datos }
+    // Si se cambia la fecha, actualizar también mes/anio para consistencia
+    if (datos.fecha_recepcion) {
+      const [anioFecha, mesFecha] = datos.fecha_recepcion.split('-').map(Number)
+      updates.mes = mesFecha
+      updates.anio = anioFecha
+    }
+    const { error } = await supabase.from('ingresos').update(updates).eq('id', id)
     setSaving(false)
     if (!error) refetch()
     return { error }

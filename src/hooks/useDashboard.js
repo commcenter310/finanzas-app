@@ -20,7 +20,9 @@ export function useDashboard() {
     const { data, error } = await supabase
       .from('ingresos')
       .select('monto_actual, monto_presupuesto')
-      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+      .eq('user_id', user.id)
+      .gte('fecha_recepcion', inicioMes)
+      .lte('fecha_recepcion', finMes)
     if (error) throw error
     return data || []
   }, [user?.id, mes, anio])
@@ -55,7 +57,9 @@ export function useDashboard() {
     const { data, error } = await supabase
       .from('ingresos')
       .select('monto_actual')
-      .eq('user_id', user.id).eq('mes', mesPrev).eq('anio', anioPrev)
+      .eq('user_id', user.id)
+      .gte('fecha_recepcion', inicioMesPrev)
+      .lte('fecha_recepcion', finMesPrev)
     if (error) throw error
     return data || []
   }, [user?.id, mesPrev, anioPrev])
@@ -92,7 +96,21 @@ export function useDashboard() {
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
   const totalTx       = transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
   const totalGastos   = totalFijos + totalTx
-  const porAsignar    = totalIngresos - totalGastos
+
+  // Saldo arrastrado del mes anterior: cuánto sobró (o se pasó) el mes pasado
+  const saldoAnterior = (() => {
+    const prevIng   = ingresosPrev?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
+    const prevFijos = gastosFijosPrev?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
+    const prevTx    = transaccionesPrev?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+    if (!ingresosPrev && !gastosFijosPrev && !transaccionesPrev) return null
+    return prevIng - prevFijos - prevTx
+  })()
+
+  // Solo arrastramos saldo positivo (no deudas del mes anterior)
+  const saldoArrastrado = saldoAnterior !== null && saldoAnterior > 0 ? saldoAnterior : 0
+  // Si no hay ingresos ni saldo anterior, porAsignar = null para evitar negativo engañoso
+  const sinDatos = totalIngresos === 0 && saldoAnterior === null
+  const porAsignar = sinDatos ? null : saldoArrastrado + totalIngresos - totalGastos
 
   const necesidad = [
     ...gastosFijos?.filter(g => g.clasificacion === 'necesidad') ?? [],
@@ -117,15 +135,6 @@ export function useDashboard() {
 
   const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
 
-  // Saldo arrastrado del mes anterior: cuánto sobró (o se pasó) el mes pasado
-  const saldoAnterior = (() => {
-    const prevIng   = ingresosPrev?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
-    const prevFijos = gastosFijosPrev?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-    const prevTx    = transaccionesPrev?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
-    // Solo emitir cuando los datos ya cargaron (evitar 0 engañoso al inicio)
-    if (!ingresosPrev && !gastosFijosPrev && !transaccionesPrev) return null
-    return prevIng - prevFijos - prevTx
-  })()
 
   const umbral = profile?.umbral_hormiga ?? 100
   const hormigaTx = transacciones?.filter(t => Number(t.monto) <= umbral) ?? []

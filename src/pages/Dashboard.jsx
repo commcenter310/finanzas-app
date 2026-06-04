@@ -52,9 +52,10 @@ const STAT_CONFIG = (totalIngresos, totalGastos, porAsignar, ahorro) => [
     label:      'Por Asignar',
     value:      porAsignar,
     icon:       Wallet,
-    valueColor: porAsignar >= 0 ? 'var(--primary-600)' : 'var(--negative-fg)',
-    iconBg:     porAsignar >= 0 ? 'var(--primary-50)'  : 'var(--negative-bg)',
-    iconColor:  porAsignar >= 0 ? 'var(--primary-700)' : 'var(--negative-fg)',
+    sinDatos:   porAsignar === null,
+    valueColor: porAsignar === null ? 'var(--fg-3)' : porAsignar >= 0 ? 'var(--primary-600)' : 'var(--negative-fg)',
+    iconBg:     porAsignar === null ? 'var(--surface-3)' : porAsignar >= 0 ? 'var(--primary-50)'  : 'var(--negative-bg)',
+    iconColor:  porAsignar === null ? 'var(--fg-3)' : porAsignar >= 0 ? 'var(--primary-700)' : 'var(--negative-fg)',
   },
   {
     label:      'Ahorro del Mes',
@@ -97,7 +98,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {loading
             ? Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
-            : tarjetas.map(({ label, value, icon: Icon, valueColor, iconBg, iconColor }) => (
+            : tarjetas.map(({ label, value, icon: Icon, valueColor, iconBg, iconColor, sinDatos }) => (
               <div key={label} className="card p-5">
                 <div className="flex items-center justify-between mb-3">
                   <p
@@ -113,17 +114,20 @@ export default function Dashboard() {
                     <Icon className="w-[17px] h-[17px]" style={{ color: iconColor }} strokeWidth={2} />
                   </div>
                 </div>
-                <p
-                  className="text-[26px] font-bold tabular leading-none"
-                  style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {formatMXN(value)}
-                </p>
+                {sinDatos
+                  ? <p className="text-sm font-semibold" style={{ color: 'var(--fg-3)' }}>Sin ingresos aún</p>
+                  : <p
+                      className="text-[26px] font-bold tabular leading-none"
+                      style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {formatMXN(value)}
+                    </p>
+                }
               </div>
             ))}
         </div>
 
-        {/* ── Saldo arrastrado del mes anterior ── */}
+        {/* ── Saldo arrastrado del mes anterior (ya incluido en Por Asignar) ── */}
         {saldoAnterior !== null && Math.abs(saldoAnterior) > 0.5 && (
           <div
             className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
@@ -137,11 +141,11 @@ export default function Dashboard() {
                 className="text-[11px] font-bold uppercase tracking-[0.06em] mb-0.5"
                 style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)' }}
               >
-                {saldoAnterior >= 0 ? '✓ Saldo sobrante de' : '⚠ Déficit de'} {MESES[mesPrev - 1]} {anioPrev}
+                {saldoAnterior >= 0 ? '✓ Saldo de' : '⚠ Déficit de'} {MESES[mesPrev - 1]} {anioPrev}
               </p>
               <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
                 {saldoAnterior >= 0
-                  ? 'Puedes contarlo como ingreso disponible este mes.'
+                  ? 'Ya incluido en tu saldo Por Asignar de este mes.'
                   : 'El mes pasado se gastó más de lo que entró.'}
               </p>
             </div>
@@ -154,9 +158,6 @@ export default function Dashboard() {
                 }}
               >
                 {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
-              </p>
-              <p className="text-[11px]" style={{ color: 'var(--fg-3)' }}>
-                Balance total: {formatMXN(saldoAnterior + porAsignar)}
               </p>
             </div>
           </div>

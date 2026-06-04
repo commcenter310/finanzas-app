@@ -165,14 +165,21 @@ export default function Ingresos() {
   const { mes, anio } = useMes()
   const { ingresos, loading, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
-  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '', mes, anio })
+  const hoy = new Date().toISOString().split('T')[0]
+  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '' })
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
-    if (!form.concepto || !form.monto_presupuesto) return
-    const { error } = await agregar(form)
+    // Requerido: concepto, monto_actual (dinero recibido) y fecha
+    if (!form.concepto || !form.monto_actual || !form.fecha_recepcion) return
+    // Si no pusieron monto esperado, usar el monto real
+    const datos = {
+      ...form,
+      monto_presupuesto: form.monto_presupuesto || form.monto_actual,
+    }
+    const { error } = await agregar(datos)
     if (!error) {
-      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: '', notas: '', mes, anio })
+      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '' })
       setMostrarForm(false)
     }
   }
@@ -209,40 +216,24 @@ export default function Ingresos() {
           {/* Formulario inline */}
           {mostrarForm && (
             <div className="p-4 bg-primary-50 border-b border-primary-100">
-              {/* ── ¿A qué mes aplica? ─────────────────────────────── */}
-              <div className="mb-3">
-                <label className="label mb-1.5">¿A qué mes aplica este ingreso?</label>
-                <MesPicker
-                  mesVal={form.mes}
-                  anioVal={form.anio}
-                  onChange={(m, a) => setForm(f => ({ ...f, mes: m, anio: a }))}
-                  mesBase={mes}
-                  anioBase={anio}
-                />
-                {(form.mes !== mes || form.anio !== anio) && (
-                  <p className="text-xs mt-1.5 font-medium" style={{ color: 'var(--primary-700)' }}>
-                    Este ingreso aparecerá en <strong>{MESES[form.mes - 1]} {form.anio}</strong>, no en el mes que estás viendo.
-                  </p>
-                )}
-              </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                 <div>
                   <label className="label">Concepto</label>
-                  <input className="input text-sm" placeholder="Ej: Nómina 15"
+                  <input className="input text-sm" placeholder="Ej: Quincena 15"
                     value={form.concepto} onChange={e => setForm(f => ({ ...f, concepto: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Presupuesto ($)</label>
-                  <input type="number" className="input text-sm font-mono" placeholder="0"
-                    value={form.monto_presupuesto} onChange={e => setForm(f => ({ ...f, monto_presupuesto: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">Recibido ($)</label>
+                  <label className="label">Monto recibido ($) <span className="text-negative">*</span></label>
                   <input type="number" className="input text-sm font-mono" placeholder="0"
                     value={form.monto_actual} onChange={e => setForm(f => ({ ...f, monto_actual: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Fecha de recepción</label>
+                  <label className="label">Monto esperado ($) <span className="text-fg-4 font-normal">(opcional)</span></label>
+                  <input type="number" className="input text-sm font-mono" placeholder="= recibido si vacío"
+                    value={form.monto_presupuesto} onChange={e => setForm(f => ({ ...f, monto_presupuesto: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Fecha en que llegó <span className="text-negative">*</span></label>
                   <DatePicker
                     value={form.fecha_recepcion}
                     onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}

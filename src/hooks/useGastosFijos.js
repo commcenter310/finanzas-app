@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
@@ -8,6 +8,9 @@ export function useGastosFijos() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
+  const [autoCopiadosCount, setAutoCopiadosCount] = useState(0)
+  // Ref para evitar auto-copiar más de una vez por mes/año
+  const autoCopiadoKeyRef = useRef(null)
 
   const { data: gastos, loading, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -72,5 +75,18 @@ export function useGastosFijos() {
     return { copiados: recurrentes.length }
   }
 
-  return { gastos: gastos ?? [], loading, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes }
+  // Auto-copiar recurrentes cuando el mes está vacío (solo una vez por mes/año)
+  useEffect(() => {
+    const key = `${mes}-${anio}`
+    if (loading) return
+    if (gastos === null) return
+    if (gastos.length > 0) return                    // ya tiene datos, no copiar
+    if (autoCopiadoKeyRef.current === key) return    // ya se intentó para este mes
+    autoCopiadoKeyRef.current = key
+    copiarRecurrentes().then(({ copiados }) => {
+      if (copiados > 0) setAutoCopiadosCount(copiados)
+    })
+  }, [loading, gastos, mes, anio]) // eslint-disable-line
+
+  return { gastos: gastos ?? [], loading, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
 }

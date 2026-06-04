@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
 import { formatMXN } from '../utils/constantes'
@@ -14,8 +14,17 @@ const CLASIF_OPTS = [
 ]
 
 export default function GastosFijos() {
-  const { gastos, loading, saving, totales, agregar, togglePagado, eliminar, copiarRecurrentes } = useGastosFijos()
+  const { gastos, loading, saving, totales, agregar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
+  const prevAutoCopRef = useRef(0)
+
+  // Mostrar toast cuando se auto-copian recurrentes
+  useEffect(() => {
+    if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
+      prevAutoCopRef.current = autoCopiadosCount
+      toast(`✅ ${autoCopiadosCount} gastos recurrentes copiados automáticamente`, 'success')
+    }
+  }, [autoCopiadosCount, toast])
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
   const [copiando, setCopiando] = useState(false)
