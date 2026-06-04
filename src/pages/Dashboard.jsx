@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import Layout from '../components/layout/Layout'
 import HuskyMascot from '../components/HuskyMascot'
 import { useDashboard } from '../hooks/useDashboard'
@@ -422,16 +423,30 @@ export default function Dashboard() {
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </Link>
 
-      {/* Mascota Husky */}
-      {!loading && (
-        <HuskyMascot
-          porAsignar={porAsignar}
-          totalIngresos={totalIngresos}
-          totalGastos={totalGastos}
-          categoriasEnRiesgo={categoriasEnRiesgo}
-          gastosHormiga={gastosHormiga}
-          ahorro={ahorro}
-        />
+      {/* Mascota Husky — renderizada fuera del Layout via portal para z-index correcto */}
+      {!loading && createPortal(
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 'auto',
+          zIndex: 9,
+          pointerEvents: 'none',
+          paddingLeft: 0,
+        }}>
+          <div className="lg:pl-[248px]" style={{ pointerEvents: 'auto' }}>
+            <HuskyMascot
+              porAsignar={porAsignar}
+              totalIngresos={totalIngresos}
+              totalGastos={totalGastos}
+              categoriasEnRiesgo={categoriasEnRiesgo}
+              gastosHormiga={gastosHormiga}
+              ahorro={ahorro}
+            />
+          </div>
+        </div>,
+        document.body
       )}
     </Layout>
   )
