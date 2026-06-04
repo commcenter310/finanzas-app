@@ -138,7 +138,7 @@ export default function HuskyMascot({ containerWidth = 800, porAsignar = 0, tota
         left: 0,
         right: 0,
         height: `${DISPLAY_H + 70}px`,
-        zIndex: 20,
+        zIndex: 5,
         pointerEvents: "none",
         userSelect: "none",
       }}>
