@@ -88,6 +88,11 @@ export default function SimuladorCredito() {
               <label className="label">Tasa de interés anual (%)</label>
               <input type="number" step="0.1" className="input font-mono" placeholder="36"
                 value={tasa} onChange={e => setTasa(e.target.value)} />
+              {tasaNum > 100 && (
+                <p className="text-xs mt-1 font-semibold" style={{ color: 'var(--negative-fg)' }}>
+                  ⚠️ Tasa muy alta. Considera liquidar antes o buscar otra opción.
+                </p>
+              )}
               <p className="text-xs text-gray-400 mt-1">
                 Referencia: NU ~36% · Liverpool ~85% · HSBC ~28%
               </p>

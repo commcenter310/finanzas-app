@@ -31,7 +31,8 @@ export default function Tendencias() {
       const totalTx    = tx?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
 
       resultados.push({
-        mes:       MESES[m - 1].slice(0, 3),
+        mes:       i === 0 ? `${MESES[m - 1].slice(0, 3)}*` : MESES[m - 1].slice(0, 3),
+        esActual:  i === 0,
         ingresos:  ing?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0,
         gastos:    totalFijos + totalTx,
         necesidad: tx?.filter(t => t.clasificacion === 'necesidad').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
@@ -128,7 +129,10 @@ export default function Tendencias() {
 
         {/* Ingresos vs Gastos */}
         <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-4">Ingresos vs Gastos (6 meses)</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-gray-900">Ingresos vs Gastos (6 meses)</h2>
+            <span className="text-xs" style={{ color: 'var(--fg-4)' }}>* mes en curso (parcial)</span>
+          </div>
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (

@@ -40,8 +40,10 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
   const { diasParaCorte, diasParaPago, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
   const pctUso = credito.limite_credito > 0
     ? (credito.saldo_utilizado / credito.limite_credito) * 100 : 0
-  const alertaPago   = diasParaPago <= 5
-  const alertaCorte  = diasParaCorte <= 5
+  const alertaPagoUrgente  = diasParaPago  <= 3
+  const alertaPago         = diasParaPago  <= 7
+  const alertaCorteUrgente = diasParaCorte <= 3
+  const alertaCorte        = diasParaCorte <= 7
   const sobreLimite  = pctUso > 30
   const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
   const colorBarra = pctUso > 80 ? '#EE4D63' : pctUso > 30 ? '#F2913E' : '#0FA978'
@@ -50,7 +52,7 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
 
   return (
-    <div className="card p-5" style={alertaPago ? { border: '2px solid var(--negative-bg)' } : alertaCorte ? { border: '2px solid var(--warning-bg)' } : {}}>
+    <div className="card p-5" style={alertaPagoUrgente ? { border: '2px solid var(--negative)' } : alertaPago ? { border: '2px solid var(--negative-bg)' } : alertaCorteUrgente ? { border: '2px solid var(--warning)' } : alertaCorte ? { border: '2px solid var(--warning-bg)' } : {}}>
       <div className="flex items-start justify-between mb-3">
         <div className="space-y-1">
           <h3 className="font-bold text-gray-900">{credito.nombre}</h3>
@@ -120,21 +122,25 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
 
       <div className="grid grid-cols-2 gap-3 text-sm mb-3">
         <div className="rounded-lg p-3"
-          style={alertaCorte ? { background: 'var(--warning-bg)', border: '1px solid var(--warning-bg)' } : { background: 'var(--surface-2)' }}>
+          style={alertaCorteUrgente ? { background: 'var(--warning-bg)', border: '1px solid var(--warning)' } : alertaCorte ? { background: 'var(--warning-bg)', border: '1px solid var(--warning-bg)' } : { background: 'var(--surface-2)' }}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Corte</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_corte}</p>
           <p className="text-xs mt-0.5" style={alertaCorte ? { color: 'var(--warning-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
-            {alertaCorte
+            {alertaCorteUrgente
+              ? <span className="flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" />⚠️ ¡{diasParaCorte} días!</span>
+              : alertaCorte
               ? <span className="flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" />Faltan {diasParaCorte} días</span>
               : `En ${diasParaCorte} días`}
           </p>
         </div>
         <div className="rounded-lg p-3"
-          style={alertaPago ? { background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' } : { background: 'var(--surface-2)' }}>
+          style={alertaPagoUrgente ? { background: 'var(--negative-bg)', border: '1px solid var(--negative)' } : alertaPago ? { background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' } : { background: 'var(--surface-2)' }}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Pago</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_pago}</p>
           <p className="text-xs mt-0.5" style={alertaPago ? { color: 'var(--negative-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
-            {alertaPago
+            {alertaPagoUrgente
+              ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />🔴 ¡{diasParaPago} días!</span>
+              : alertaPago
               ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />¡{diasParaPago} días!</span>
               : `En ${diasParaPago} días`}
           </p>
