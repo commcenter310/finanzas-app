@@ -35,7 +35,7 @@ export default function Sidebar({ open, onClose }) {
     <aside
       style={GLASS_SIDEBAR}
       className={`
-        w-[248px] min-h-screen flex flex-col
+        w-[248px] h-screen flex flex-col
         fixed left-0 top-0 z-30
         border-r border-[var(--border)]
         transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
