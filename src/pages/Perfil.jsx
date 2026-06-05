@@ -159,8 +159,7 @@ export default function Perfil() {
 
   return (
     <Layout titulo="Perfil">
-      {/* flex-col para que la fila de listas pueda crecer hasta el final */}
-      <div className="flex flex-col gap-5" style={{ minHeight: 'calc(100vh - 130px)' }}>
+      <div className="space-y-5">
 
         {/* ── Fila 1: Datos básicos + Regla 50/30/20 lado a lado ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
@@ -284,12 +283,12 @@ export default function Perfil() {
 
         </div>
 
-        {/* ── Fila 2: ocupa todo el espacio restante ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-1 items-stretch min-h-0">
+        {/* ── Fila 2: Métodos de pago + Categorías ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
           {/* Métodos de pago */}
-          <div className="card overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: 'var(--divider)' }}>
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
               <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Métodos de Pago</h2>
               <button onClick={() => setMostrarFormMetodo(v => !v)}
                 className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
@@ -322,7 +321,7 @@ export default function Perfil() {
               </div>
             )}
             {/* Buscador métodos */}
-            <div className="px-4 py-2.5 border-b flex-shrink-0" style={{ borderColor: 'var(--divider)' }}>
+            <div className="px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--fg-4)' }} />
                 <input
@@ -333,7 +332,7 @@ export default function Perfil() {
                 />
               </div>
             </div>
-            <div className="divide-y overflow-y-auto flex-1 min-h-0" style={{ borderColor: 'var(--divider)' }}>
+            <div className="divide-y overflow-y-auto max-h-72" style={{ borderColor: 'var(--divider)' }}>
               {(() => {
                 const lista = (metodos ?? []).filter(m => m.activo && m.nombre.toLowerCase().includes(busquedaMetodo.toLowerCase()))
                 if (lista.length === 0) return <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>{busquedaMetodo ? 'Sin resultados' : 'Sin métodos de pago'}</p>
@@ -398,8 +397,8 @@ export default function Perfil() {
           </div>
 
           {/* Categorías */}
-          <div className="card overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: 'var(--divider)' }}>
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
               <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Categorías</h2>
               <button onClick={() => setMostrarFormCat(v => !v)}
                 className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
@@ -437,7 +436,7 @@ export default function Perfil() {
               </div>
             )}
             {/* Buscador categorías */}
-            <div className="px-4 py-2.5 border-b flex-shrink-0" style={{ borderColor: 'var(--divider)' }}>
+            <div className="px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--fg-4)' }} />
                 <input
@@ -448,7 +447,7 @@ export default function Perfil() {
                 />
               </div>
             </div>
-            <div className="divide-y overflow-y-auto flex-1 min-h-0" style={{ borderColor: 'var(--divider)' }}>
+            <div className="divide-y overflow-y-auto max-h-72" style={{ borderColor: 'var(--divider)' }}>
               {(categorias ?? [])
                 .filter(c => c.nombre.toLowerCase().includes(busquedaCat.toLowerCase()))
                 .map(c => (
