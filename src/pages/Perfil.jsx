@@ -5,6 +5,19 @@ import { supabase } from '../lib/supabase'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { formatMXN } from '../utils/constantes'
 import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
+import FilterSelect from '../components/ui/FilterSelect'
+
+const TIPO_METODO_OPTS = [
+  { value: 'debito',   label: 'Débito',   dotColor: 'var(--fg-3)'    },
+  { value: 'credito',  label: 'Crédito',  dotColor: 'var(--primary)' },
+  { value: 'efectivo', label: 'Efectivo', dotColor: 'var(--ahorro)'  },
+  { value: 'digital',  label: 'Digital',  dotColor: 'var(--deseo)'   },
+]
+const CLASIF_OPTS = [
+  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
+  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
+  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
+]
 
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
@@ -195,31 +208,60 @@ export default function Perfil() {
           <div className="card p-5">
             <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Regla Personalizada</h2>
             <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
-            <div className="space-y-3 mb-4">
+            <div className="space-y-5 mb-4">
               {[
-                { key: 'necesidad', label: 'Necesidad', emoji: '🔵', color: 'var(--necesidad-fg)' },
-                { key: 'deseo',     label: 'Deseo',     emoji: '🟡', color: 'var(--deseo-fg)'     },
-                { key: 'ahorro',    label: 'Ahorro',    emoji: '🟢', color: 'var(--ahorro-fg)'    },
-              ].map(({ key, label, emoji, color }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <span className="text-sm font-semibold w-24 flex-shrink-0" style={{ color }}>
-                    {emoji} {label}
-                  </span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
-                    <div className="h-full rounded-full transition-all"
-                      style={{ width: `${Math.min(Number(regla[key]) * 100, 100)}%`, background: color }} />
+                { key: 'necesidad', label: 'Necesidad', emoji: '🔵', color: 'var(--necesidad-fg)', trackColor: 'var(--necesidad)' },
+                { key: 'deseo',     label: 'Deseo',     emoji: '🟡', color: 'var(--deseo-fg)',     trackColor: 'var(--deseo)'     },
+                { key: 'ahorro',    label: 'Ahorro',    emoji: '🟢', color: 'var(--ahorro-fg)',    trackColor: 'var(--ahorro)'    },
+              ].map(({ key, label, emoji, color, trackColor }) => {
+                const pct = Math.round(Number(regla[key]) * 100)
+                return (
+                  <div key={key}>
+                    {/* Etiqueta + valor */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold" style={{ color }}>{emoji} {label}</span>
+                      <div className="relative flex-shrink-0">
+                        <input
+                          type="number" step="1" min="0" max="100"
+                          className="input font-mono text-sm w-16 pr-5 text-right py-1"
+                          style={{ color }}
+                          value={pct}
+                          onChange={e => setRegla(r => ({ ...r, [key]: Number(e.target.value) / 100 }))}
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--fg-4)' }}>%</span>
+                      </div>
+                    </div>
+                    {/* Barra con jalador */}
+                    <div className="relative h-5 flex items-center">
+                      {/* Track */}
+                      <div className="absolute w-full h-2.5 rounded-full" style={{ background: 'var(--surface-3)' }} />
+                      {/* Fill */}
+                      <div
+                        className="absolute h-2.5 rounded-full pointer-events-none"
+                        style={{ width: `${pct}%`, background: trackColor }}
+                      />
+                      {/* Range input invisible — captura todos los eventos de arrastre */}
+                      <input
+                        type="range" min="0" max="100" step="1"
+                        value={pct}
+                        onChange={e => setRegla(r => ({ ...r, [key]: Number(e.target.value) / 100 }))}
+                        className="absolute w-full h-full cursor-pointer"
+                        style={{ opacity: 0, zIndex: 2 }}
+                      />
+                      {/* Jalador visible */}
+                      <div
+                        className="absolute w-5 h-5 rounded-full bg-white border-[2.5px] shadow-md pointer-events-none"
+                        style={{
+                          left:        `calc(${pct}% - 10px)`,
+                          borderColor: trackColor,
+                          zIndex:      1,
+                          boxShadow:   '0 1px 4px rgba(0,0,0,0.18)',
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="relative flex-shrink-0">
-                    <input type="number" step="1" min="0" max="100"
-                      className="input font-mono text-sm w-20 pr-6 text-right"
-                      style={{ color }}
-                      value={Math.round(Number(regla[key]) * 100)}
-                      onChange={e => setRegla(r => ({ ...r, [key]: Number(e.target.value) / 100 }))}
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--fg-4)' }}>%</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-xl"
               style={{ background: reglaOk ? 'var(--positive-bg)' : 'var(--negative-bg)' }}>
@@ -261,13 +303,13 @@ export default function Perfil() {
                   </div>
                   <div>
                     <label className="label">Tipo</label>
-                    <select className="input text-sm" value={formMetodo.tipo}
-                      onChange={e => setFormMetodo(f => ({ ...f, tipo: e.target.value }))}>
-                      <option value="debito">Débito</option>
-                      <option value="credito">Crédito</option>
-                      <option value="efectivo">Efectivo</option>
-                      <option value="digital">Digital</option>
-                    </select>
+                    <FilterSelect
+                      value={formMetodo.tipo}
+                      onChange={v => setFormMetodo(f => ({ ...f, tipo: v }))}
+                      options={TIPO_METODO_OPTS}
+                      placeholder="Tipo"
+                      showClear={false}
+                    />
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -303,15 +345,15 @@ export default function Perfil() {
                         autoFocus
                         onKeyDown={e => { if (e.key === 'Enter') guardarEditMetodo(m.id); if (e.key === 'Escape') setEditandoMetodo(null) }}
                       />
-                      <select
-                        className="input text-sm py-1.5 w-28"
-                        value={formEditMetodo.tipo}
-                        onChange={e => setFormEditMetodo(f => ({ ...f, tipo: e.target.value }))}>
-                        <option value="debito">Débito</option>
-                        <option value="credito">Crédito</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="digital">Digital</option>
-                      </select>
+                      <div className="w-32 flex-shrink-0">
+                        <FilterSelect
+                          value={formEditMetodo.tipo}
+                          onChange={v => setFormEditMetodo(f => ({ ...f, tipo: v }))}
+                          options={TIPO_METODO_OPTS}
+                          placeholder="Tipo"
+                          showClear={false}
+                        />
+                      </div>
                       <button onClick={() => guardarEditMetodo(m.id)}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
                         style={{ background: 'var(--ahorro)' }}>
@@ -376,12 +418,13 @@ export default function Perfil() {
                   </div>
                   <div>
                     <label className="label">Tipo</label>
-                    <select className="input text-sm" value={formCat.clasificacion}
-                      onChange={e => setFormCat(f => ({ ...f, clasificacion: e.target.value }))}>
-                      <option value="necesidad">Necesidad</option>
-                      <option value="deseo">Deseo</option>
-                      <option value="ahorro">Ahorro</option>
-                    </select>
+                    <FilterSelect
+                      value={formCat.clasificacion}
+                      onChange={v => setFormCat(f => ({ ...f, clasificacion: v }))}
+                      options={CLASIF_OPTS}
+                      placeholder="Tipo"
+                      showClear={false}
+                    />
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -421,14 +464,15 @@ export default function Perfil() {
                       autoFocus
                       onKeyDown={e => { if (e.key === 'Enter') guardarEditCat(c.id); if (e.key === 'Escape') setEditandoCat(null) }}
                     />
-                    <select
-                      className="input text-sm py-1.5 w-28 flex-shrink-0"
-                      value={formEditCat.clasificacion}
-                      onChange={e => setFormEditCat(f => ({ ...f, clasificacion: e.target.value }))}>
-                      <option value="necesidad">Necesidad</option>
-                      <option value="deseo">Deseo</option>
-                      <option value="ahorro">Ahorro</option>
-                    </select>
+                    <div className="w-32 flex-shrink-0">
+                      <FilterSelect
+                        value={formEditCat.clasificacion}
+                        onChange={v => setFormEditCat(f => ({ ...f, clasificacion: v }))}
+                        options={CLASIF_OPTS}
+                        placeholder="Tipo"
+                        showClear={false}
+                      />
+                    </div>
                     <button onClick={() => guardarEditCat(c.id)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
                       style={{ background: 'var(--ahorro)' }}>
