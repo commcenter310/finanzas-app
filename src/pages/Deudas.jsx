@@ -1,15 +1,16 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
-import { Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
 export default function Deudas() {
-  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, abonar, eliminar } = useDeudas()
+  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, abonar, abonarCredito, eliminar } = useDeudas()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -35,10 +36,15 @@ export default function Deudas() {
     if (!monto || Number(monto) <= 0) return
     const deuda = deudas.find(d => d.id === deudaId)
     if (deuda && Number(monto) > Number(deuda.saldo_actual)) {
-      alert(`El abono ($${Number(monto).toLocaleString('es-MX')}) no puede ser mayor al saldo actual ($${Number(deuda.saldo_actual).toLocaleString('es-MX')})`)
+      alert(`El pago ($${Number(monto).toLocaleString('es-MX')}) no puede ser mayor al saldo actual ($${Number(deuda.saldo_actual).toLocaleString('es-MX')})`)
       return
     }
-    await abonar(deudaId, monto)
+    // Si es tarjeta de crédito, actualiza saldo_utilizado en creditos
+    if (deuda?.tipo === 'credito') {
+      await abonarCredito(deuda.credito_id, monto)
+    } else {
+      await abonar(deudaId, monto)
+    }
     setMontoAbono(m => ({ ...m, [deudaId]: '' }))
   }
 
@@ -138,30 +144,57 @@ export default function Deudas() {
                 : deudas.length === 0
                   ? <div className="card p-16 text-center text-gray-300 text-sm">Sin deudas registradas 🎉</div>
                   : deudas.map(d => {
+                    const esTarjeta = d.tipo === 'credito'
                     const pct = d.saldo_original > 0
                       ? ((Number(d.saldo_original) - Number(d.saldo_actual)) / Number(d.saldo_original)) * 100 : 0
                     const expandido = expandida === d.id
                     return (
-                      <div key={d.id} className="card overflow-hidden">
+                      <div key={d.id}
+                        className="card overflow-hidden"
+                        style={esTarjeta ? { borderLeft: '3px solid var(--primary-200)' } : {}}
+                      >
                         <div className="p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <p className="font-bold text-gray-900">{d.nombre}</p>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-bold text-gray-900">{d.nombre}</p>
+                                {/* Chip que indica que viene de Créditos */}
+                                {esTarjeta && (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                    style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}
+                                  >
+                                    <CreditCard className="w-3 h-3" />
+                                    Tarjeta
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                                 {d.pago_mensual > 0 && <span>Pago: {formatMXN(d.pago_mensual)}/mes</span>}
                                 {d.tasa_interes > 0 && <span>Tasa: {d.tasa_interes}%</span>}
                                 {d.fecha_proximo_pago && <span>Próximo: {d.fecha_proximo_pago}</span>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-shrink-0">
                               <div className="text-right">
                                 <p className="font-bold font-mono text-lg" style={{ color: 'var(--negative-fg)' }}>{formatMXN(d.saldo_actual)}</p>
                                 {d.saldo_original > 0 && <p className="text-xs text-gray-400">de {formatMXN(d.saldo_original)}</p>}
                               </div>
-                              <button onClick={() => setConfirmDelete(d.id)}
-                                className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {/* Tarjeta: link a Créditos | Deuda manual: botón eliminar */}
+                              {esTarjeta ? (
+                                <Link
+                                  to="/creditos"
+                                  className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                                  title="Administrar en Créditos"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </Link>
+                              ) : (
+                                <button onClick={() => setConfirmDelete(d.id)}
+                                  className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
 
@@ -169,26 +202,44 @@ export default function Deudas() {
                             <div className="mb-3">
                               <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--negative-bg)' }}>
                                 <div className="h-full rounded-full transition-all"
-                                  style={{ width: `${Math.min(pct, 100)}%`, background: 'var(--ahorro)' }} />
+                                  style={{
+                                    width: `${Math.min(esTarjeta ? (d.saldo_actual / d.saldo_original) * 100 : pct, 100)}%`,
+                                    background: esTarjeta ? 'var(--negative)' : 'var(--ahorro)',
+                                  }}
+                                />
                               </div>
-                              <p className="text-xs mt-1" style={{ color: 'var(--fg-4)' }}>{pct.toFixed(0)}% pagado</p>
+                              <p className="text-xs mt-1" style={{ color: 'var(--fg-4)' }}>
+                                {esTarjeta
+                                  ? `${((d.saldo_actual / d.saldo_original) * 100).toFixed(0)}% del límite utilizado`
+                                  : `${pct.toFixed(0)}% pagado`
+                                }
+                              </p>
                             </div>
                           )}
 
                           <div className="flex items-center gap-2">
-                            <input type="number" className="input text-sm py-1.5 font-mono w-full sm:w-36" placeholder="Monto abono"
-                              value={montoAbono[d.id] ?? ''} onChange={e => setMontoAbono(m => ({ ...m, [d.id]: e.target.value }))} />
+                            <input
+                              type="number"
+                              className="input text-sm py-1.5 font-mono w-full sm:w-36"
+                              placeholder={esTarjeta ? 'Monto pago' : 'Monto abono'}
+                              value={montoAbono[d.id] ?? ''}
+                              onChange={e => setMontoAbono(m => ({ ...m, [d.id]: e.target.value }))}
+                            />
                             <button onClick={() => handleAbonar(d.id)} className="btn-secondary text-sm py-1.5 px-3">
-                              Abonar
+                              {esTarjeta ? 'Pagar' : 'Abonar'}
                             </button>
-                            <button onClick={() => setExpandida(expandido ? null : d.id)}
-                              className="btn-ghost text-sm flex items-center gap-1 ml-auto">
-                              Historial {expandido ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                            </button>
+                            {/* El historial de pagos solo aplica a deudas manuales */}
+                            {!esTarjeta && (
+                              <button onClick={() => setExpandida(expandido ? null : d.id)}
+                                className="btn-ghost text-sm flex items-center gap-1 ml-auto">
+                                Historial {expandido ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
                           </div>
                         </div>
 
-                        {expandido && d.abonos_deuda?.length > 0 && (
+                        {/* Historial solo para deudas manuales */}
+                        {!esTarjeta && expandido && d.abonos_deuda?.length > 0 && (
                           <div className="border-t border-gray-50 bg-gray-50 px-4 py-3">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Historial de Abonos</p>
                             <div className="space-y-1.5">
@@ -201,7 +252,7 @@ export default function Deudas() {
                             </div>
                           </div>
                         )}
-                        {expandido && d.abonos_deuda?.length === 0 && (
+                        {!esTarjeta && expandido && d.abonos_deuda?.length === 0 && (
                           <div className="border-t border-gray-50 bg-gray-50 px-4 py-3 text-sm text-gray-300 text-center">
                             Sin abonos registrados
                           </div>
@@ -233,7 +284,15 @@ export default function Deudas() {
                           {i + 1}
                         </span>
                         <div className="flex-1">
-                          <p className="font-semibold text-sm text-gray-800">{d.nombre}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-semibold text-sm text-gray-800">{d.nombre}</p>
+                            {d.tipo === 'credito' && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}>
+                                💳
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-400">
                             {formatMXN(d.saldo_actual)}{d.tasa_interes ? ` · ${d.tasa_interes}% anual` : ''}
                           </p>
