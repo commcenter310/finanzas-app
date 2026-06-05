@@ -5,6 +5,104 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 
+// ── Resumen global de utilización ────────────────────────────────────────────
+function ResumenGeneral({ creditos }) {
+  const conLimite = creditos.filter(c => Number(c.limite_credito) > 0)
+  if (conLimite.length === 0) return null
+
+  const totalLimite    = conLimite.reduce((s, c) => s + Number(c.limite_credito), 0)
+  const totalUtilizado = conLimite.reduce((s, c) => s + Number(c.saldo_utilizado ?? 0), 0)
+  const pctGlobal      = totalLimite > 0 ? (totalUtilizado / totalLimite) * 100 : 0
+  const disponible     = totalLimite - totalUtilizado
+  const sobreLimite    = pctGlobal > 30
+  const colorGlobal    = pctGlobal > 80 ? '#EE4D63' : pctGlobal > 30 ? '#F2913E' : '#0FA978'
+
+  return (
+    <div className="card p-5">
+      {/* Encabezado */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Utilización Global</h3>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
+            {formatMXN(totalUtilizado)} utilizados de {formatMXN(totalLimite)} en total
+          </p>
+        </div>
+        <span
+          className="text-3xl font-bold tabular"
+          style={{ color: colorGlobal, fontVariantNumeric: 'tabular-nums' }}
+        >
+          {pctGlobal.toFixed(0)}%
+        </span>
+      </div>
+
+      {/* Barra global con marcador 30% */}
+      <div className="relative h-3 rounded-full overflow-visible mb-1" style={{ background: 'var(--surface-3)' }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(pctGlobal, 100)}%`, backgroundColor: colorGlobal }}
+        />
+        <div className="absolute top-0 h-full" style={{ left: '30%' }}>
+          <div className="w-0.5 h-4 -mt-0.5 rounded" style={{ background: 'var(--warning)' }} />
+        </div>
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-xs font-semibold" style={{ color: 'var(--warning-fg)' }}>30%</span>
+        <span className="text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>
+          Disponible: {formatMXN(disponible)}
+        </span>
+      </div>
+
+      {/* Mini barras por tarjeta */}
+      <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--divider)' }}>
+        {conLimite
+          .slice()
+          .sort((a, b) => (Number(b.saldo_utilizado) / Number(b.limite_credito)) - (Number(a.saldo_utilizado) / Number(a.limite_credito)))
+          .map(c => {
+            const pct   = (Number(c.saldo_utilizado ?? 0) / Number(c.limite_credito)) * 100
+            const color = pct > 80 ? '#EE4D63' : pct > 30 ? '#F2913E' : '#0FA978'
+            return (
+              <div key={c.id} className="flex items-center gap-3">
+                <span
+                  className="text-xs font-semibold truncate flex-shrink-0 w-24"
+                  style={{ color: 'var(--fg-2)' }}
+                  title={c.nombre}
+                >
+                  {c.nombre}
+                </span>
+                <div className="flex-1 relative h-2 rounded-full overflow-visible" style={{ background: 'var(--surface-3)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+                  {/* Marcador 30% en mini barra */}
+                  <div className="absolute top-0 h-full" style={{ left: '30%' }}>
+                    <div className="w-px h-3 -mt-0.5" style={{ background: 'var(--warning)', opacity: 0.5 }} />
+                  </div>
+                </div>
+                <span
+                  className="text-xs font-bold tabular flex-shrink-0 w-8 text-right"
+                  style={{ color, fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {pct.toFixed(0)}%
+                </span>
+                <span
+                  className="text-xs tabular flex-shrink-0 w-20 text-right hidden sm:block"
+                  style={{ color: 'var(--fg-4)', fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {formatMXN(c.saldo_utilizado ?? 0)}
+                </span>
+              </div>
+            )
+          })}
+      </div>
+
+      {/* Estado global */}
+      <p className="text-xs mt-3 font-semibold" style={{ color: sobreLimite ? 'var(--warning-fg)' : 'var(--ahorro-fg)' }}>
+        {sobreLimite
+          ? '⚠️ Tu uso global supera el 30% recomendado. Puede afectar tu score de crédito.'
+          : '✓ Tu uso global está dentro del 30% recomendado. ¡Bien manejado!'}
+      </p>
+    </div>
+  )
+}
+
 function calcularFechasOptimas(fechaCorte) {
   const buf = 5
   return {
@@ -230,17 +328,8 @@ export default function Creditos() {
           </div>
         </div>
 
-        <div className="card p-4 flex items-start gap-3"
-          style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
-          <span className="text-lg mt-0.5">💡</span>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--warning-fg)' }}>Recomendación de uso de crédito</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--warning-fg)' }}>
-              Para mantener un buen historial crediticio, se recomienda no utilizar más del <strong>30%</strong> del límite de cada tarjeta.
-              Usar más del 30% puede afectar negativamente tu score de crédito aunque pagues a tiempo.
-            </p>
-          </div>
-        </div>
+        {/* Resumen global con mini barras por tarjeta */}
+        {!loading && <ResumenGeneral creditos={creditos} />}
 
         <div className="flex justify-end">
           <button onClick={() => { setForm(FORM_VACIO); setEditando(null); setMostrarForm(v => !v) }}
