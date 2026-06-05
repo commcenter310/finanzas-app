@@ -161,8 +161,8 @@ export default function Perfil() {
     <Layout titulo="Perfil">
       <div className="space-y-5">
 
-        {/* ── Fila 1: Datos básicos + Regla 50/30/20 lado a lado ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        {/* ── Fila 1: misma altura en ambas columnas ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
           {/* Datos básicos */}
           <div className="card p-5">
@@ -332,7 +332,7 @@ export default function Perfil() {
                 />
               </div>
             </div>
-            <div className="divide-y overflow-y-auto max-h-72" style={{ borderColor: 'var(--divider)' }}>
+            <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
               {(() => {
                 const lista = (metodos ?? []).filter(m => m.activo && m.nombre.toLowerCase().includes(busquedaMetodo.toLowerCase()))
                 if (lista.length === 0) return <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>{busquedaMetodo ? 'Sin resultados' : 'Sin métodos de pago'}</p>
@@ -447,7 +447,7 @@ export default function Perfil() {
                 />
               </div>
             </div>
-            <div className="divide-y overflow-y-auto max-h-72" style={{ borderColor: 'var(--divider)' }}>
+            <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
               {(categorias ?? [])
                 .filter(c => c.nombre.toLowerCase().includes(busquedaCat.toLowerCase()))
                 .map(c => (
