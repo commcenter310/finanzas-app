@@ -137,7 +137,10 @@ export function useDashboard() {
 
 
   const umbral = profile?.umbral_hormiga ?? 100
-  const hormigaTx = transacciones?.filter(t => Number(t.monto) <= umbral) ?? []
+  // Solo cuentan como "hormiga" los gastos de deseo: una medicina de $50 no es hormiga, un café sí
+  const hormigaTx = transacciones?.filter(t =>
+    Number(t.monto) <= umbral && t.clasificacion === 'deseo'
+  ) ?? []
   const gastosHormiga = {
     count: hormigaTx.length,
     total: hormigaTx.reduce((s, t) => s + Number(t.monto), 0),

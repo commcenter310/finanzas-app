@@ -111,172 +111,219 @@ export default function Perfil() {
     refetchCats()
   }
 
+  const totalRegla = Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)
+  const reglaOk    = Math.abs(totalRegla - 1) < 0.01
+
   return (
     <Layout titulo="Perfil">
-      <div className="max-w-2xl space-y-6">
+      <div className="space-y-5">
 
-        {/* Datos básicos */}
-        <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-4">Datos Básicos</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="label">Email</label>
-              <input className="input bg-gray-50 text-gray-400 cursor-not-allowed" value={user?.email ?? ''} readOnly />
+        {/* ── Fila 1: Datos básicos + Regla 50/30/20 lado a lado ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+          {/* Datos básicos */}
+          <div className="card p-5">
+            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Datos Básicos</h2>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="col-span-2">
+                <label className="label">Email</label>
+                <input className="input text-sm cursor-not-allowed" style={{ color: 'var(--fg-4)', background: 'var(--surface-2)' }}
+                  value={user?.email ?? ''} readOnly />
+              </div>
+              <div>
+                <label className="label">Nombre</label>
+                <input className="input text-sm" placeholder="Tu nombre"
+                  value={nombre} onChange={e => setNombre(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">WhatsApp</label>
+                <input className="input font-mono text-sm" placeholder="+52 55 1234 5678"
+                  value={telefono} onChange={e => setTelefono(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className="label">Nombre</label>
-              <input className="input" placeholder="Tu nombre" value={nombre} onChange={e => setNombre(e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Teléfono WhatsApp</label>
-              <input className="input font-mono" placeholder="+52 55 1234 5678" value={telefono} onChange={e => setTelefono(e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Umbral de gastos hormiga ($)</label>
-              <input type="number" className="input font-mono w-40" placeholder="100"
-                value={umbralHormiga} onChange={e => setUmbralHormiga(e.target.value)} />
-              <p className="text-xs text-gray-400 mt-1">Transacciones por debajo de este monto se contarán como "gastos hormiga"</p>
+            <div className="mb-4">
+              <label className="label">Umbral gastos hormiga 🐜</label>
+              <div className="flex items-center gap-2">
+                <input type="number" className="input font-mono text-sm w-28" placeholder="100"
+                  value={umbralHormiga} onChange={e => setUmbralHormiga(e.target.value)} />
+                <span className="text-sm font-medium" style={{ color: 'var(--fg-3)' }}>pesos</span>
+              </div>
+              <p className="text-xs mt-1" style={{ color: 'var(--fg-4)' }}>
+                Solo gastos de <strong style={{ color: 'var(--deseo-fg)' }}>Deseo</strong> por debajo de este monto se cuentan como hormiga
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <button className="btn-primary flex items-center gap-2 text-sm" onClick={guardarBasico} disabled={savingBasico}>
                 <Save className="w-4 h-4" /> {savingBasico ? 'Guardando...' : 'Guardar'}
               </button>
-              {msgBasico && <span className="text-sm" style={{ color: 'var(--positive-fg)' }}>{msgBasico}</span>}
+              {msgBasico && <span className="text-sm font-medium" style={{ color: 'var(--positive-fg)' }}>{msgBasico}</span>}
             </div>
           </div>
-        </div>
 
-        {/* Regla 50/30/20 */}
-        <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-1">Regla Personalizada</h2>
-          <p className="text-xs text-gray-400 mb-4">Los valores deben sumar 100%</p>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {[
-              { key: 'necesidad', label: '🔵 Necesidad', color: 'var(--necesidad-fg)' },
-              { key: 'deseo',     label: '🟡 Deseo',     color: 'var(--deseo-fg)' },
-              { key: 'ahorro',    label: '🟢 Ahorro',    color: 'var(--ahorro-fg)' },
-            ].map(({ key, label, color }) => (
-              <div key={key}>
-                <label className="label">{label}</label>
-                <div className="relative">
-                  <input type="number" step="0.01" min="0" max="1" className="input font-mono pr-8" style={{ color }}
-                    value={regla[key]}
-                    onChange={e => setRegla(r => ({ ...r, [key]: e.target.value }))} />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                    {(Number(regla[key]) * 100).toFixed(0)}%
+          {/* Regla 50/30/20 */}
+          <div className="card p-5">
+            <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Regla Personalizada</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
+            <div className="space-y-3 mb-4">
+              {[
+                { key: 'necesidad', label: 'Necesidad', emoji: '🔵', color: 'var(--necesidad-fg)' },
+                { key: 'deseo',     label: 'Deseo',     emoji: '🟡', color: 'var(--deseo-fg)'     },
+                { key: 'ahorro',    label: 'Ahorro',    emoji: '🟢', color: 'var(--ahorro-fg)'    },
+              ].map(({ key, label, emoji, color }) => (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="text-sm font-semibold w-24 flex-shrink-0" style={{ color }}>
+                    {emoji} {label}
                   </span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${Math.min(Number(regla[key]) * 100, 100)}%`, background: color }} />
+                  </div>
+                  <div className="relative flex-shrink-0">
+                    <input type="number" step="1" min="0" max="100"
+                      className="input font-mono text-sm w-20 pr-6 text-right"
+                      style={{ color }}
+                      value={Math.round(Number(regla[key]) * 100)}
+                      onChange={e => setRegla(r => ({ ...r, [key]: Number(e.target.value) / 100 }))}
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--fg-4)' }}>%</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          {errorRegla && <p className="text-sm mb-3" style={{ color: 'var(--negative-fg)' }}>{errorRegla}</p>}
-          <div className="flex items-center gap-3">
-            <button className="btn-primary flex items-center gap-2 text-sm" onClick={guardarRegla} disabled={savingRegla}>
+              ))}
+            </div>
+            <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-xl"
+              style={{ background: reglaOk ? 'var(--positive-bg)' : 'var(--negative-bg)' }}>
+              <span className="text-xs font-semibold" style={{ color: reglaOk ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
+                {reglaOk ? '✓ Total correcto' : '⚠ Debe sumar 100%'}
+              </span>
+              <span className="text-sm font-bold tabular" style={{ color: reglaOk ? 'var(--positive-fg)' : 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>
+                {(totalRegla * 100).toFixed(0)}%
+              </span>
+            </div>
+            {errorRegla && <p className="text-sm mb-3" style={{ color: 'var(--negative-fg)' }}>{errorRegla}</p>}
+            <button className="btn-primary flex items-center gap-2 text-sm w-full justify-center"
+              onClick={guardarRegla} disabled={savingRegla || !reglaOk}>
               <Save className="w-4 h-4" /> {savingRegla ? 'Guardando...' : 'Guardar Regla'}
             </button>
-            <span className="text-sm font-mono" style={{ color: Math.abs((Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)) - 1) < 0.01 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
-              Total: {((Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)) * 100).toFixed(0)}%
-            </span>
           </div>
+
         </div>
 
-        {/* Métodos de pago */}
-        <div className="card overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-gray-50">
-            <h2 className="font-bold text-gray-900">Métodos de Pago</h2>
-            <button onClick={() => setMostrarFormMetodo(v => !v)} className="btn-primary flex items-center gap-1.5 text-sm py-1.5 px-3">
-              <Plus className="w-4 h-4" /> Agregar
-            </button>
-          </div>
-          {mostrarFormMetodo && (
-            <div className="p-4 bg-primary-50 border-b border-primary-100 flex gap-3 items-end">
-              <div className="flex-1">
-                <label className="label">Nombre</label>
-                <input className="input text-sm" placeholder="Ej: HSBC, Banamex..."
-                  value={formMetodo.nombre} onChange={e => setFormMetodo(f => ({ ...f, nombre: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Tipo</label>
-                <select className="input text-sm" value={formMetodo.tipo} onChange={e => setFormMetodo(f => ({ ...f, tipo: e.target.value }))}>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="digital">Digital</option>
-                </select>
-              </div>
-              <button className="btn-primary text-sm py-2.5 px-4" onClick={agregarMetodo} disabled={savingMetodo}>
-                Guardar
+        {/* ── Fila 2: Métodos de pago + Categorías lado a lado ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+          {/* Métodos de pago */}
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+              <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Métodos de Pago</h2>
+              <button onClick={() => setMostrarFormMetodo(v => !v)}
+                className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+                <Plus className="w-3.5 h-3.5" /> Agregar
               </button>
-              <button className="btn-ghost text-sm" onClick={() => setMostrarFormMetodo(false)}>Cancelar</button>
             </div>
-          )}
-          <div className="divide-y divide-gray-50">
-            {(metodos ?? []).filter(m => m.activo).map(m => (
-              <div key={m.id} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="font-medium text-gray-800 text-sm">{m.nombre}</p>
-                  <p className="text-xs text-gray-400">{m.tipo}</p>
+            {mostrarFormMetodo && (
+              <div className="p-4 border-b" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <label className="label">Nombre</label>
+                    <input className="input text-sm" placeholder="Ej: HSBC..."
+                      value={formMetodo.nombre} onChange={e => setFormMetodo(f => ({ ...f, nombre: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Tipo</label>
+                    <select className="input text-sm" value={formMetodo.tipo}
+                      onChange={e => setFormMetodo(f => ({ ...f, tipo: e.target.value }))}>
+                      <option value="debito">Débito</option>
+                      <option value="credito">Crédito</option>
+                      <option value="efectivo">Efectivo</option>
+                      <option value="digital">Digital</option>
+                    </select>
+                  </div>
                 </div>
-                <button onClick={() => eliminarMetodo(m.id)}
-                  className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex gap-2">
+                  <button className="btn-primary text-xs py-2 px-4" onClick={agregarMetodo} disabled={savingMetodo}>Guardar</button>
+                  <button className="btn-ghost text-xs" onClick={() => setMostrarFormMetodo(false)}>Cancelar</button>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Categorías */}
-        <div className="card overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-gray-50">
-            <h2 className="font-bold text-gray-900">Categorías</h2>
-            <button onClick={() => setMostrarFormCat(v => !v)} className="btn-primary flex items-center gap-1.5 text-sm py-1.5 px-3">
-              <Plus className="w-4 h-4" /> Agregar
-            </button>
-          </div>
-          {mostrarFormCat && (
-            <div className="p-4 bg-primary-50 border-b border-primary-100 flex gap-3 items-end">
-              <div>
-                <label className="label">Ícono</label>
-                <input className="input text-sm w-16 text-center" value={formCat.icono}
-                  onChange={e => setFormCat(f => ({ ...f, icono: e.target.value }))} />
-              </div>
-              <div className="flex-1">
-                <label className="label">Nombre</label>
-                <input className="input text-sm" placeholder="Ej: Medicamentos..."
-                  value={formCat.nombre} onChange={e => setFormCat(f => ({ ...f, nombre: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Tipo</label>
-                <select className="input text-sm" value={formCat.clasificacion}
-                  onChange={e => setFormCat(f => ({ ...f, clasificacion: e.target.value }))}>
-                  <option value="necesidad">Necesidad</option>
-                  <option value="deseo">Deseo</option>
-                  <option value="ahorro">Ahorro</option>
-                </select>
-              </div>
-              <button className="btn-primary text-sm py-2.5 px-4" onClick={agregarCategoria}>Guardar</button>
-              <button className="btn-ghost text-sm" onClick={() => setMostrarFormCat(false)}>Cancelar</button>
+            )}
+            <div className="divide-y max-h-64 overflow-y-auto" style={{ borderColor: 'var(--divider)' }}>
+              {(metodos ?? []).filter(m => m.activo).length === 0
+                ? <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>Sin métodos de pago</p>
+                : (metodos ?? []).filter(m => m.activo).map(m => (
+                  <div key={m.id} className="flex items-center justify-between px-5 py-3">
+                    <div>
+                      <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
+                      <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>
+                    </div>
+                    <button onClick={() => eliminarMetodo(m.id)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                      style={{ color: 'var(--fg-4)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
             </div>
-          )}
-          <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
-            {(categorias ?? []).map(c => (
-              <div key={c.id} className={`flex items-center justify-between px-5 py-2.5 ${!c.activa ? 'opacity-40' : ''}`}>
-                <div className="flex items-center gap-2">
-                  <span>{c.icono}</span>
-                  <p className="font-medium text-gray-800 text-sm">{c.nombre}</p>
-                  <span className={`badge-${c.clasificacion} text-xs`}>{c.clasificacion}</span>
-                </div>
-                <button onClick={() => toggleCategoria(c.id, c.activa)}
-                  className="text-xs px-2 py-1 rounded-full font-semibold transition-all"
-                  style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
-                  {c.activa ? 'Desactivar' : 'Activar'}
-                </button>
-              </div>
-            ))}
           </div>
-        </div>
 
+          {/* Categorías */}
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+              <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Categorías</h2>
+              <button onClick={() => setMostrarFormCat(v => !v)}
+                className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+                <Plus className="w-3.5 h-3.5" /> Agregar
+              </button>
+            </div>
+            {mostrarFormCat && (
+              <div className="p-4 border-b" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div>
+                    <label className="label">Ícono</label>
+                    <input className="input text-sm text-center" value={formCat.icono}
+                      onChange={e => setFormCat(f => ({ ...f, icono: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Nombre</label>
+                    <input className="input text-sm" placeholder="Medicamentos..."
+                      value={formCat.nombre} onChange={e => setFormCat(f => ({ ...f, nombre: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Tipo</label>
+                    <select className="input text-sm" value={formCat.clasificacion}
+                      onChange={e => setFormCat(f => ({ ...f, clasificacion: e.target.value }))}>
+                      <option value="necesidad">Necesidad</option>
+                      <option value="deseo">Deseo</option>
+                      <option value="ahorro">Ahorro</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn-primary text-xs py-2 px-4" onClick={agregarCategoria}>Guardar</button>
+                  <button className="btn-ghost text-xs" onClick={() => setMostrarFormCat(false)}>Cancelar</button>
+                </div>
+              </div>
+            )}
+            <div className="divide-y max-h-64 overflow-y-auto" style={{ borderColor: 'var(--divider)' }}>
+              {(categorias ?? []).map(c => (
+                <div key={c.id} className="flex items-center justify-between px-5 py-2.5"
+                  style={{ opacity: c.activa ? 1 : 0.4 }}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="flex-shrink-0">{c.icono}</span>
+                    <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{c.nombre}</p>
+                    <span className={`badge badge-${c.clasificacion} flex-shrink-0`}>{c.clasificacion}</span>
+                  </div>
+                  <button onClick={() => toggleCategoria(c.id, c.activa)}
+                    className="text-xs px-2 py-1 rounded-full font-semibold transition-all flex-shrink-0 ml-2"
+                    style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                    {c.activa ? 'Desactivar' : 'Activar'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
       </div>
     </Layout>
   )

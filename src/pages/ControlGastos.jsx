@@ -89,7 +89,7 @@ export default function ControlGastos() {
     const matchBusqueda = !busqueda       || t.descripcion.toLowerCase().includes(busqueda.toLowerCase())
     const matchClasif   = !filtroClasif   || t.clasificacion === filtroClasif
     const matchCat      = !filtroCategoria || t.categoria_id === Number(filtroCategoria)
-    const matchHormiga  = !soloHormiga    || Number(t.monto) <= umbral
+    const matchHormiga  = !soloHormiga    || (Number(t.monto) <= umbral && t.clasificacion === 'deseo')
     return matchBusqueda && matchClasif && matchCat && matchHormiga
   }), [transacciones, busqueda, filtroClasif, filtroCategoria, soloHormiga, umbral])
 
