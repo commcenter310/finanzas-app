@@ -220,16 +220,19 @@ export default function Perfil() {
                     {/* Etiqueta + valor */}
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold" style={{ color }}>{emoji} {label}</span>
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="number" step="1" min="0" max="100"
-                          className="input font-mono text-sm w-16 pr-5 text-right py-1"
-                          style={{ color }}
-                          value={pct}
-                          onChange={e => setRegla(r => ({ ...r, [key]: Number(e.target.value) / 100 }))}
-                        />
-                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--fg-4)' }}>%</span>
-                      </div>
+                      <span
+                        className="text-sm font-bold tabular px-3 py-0.5 rounded-lg"
+                        style={{
+                          color,
+                          background: 'var(--surface-2)',
+                          fontVariantNumeric: 'tabular-nums',
+                          minWidth: '3.5rem',
+                          textAlign: 'right',
+                          display: 'inline-block',
+                        }}
+                      >
+                        {pct}%
+                      </span>
                     </div>
                     {/* Barra con jalador */}
                     <div className="relative h-5 flex items-center">
