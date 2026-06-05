@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { formatMXN } from '../utils/constantes'
-import { Save, Plus, Trash2 } from 'lucide-react'
+import { Save, Plus, Trash2, Pencil, Check, X } from 'lucide-react'
 
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
@@ -73,6 +73,8 @@ export default function Perfil() {
   const [formMetodo, setFormMetodo] = useState({ nombre: '', tipo: 'debito' })
   const [savingMetodo, setSavingMetodo] = useState(false)
   const [mostrarFormMetodo, setMostrarFormMetodo] = useState(false)
+  const [editandoMetodo, setEditandoMetodo] = useState(null)   // id del método en edición
+  const [formEditMetodo, setFormEditMetodo] = useState({})
 
   const agregarMetodo = async () => {
     if (!formMetodo.nombre) return
@@ -81,6 +83,18 @@ export default function Perfil() {
     setSavingMetodo(false)
     setFormMetodo({ nombre: '', tipo: 'debito' })
     setMostrarFormMetodo(false)
+    refetchMetodos()
+  }
+
+  const iniciarEditMetodo = (m) => {
+    setEditandoMetodo(m.id)
+    setFormEditMetodo({ nombre: m.nombre, tipo: m.tipo })
+  }
+
+  const guardarEditMetodo = async (id) => {
+    if (!formEditMetodo.nombre) return
+    await supabase.from('metodos_pago').update(formEditMetodo).eq('id', id)
+    setEditandoMetodo(null)
     refetchMetodos()
   }
 
@@ -102,12 +116,26 @@ export default function Perfil() {
 
   const [formCat, setFormCat] = useState({ nombre: '', clasificacion: 'deseo', icono: '📦' })
   const [mostrarFormCat, setMostrarFormCat] = useState(false)
+  const [editandoCat, setEditandoCat] = useState(null)   // id de la categoría en edición
+  const [formEditCat, setFormEditCat] = useState({})
 
   const agregarCategoria = async () => {
     if (!formCat.nombre) return
     await supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' })
     setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
     setMostrarFormCat(false)
+    refetchCats()
+  }
+
+  const iniciarEditCat = (c) => {
+    setEditandoCat(c.id)
+    setFormEditCat({ icono: c.icono, nombre: c.nombre, clasificacion: c.clasificacion })
+  }
+
+  const guardarEditCat = async (id) => {
+    if (!formEditCat.nombre) return
+    await supabase.from('categorias').update(formEditCat).eq('id', id)
+    setEditandoCat(null)
     refetchCats()
   }
 
@@ -249,19 +277,60 @@ export default function Perfil() {
               {(metodos ?? []).filter(m => m.activo).length === 0
                 ? <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>Sin métodos de pago</p>
                 : (metodos ?? []).filter(m => m.activo).map(m => (
-                  <div key={m.id} className="flex items-center justify-between px-5 py-3">
-                    <div>
-                      <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
-                      <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>
+                  editandoMetodo === m.id ? (
+                    /* ── Fila en modo edición ── */
+                    <div key={m.id} className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'var(--primary-50)' }}>
+                      <input
+                        className="input text-sm flex-1 py-1.5"
+                        value={formEditMetodo.nombre}
+                        onChange={e => setFormEditMetodo(f => ({ ...f, nombre: e.target.value }))}
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') guardarEditMetodo(m.id); if (e.key === 'Escape') setEditandoMetodo(null) }}
+                      />
+                      <select
+                        className="input text-sm py-1.5 w-28"
+                        value={formEditMetodo.tipo}
+                        onChange={e => setFormEditMetodo(f => ({ ...f, tipo: e.target.value }))}>
+                        <option value="debito">Débito</option>
+                        <option value="credito">Crédito</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="digital">Digital</option>
+                      </select>
+                      <button onClick={() => guardarEditMetodo(m.id)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+                        style={{ background: 'var(--ahorro)' }}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => setEditandoMetodo(null)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <button onClick={() => eliminarMetodo(m.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                      style={{ color: 'var(--fg-4)' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  ) : (
+                    /* ── Fila normal ── */
+                    <div key={m.id} className="flex items-center justify-between px-5 py-3 group">
+                      <div>
+                        <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
+                        <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => iniciarEditMetodo(m)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                          style={{ color: 'var(--fg-4)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => eliminarMetodo(m.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                          style={{ color: 'var(--fg-4)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ))}
             </div>
           </div>
@@ -306,19 +375,66 @@ export default function Perfil() {
             )}
             <div className="divide-y max-h-64 overflow-y-auto" style={{ borderColor: 'var(--divider)' }}>
               {(categorias ?? []).map(c => (
-                <div key={c.id} className="flex items-center justify-between px-5 py-2.5"
-                  style={{ opacity: c.activa ? 1 : 0.4 }}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="flex-shrink-0">{c.icono}</span>
-                    <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{c.nombre}</p>
-                    <span className={`badge badge-${c.clasificacion} flex-shrink-0`}>{c.clasificacion}</span>
+                editandoCat === c.id ? (
+                  /* ── Fila en modo edición ── */
+                  <div key={c.id} className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'var(--primary-50)' }}>
+                    <input
+                      className="input text-sm text-center py-1.5 w-12 flex-shrink-0"
+                      value={formEditCat.icono}
+                      onChange={e => setFormEditCat(f => ({ ...f, icono: e.target.value }))}
+                    />
+                    <input
+                      className="input text-sm py-1.5 flex-1"
+                      value={formEditCat.nombre}
+                      onChange={e => setFormEditCat(f => ({ ...f, nombre: e.target.value }))}
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') guardarEditCat(c.id); if (e.key === 'Escape') setEditandoCat(null) }}
+                    />
+                    <select
+                      className="input text-sm py-1.5 w-28 flex-shrink-0"
+                      value={formEditCat.clasificacion}
+                      onChange={e => setFormEditCat(f => ({ ...f, clasificacion: e.target.value }))}>
+                      <option value="necesidad">Necesidad</option>
+                      <option value="deseo">Deseo</option>
+                      <option value="ahorro">Ahorro</option>
+                    </select>
+                    <button onClick={() => guardarEditCat(c.id)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+                      style={{ background: 'var(--ahorro)' }}>
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setEditandoCat(null)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <button onClick={() => toggleCategoria(c.id, c.activa)}
-                    className="text-xs px-2 py-1 rounded-full font-semibold transition-all flex-shrink-0 ml-2"
-                    style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
-                    {c.activa ? 'Desactivar' : 'Activar'}
-                  </button>
-                </div>
+                ) : (
+                  /* ── Fila normal ── */
+                  <div key={c.id} className="flex items-center justify-between px-5 py-2.5 group"
+                    style={{ opacity: c.activa ? 1 : 0.4 }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="flex-shrink-0">{c.icono}</span>
+                      <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{c.nombre}</p>
+                      <span className={`badge badge-${c.clasificacion} flex-shrink-0`}>{c.clasificacion}</span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                      {/* Botón editar — visible en hover */}
+                      <button onClick={() => iniciarEditCat(c)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
+                        style={{ color: 'var(--fg-4)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      {/* Botón activar/desactivar — siempre visible */}
+                      <button onClick={() => toggleCategoria(c.id, c.activa)}
+                        className="text-xs px-2 py-1 rounded-full font-semibold transition-all"
+                        style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                        {c.activa ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
+                  </div>
+                )
               ))}
             </div>
           </div>
