@@ -272,6 +272,20 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_estado (
 ALTER TABLE public.whatsapp_estado ENABLE ROW LEVEL SECURITY;
 -- Solo service_role (el bot usa supabaseAdmin) puede leer/escribir esta tabla
 
+-- Historial de pagos a tarjetas de crédito (espejo de abonos_deuda para TDCs)
+CREATE TABLE IF NOT EXISTS public.pagos_credito (
+  id          SERIAL PRIMARY KEY,
+  credito_id  INTEGER REFERENCES public.creditos(id) ON DELETE CASCADE,
+  user_id     UUID    REFERENCES public.profiles(id) ON DELETE CASCADE,
+  monto       NUMERIC(12,2) NOT NULL CHECK (monto > 0),
+  fecha       DATE NOT NULL DEFAULT CURRENT_DATE,
+  notas       TEXT,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.pagos_credito ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own" ON public.pagos_credito
+  FOR ALL USING (auth.uid() = user_id);
+
 -- RPC atómica para ajustar saldo_utilizado sin race conditions
 CREATE OR REPLACE FUNCTION update_saldo_credito(p_credito_id INTEGER, p_delta NUMERIC)
 RETURNS VOID LANGUAGE SQL SECURITY DEFINER AS $$

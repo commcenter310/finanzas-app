@@ -21,7 +21,7 @@ export function useDeudas() {
   const { data: creditosConSaldo, refetch: refetchCreditos } = useSupabaseQuery(async () => {
     const { data } = await supabase
       .from('creditos')
-      .select('id, nombre, saldo_utilizado, limite_credito, fecha_pago')
+      .select('id, nombre, saldo_utilizado, limite_credito, fecha_pago, pagos_credito(*)')
       .eq('user_id', user.id)
       .eq('activo', true)
       .gt('saldo_utilizado', 0)
@@ -42,7 +42,10 @@ export function useDeudas() {
     notas:              null,
     liquidada:          false,
     tipo:               'credito',           // flag que usa la UI
-    abonos_deuda:       [],
+    // Reutilizamos el campo abonos_deuda para el historial de pagos de la TDC
+    abonos_deuda:       (c.pagos_credito ?? []).map(p => ({
+      id: p.id, monto: p.monto, fecha: p.fecha, notas: p.notas,
+    })),
   }))
 
   // Lista unificada: deudas manuales primero, luego tarjetas
@@ -70,12 +73,17 @@ export function useDeudas() {
     refetch()
   }
 
-  // Pagar saldo de tarjeta de crédito → actualiza creditos.saldo_utilizado
+  // Pagar saldo de tarjeta de crédito → actualiza saldo_utilizado Y guarda historial
   const abonarCredito = async (creditoId, monto) => {
     const credito = creditosConSaldo?.find(c => c.id === creditoId)
     if (!credito) return
     const nuevoSaldo = Math.max(0, Number(credito.saldo_utilizado) - Number(monto))
-    await supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId)
+    const hoy = new Date().toISOString().split('T')[0]
+    // Ejecutar en paralelo: reducir saldo + registrar pago en historial
+    await Promise.all([
+      supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId),
+      supabase.from('pagos_credito').insert({ credito_id: creditoId, user_id: user.id, monto: Number(monto), fecha: hoy }),
+    ])
     refetchCreditos()
   }
 

@@ -228,20 +228,18 @@ export default function Deudas() {
                             <button onClick={() => handleAbonar(d.id)} className="btn-secondary text-sm py-1.5 px-3">
                               {esTarjeta ? 'Pagar' : 'Abonar'}
                             </button>
-                            {/* El historial de pagos solo aplica a deudas manuales */}
-                            {!esTarjeta && (
-                              <button onClick={() => setExpandida(expandido ? null : d.id)}
-                                className="btn-ghost text-sm flex items-center gap-1 ml-auto">
-                                Historial {expandido ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                              </button>
-                            )}
+                            <button onClick={() => setExpandida(expandido ? null : d.id)}
+                              className="btn-ghost text-sm flex items-center gap-1 ml-auto">
+                              Historial {expandido ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
                         </div>
 
-                        {/* Historial solo para deudas manuales */}
-                        {!esTarjeta && expandido && d.abonos_deuda?.length > 0 && (
+                        {expandido && d.abonos_deuda?.length > 0 && (
                           <div className="border-t border-gray-50 bg-gray-50 px-4 py-3">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Historial de Abonos</p>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                              {esTarjeta ? 'Historial de Pagos' : 'Historial de Abonos'}
+                            </p>
                             <div className="space-y-1.5">
                               {[...d.abonos_deuda].sort((a,b) => b.fecha.localeCompare(a.fecha)).map(a => (
                                 <div key={a.id} className="flex justify-between text-sm">
@@ -252,9 +250,9 @@ export default function Deudas() {
                             </div>
                           </div>
                         )}
-                        {!esTarjeta && expandido && d.abonos_deuda?.length === 0 && (
+                        {expandido && d.abonos_deuda?.length === 0 && (
                           <div className="border-t border-gray-50 bg-gray-50 px-4 py-3 text-sm text-gray-300 text-center">
-                            Sin abonos registrados
+                            {esTarjeta ? 'Sin pagos registrados' : 'Sin abonos registrados'}
                           </div>
                         )}
                       </div>
