@@ -40,7 +40,7 @@ export function useDashboard() {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
-        id, descripcion, monto, clasificacion, fecha, created_at,
+        id, descripcion, monto, clasificacion, fecha, origen, created_at,
         categorias(nombre, icono),
         metodos_pago(nombre)
       `)
@@ -50,6 +50,16 @@ export function useDashboard() {
       .order('created_at', { ascending: false })
     if (error) throw error
     return data || []
+  }, [user?.id, mes, anio])
+
+  // Gastos fijos pendientes de pago este mes (para aviso en Dashboard)
+  const { data: fijosPendientes } = useSupabaseQuery(async () => {
+    const { data } = await supabase
+      .from('gastos_fijos')
+      .select('id, concepto, monto_previsto, dia_cobro, clasificacion')
+      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio).eq('pagado', false)
+      .order('dia_cobro', { ascending: true, nullsFirst: false })
+    return data ?? []
   }, [user?.id, mes, anio])
 
   // ── Queries del mes anterior (se cargan en paralelo, sin bloquear el skeleton principal) ──
@@ -94,14 +104,18 @@ export function useDashboard() {
 
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-  const totalTx       = transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+  // Excluir transacciones auto-generadas por gastos_fijos (ya contadas en totalFijos)
+  const txSinFijos    = transacciones?.filter(t => t.origen !== 'gastos_fijos') ?? []
+  const totalTx       = txSinFijos.reduce((s, t) => s + Number(t.monto), 0)
   const totalGastos   = totalFijos + totalTx
 
-  // Saldo arrastrado del mes anterior: cuánto sobró (o se pasó) el mes pasado
+  // Saldo arrastrado del mes anterior
   const saldoAnterior = (() => {
     const prevIng   = ingresosPrev?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
     const prevFijos = gastosFijosPrev?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-    const prevTx    = transaccionesPrev?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
+    // También excluir gastos_fijos del mes anterior para evitar doble conteo
+    const prevTxFilt = transaccionesPrev?.filter(t => t.origen !== 'gastos_fijos') ?? []
+    const prevTx    = prevTxFilt.reduce((s, t) => s + Number(t.monto), 0)
     if (!ingresosPrev && !gastosFijosPrev && !transaccionesPrev) return null
     return prevIng - prevFijos - prevTx
   })()
@@ -114,17 +128,17 @@ export function useDashboard() {
 
   const necesidad = [
     ...gastosFijos?.filter(g => g.clasificacion === 'necesidad') ?? [],
-    ...transacciones?.filter(t => t.clasificacion === 'necesidad') ?? []
+    ...txSinFijos.filter(t => t.clasificacion === 'necesidad'),
   ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
 
   const deseo = [
     ...gastosFijos?.filter(g => g.clasificacion === 'deseo') ?? [],
-    ...transacciones?.filter(t => t.clasificacion === 'deseo') ?? []
+    ...txSinFijos.filter(t => t.clasificacion === 'deseo'),
   ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
 
   const ahorro = [
     ...gastosFijos?.filter(g => g.clasificacion === 'ahorro') ?? [],
-    ...transacciones?.filter(t => t.clasificacion === 'ahorro') ?? []
+    ...txSinFijos.filter(t => t.clasificacion === 'ahorro'),
   ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
 
   const gastosPorCategoria = transacciones?.reduce((acc, t) => {
@@ -158,6 +172,7 @@ export function useDashboard() {
 
   return {
     loading: loadingIngresos || loadingFijos || loadingTx,
+    fijosPendientes: fijosPendientes ?? [],
     saldoAnterior,
     mesPrev,
     anioPrev,

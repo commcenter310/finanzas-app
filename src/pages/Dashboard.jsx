@@ -3,7 +3,7 @@ import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare, Landmark } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // Finni chart palette
@@ -72,7 +72,7 @@ export default function Dashboard() {
     loading, totalIngresos, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
     totalPresupuestado, categoriasEnRiesgo, gastosHormiga,
-    saldoAnterior, mesPrev, anioPrev,
+    saldoAnterior, mesPrev, anioPrev, fijosPendientes,
   } = useDashboard()
 
   const datosDona = Object.entries(gastosPorCategoria)
@@ -158,6 +158,57 @@ export default function Dashboard() {
               >
                 {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Facturas pendientes ── */}
+        {!loading && fijosPendientes.length > 0 && (
+          <div className="card p-4" style={{ borderLeft: '3px solid var(--warning)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4" style={{ color: 'var(--warning-fg)' }} />
+                <p className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>
+                  {fijosPendientes.length} factura{fijosPendientes.length !== 1 ? 's' : ''} pendiente{fijosPendientes.length !== 1 ? 's' : ''} de pago
+                </p>
+              </div>
+              <Link to="/gastos-fijos"
+                className="text-xs font-semibold flex items-center gap-1"
+                style={{ color: 'var(--primary-600)' }}>
+                Ver todas <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            <div className="space-y-1.5">
+              {fijosPendientes.slice(0, 4).map(g => {
+                const hoyDia = new Date().getDate()
+                const vencido = g.dia_cobro && g.dia_cobro < hoyDia
+                const proximo = g.dia_cobro && (g.dia_cobro - hoyDia) <= 3 && !vencido
+                return (
+                  <div key={g.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium" style={{ color: 'var(--fg-1)' }}>{g.concepto}</span>
+                      {g.dia_cobro && (
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded"
+                          style={{
+                            background: vencido ? 'var(--negative-bg)' : proximo ? 'var(--warning-bg)' : 'var(--surface-3)',
+                            color: vencido ? 'var(--negative-fg)' : proximo ? 'var(--warning-fg)' : 'var(--fg-3)',
+                            fontWeight: (vencido || proximo) ? 700 : 400,
+                          }}>
+                          Día {g.dia_cobro}{vencido ? ' · vencido' : proximo ? ' · próximo' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-mono font-semibold" style={{ color: 'var(--negative-fg)' }}>
+                      -{formatMXN(g.monto_previsto)}
+                    </span>
+                  </div>
+                )
+              })}
+              {fijosPendientes.length > 4 && (
+                <p className="text-xs" style={{ color: 'var(--fg-4)' }}>
+                  +{fijosPendientes.length - 4} más…
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -384,13 +435,18 @@ export default function Dashboard() {
                       onMouseLeave={e => { e.currentTarget.style.background = '' }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-lg flex-shrink-0">{t.categorias?.icono ?? '📦'}</span>
+                        <span className="text-lg flex-shrink-0">
+                          {t.origen === 'gastos_fijos' ? '🧾' : t.origen === 'deuda' ? '💳' : (t.categorias?.icono ?? '📦')}
+                        </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: 'var(--fg-1)' }}>
-                            {t.descripcion}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold truncate" style={{ color: 'var(--fg-1)' }}>
+                              {t.descripcion}
+                            </p>
+                            {t.origen === 'whatsapp' && <MessageSquare className="w-3 h-3 flex-shrink-0 text-gray-300" />}
+                          </div>
                           <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
-                            {t.categorias?.nombre} · {t.fecha}
+                            {t.origen === 'gastos_fijos' ? 'Gasto fijo' : t.origen === 'deuda' ? 'Pago deuda' : (t.categorias?.nombre ?? '—')} · {t.fecha}
                           </p>
                         </div>
                       </div>

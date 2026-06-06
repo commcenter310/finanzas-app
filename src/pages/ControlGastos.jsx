@@ -3,7 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Search, X, MessageSquare, Pencil } from 'lucide-react'
+import { Plus, Trash2, Search, X, MessageSquare, Pencil, Lock } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
@@ -265,13 +265,21 @@ export default function ControlGastos() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filtradas.map(t => (
+                    {filtradas.map(t => {
+                      const esAuto = t.origen === 'gastos_fijos' || t.origen === 'deuda'
+                      const origenLabel = t.origen === 'gastos_fijos' ? '🧾 Gasto fijo' : t.origen === 'deuda' ? '💳 Pago deuda' : null
+                      return (
                       <tr key={t.id} className="hover:bg-gray-50 group">
                         <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">{t.fecha}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-gray-800 text-sm">{t.descripcion}</p>
                             {t.origen === 'whatsapp' && <MessageSquare className="w-3 h-3 text-gray-300" title="Via WhatsApp" />}
+                            {origenLabel && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 whitespace-nowrap">
+                                {origenLabel}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
@@ -283,10 +291,15 @@ export default function ControlGastos() {
                         <td className="px-4 py-3 text-xs text-gray-400">{t.metodos_pago?.nombre ?? '—'}</td>
                         <td className="px-4 py-3 font-bold tabular whitespace-nowrap" style={{ color: 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>-{formatMXN(t.monto)}</td>
                         <td className="px-2 py-3">
-                          <button onClick={() => abrirEditar(t)}
-                            className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-300 transition-all">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          {esAuto
+                            ? <div className="w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100" title="Edita desde Gastos Fijos o Deudas">
+                                <Lock className="w-3 h-3 text-gray-300" />
+                              </div>
+                            : <button onClick={() => abrirEditar(t)}
+                                className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-300 transition-all">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                          }
                         </td>
                         <td className="px-2 py-3">
                           <button onClick={() => setConfirmDelete(t)}
@@ -295,7 +308,7 @@ export default function ControlGastos() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                   <tfoot className="border-t border-gray-100 bg-gray-50">
                     <tr>
