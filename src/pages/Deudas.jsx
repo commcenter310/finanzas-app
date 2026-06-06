@@ -10,8 +10,9 @@ import DatePicker   from '../components/ui/DatePicker'
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
 export default function Deudas() {
-  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, abonar, abonarCredito, eliminar } = useDeudas()
+  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, actualizar, abonar, abonarCredito, eliminar } = useDeudas()
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const [expandida, setExpandida] = useState(null)
@@ -19,16 +20,40 @@ export default function Deudas() {
   const [tab, setTab] = useState('deudas')
   const [confirmDelete, setConfirmDelete] = useState(null)
 
-  const handleAgregar = async () => {
-    if (!form.nombre || !form.saldo_actual) return
-    await agregar({
-      ...form,
-      saldo_original: form.saldo_original || form.saldo_actual,
-      saldo_actual:   Number(form.saldo_actual),
-      pago_mensual:   Number(form.pago_mensual)  || null,
-      tasa_interes:   Number(form.tasa_interes)  || null,
+  const abrirEditar = (d) => {
+    setEditandoId(d.id)
+    setForm({
+      nombre:             d.nombre,
+      saldo_actual:       d.saldo_actual,
+      saldo_original:     d.saldo_original ?? '',
+      pago_mensual:       d.pago_mensual   ?? '',
+      tasa_interes:       d.tasa_interes   ?? '',
+      fecha_proximo_pago: d.fecha_proximo_pago ?? '',
+      notas:              d.notas          ?? '',
     })
-    setForm(FORM_VACIO); setMostrarForm(false)
+    setMostrarForm(true)
+  }
+
+  const cerrarForm = () => {
+    setMostrarForm(false)
+    setEditandoId(null)
+    setForm(FORM_VACIO)
+  }
+
+  const handleGuardar = async () => {
+    if (!form.nombre || !form.saldo_actual) return
+    if (editandoId) {
+      await actualizar(editandoId, form)
+    } else {
+      await agregar({
+        ...form,
+        saldo_original: form.saldo_original || form.saldo_actual,
+        saldo_actual:   Number(form.saldo_actual),
+        pago_mensual:   Number(form.pago_mensual)  || null,
+        tasa_interes:   Number(form.tasa_interes)  || null,
+      })
+    }
+    cerrarForm()
   }
 
   const handleAbonar = async (deudaId) => {
@@ -80,7 +105,7 @@ export default function Deudas() {
             ))}
           </div>
           {tab === 'deudas' && (
-            <button onClick={() => setMostrarForm(v => !v)} className="btn-primary flex items-center gap-2 text-sm">
+            <button onClick={() => { cerrarForm(); setMostrarForm(v => !v) }} className="btn-primary flex items-center gap-2 text-sm">
               <Plus className="w-4 h-4" /> Agregar Deuda
             </button>
           )}
@@ -90,6 +115,7 @@ export default function Deudas() {
           <>
             {mostrarForm && (
               <div className="card p-5 border-2" style={{ borderColor: 'var(--negative-bg)' }}>
+                <h3 className="font-bold text-gray-900 mb-3">{editandoId ? 'Editar Deuda' : 'Nueva Deuda'}</h3>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                   <div className="col-span-2">
                     <label className="label">Nombre</label>
@@ -130,10 +156,10 @@ export default function Deudas() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn-primary px-6" onClick={handleAgregar} disabled={saving}>
-                    {saving ? 'Guardando...' : 'Guardar'}
+                  <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>
+                    {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
                   </button>
-                  <button className="btn-ghost" onClick={() => setMostrarForm(false)}>Cancelar</button>
+                  <button className="btn-ghost" onClick={cerrarForm}>Cancelar</button>
                 </div>
               </div>
             )}
@@ -190,10 +216,16 @@ export default function Deudas() {
                                   <ExternalLink className="w-3.5 h-3.5" />
                                 </Link>
                               ) : (
-                                <button onClick={() => setConfirmDelete(d.id)}
-                                  className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex gap-1">
+                                  <button onClick={() => abrirEditar(d)}
+                                    className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-300">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => setConfirmDelete(d.id)}
+                                    className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>

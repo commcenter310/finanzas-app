@@ -101,6 +101,22 @@ export function useDeudas() {
     refetchCreditos()
   }
 
+  const actualizar = async (id, datos) => {
+    setSaving(true)
+    const { error } = await supabase.from('deudas').update({
+      nombre:             datos.nombre,
+      saldo_actual:       Number(datos.saldo_actual),
+      saldo_original:     Number(datos.saldo_original) || null,
+      pago_mensual:       Number(datos.pago_mensual)   || null,
+      tasa_interes:       Number(datos.tasa_interes)   || null,
+      fecha_proximo_pago: datos.fecha_proximo_pago     || null,
+      notas:              datos.notas                  || null,
+    }).eq('id', id)
+    setSaving(false)
+    if (!error) refetch()
+    return { error }
+  }
+
   const eliminar = async (id) => {
     await supabase.from('deudas').delete().eq('id', id)
     refetch()
@@ -121,6 +137,7 @@ export function useDeudas() {
     snowball,
     avalanche,
     agregar,
+    actualizar,
     abonar,
     abonarCredito,
     eliminar,
