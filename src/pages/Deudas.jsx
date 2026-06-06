@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
-import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 
