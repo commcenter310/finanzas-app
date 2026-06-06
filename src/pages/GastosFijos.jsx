@@ -26,7 +26,7 @@ export default function GastosFijos() {
     }
   }, [autoCopiadosCount, toast])
   const [mostrarForm, setMostrarForm] = useState(false)
-  const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
+  const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false, dia_cobro: '' })
   const [copiando, setCopiando] = useState(false)
   const [msgCopia, setMsgCopia] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -35,8 +35,8 @@ export default function GastosFijos() {
 
   const handleAgregar = async () => {
     if (!form.concepto || !form.monto_previsto) return
-    await agregar(form)
-    setForm({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false })
+    await agregar({ ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null })
+    setForm({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false, dia_cobro: '' })
     setMostrarForm(false)
     toast('Factura guardada ✓', 'success')
   }
@@ -107,7 +107,7 @@ export default function GastosFijos() {
           {/* Formulario */}
           {mostrarForm && (
             <div className="p-4 bg-primary-50 border-b border-primary-100">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                 <div className="col-span-2">
                   <label className="label">Concepto</label>
                   <input className="input text-sm" placeholder="Ej: Gimnasio, Spotify..."
@@ -122,6 +122,12 @@ export default function GastosFijos() {
                   <label className="label">Actual ($)</label>
                   <input type="number" className="input text-sm font-mono"
                     value={form.monto_actual} onChange={e => setF('monto_actual', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Día de cobro</label>
+                  <input type="number" min="1" max="31" className="input text-sm font-mono"
+                    placeholder="Ej: 15"
+                    value={form.dia_cobro} onChange={e => setF('dia_cobro', e.target.value)} />
                 </div>
                 <div>
                   <label className="label">Tipo</label>
@@ -161,7 +167,8 @@ export default function GastosFijos() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Previsto</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Actual</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Fecha</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Día cobro</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Pagado</th>
                 <th className="px-4 py-3 w-12"></th>
               </tr>
             </thead>
@@ -175,7 +182,7 @@ export default function GastosFijos() {
                   : gastos.map(g => (
                     <tr key={g.id} className={`hover:bg-gray-50 group ${g.pagado ? 'opacity-70' : ''}`}>
                       <td className="px-4 py-3">
-                        <button onClick={() => togglePagado(g.id, g.pagado, g.monto_previsto)}>
+                        <button onClick={() => togglePagado(g)}>
                           {g.pagado
                             ? <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--ahorro)' }} />
                             : <Circle className="w-5 h-5 text-gray-300 hover:text-primary-400" />}
@@ -194,7 +201,10 @@ export default function GastosFijos() {
                           : <span className="text-gray-700">{formatMXN(g.monto_actual)}</span>}
                       </td>
                       <td className="px-4 py-3"><span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span></td>
-                      <td className="px-4 py-3 text-gray-400 text-sm">{g.fecha_pago ?? '—'}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-gray-500">
+                        {g.dia_cobro ? `Día ${g.dia_cobro}` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">{g.fecha_pago ?? '—'}</td>
                       <td className="px-4 py-3">
                         <button onClick={() => setConfirmDelete(g.id)}
                           className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all text-gray-300">
@@ -210,7 +220,7 @@ export default function GastosFijos() {
                   <td colSpan={2} className="px-4 py-3 font-bold text-gray-700 text-sm">TOTAL</td>
                   <td className="px-4 py-3 font-mono font-bold text-gray-500">{formatMXN(totales.previsto)}</td>
                   <td className="px-4 py-3 font-mono font-bold text-primary-700">{formatMXN(totales.actual)}</td>
-                  <td colSpan={3} />
+                  <td colSpan={4} />
                 </tr>
               </tfoot>
             )}

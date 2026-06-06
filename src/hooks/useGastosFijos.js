@@ -17,6 +17,7 @@ export function useGastosFijos() {
       .from('gastos_fijos')
       .select('*, categorias(nombre, icono)')
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+      .order('dia_cobro', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true })
     if (error) throw error
     return data ?? []
@@ -44,12 +45,36 @@ export function useGastosFijos() {
     return { error }
   }
 
-  const togglePagado = async (id, pagado, monto_previsto) => {
-    await supabase.from('gastos_fijos').update({
-      pagado: !pagado,
-      monto_actual: !pagado ? monto_previsto : 0,
-      fecha_pago: !pagado ? new Date().toISOString().split('T')[0] : null,
-    }).eq('id', id)
+  const togglePagado = async (gasto) => {
+    const hoy = new Date().toISOString().split('T')[0]
+    if (!gasto.pagado) {
+      // Marcar como pagado → crear transacción en Control de Gastos
+      const { data: tx } = await supabase.from('transacciones').insert({
+        user_id: user.id,
+        descripcion: gasto.concepto,
+        monto: Number(gasto.monto_previsto),
+        clasificacion: gasto.clasificacion,
+        fecha: hoy,
+        origen: 'gastos_fijos',
+      }).select('id').single()
+      await supabase.from('gastos_fijos').update({
+        pagado: true,
+        monto_actual: gasto.monto_previsto,
+        fecha_pago: hoy,
+        transaccion_id: tx?.id ?? null,
+      }).eq('id', gasto.id)
+    } else {
+      // Desmarcar → borrar la transacción vinculada
+      if (gasto.transaccion_id) {
+        await supabase.from('transacciones').delete().eq('id', gasto.transaccion_id)
+      }
+      await supabase.from('gastos_fijos').update({
+        pagado: false,
+        monto_actual: 0,
+        fecha_pago: null,
+        transaccion_id: null,
+      }).eq('id', gasto.id)
+    }
     refetch()
   }
 
@@ -64,7 +89,7 @@ export function useGastosFijos() {
 
     const { data: recurrentes } = await supabase
       .from('gastos_fijos')
-      .select('concepto, categoria_id, monto_previsto, clasificacion, es_recurrente')
+      .select('concepto, categoria_id, monto_previsto, clasificacion, es_recurrente, dia_cobro')
       .eq('user_id', user.id).eq('mes', mesAnterior).eq('anio', anioAnterior).eq('es_recurrente', true)
 
     if (!recurrentes?.length) return { copiados: 0 }

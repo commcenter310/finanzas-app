@@ -58,6 +58,7 @@ export default function ControlGastos() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroClasif, setFiltroClasif] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [filtroOrigen, setFiltroOrigen] = useState('')
   const [soloHormiga, setSoloHormiga] = useState(false)
 
   const onCategoriaChange = (catId) => {
@@ -86,14 +87,15 @@ export default function ControlGastos() {
   }
 
   const filtradas = useMemo(() => transacciones.filter(t => {
-    const matchBusqueda = !busqueda       || t.descripcion.toLowerCase().includes(busqueda.toLowerCase())
-    const matchClasif   = !filtroClasif   || t.clasificacion === filtroClasif
+    const matchBusqueda = !busqueda        || t.descripcion.toLowerCase().includes(busqueda.toLowerCase())
+    const matchClasif   = !filtroClasif    || t.clasificacion === filtroClasif
     const matchCat      = !filtroCategoria || t.categoria_id === Number(filtroCategoria)
-    const matchHormiga  = !soloHormiga    || (Number(t.monto) <= umbral && t.clasificacion === 'deseo')
-    return matchBusqueda && matchClasif && matchCat && matchHormiga
-  }), [transacciones, busqueda, filtroClasif, filtroCategoria, soloHormiga, umbral])
+    const matchOrigen   = !filtroOrigen    || (t.origen ?? 'web') === filtroOrigen
+    const matchHormiga  = !soloHormiga     || (Number(t.monto) <= umbral && t.clasificacion === 'deseo')
+    return matchBusqueda && matchClasif && matchCat && matchOrigen && matchHormiga
+  }), [transacciones, busqueda, filtroClasif, filtroCategoria, filtroOrigen, soloHormiga, umbral])
 
-  const hayFiltros = busqueda || filtroClasif || filtroCategoria || soloHormiga
+  const hayFiltros = busqueda || filtroClasif || filtroCategoria || filtroOrigen || soloHormiga
 
   return (
     <Layout titulo="Control de Gastos">
@@ -135,6 +137,18 @@ export default function ControlGastos() {
             options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
             placeholder="Todas las categorías"
           />
+          <FilterSelect
+            className="w-full sm:w-44"
+            value={filtroOrigen}
+            onChange={setFiltroOrigen}
+            options={[
+              { value: 'web',          label: 'Manual'        },
+              { value: 'gastos_fijos', label: 'Gastos fijos'  },
+              { value: 'deuda',        label: 'Pagos deuda'   },
+              { value: 'whatsapp',     label: 'WhatsApp'      },
+            ]}
+            placeholder="Todos los orígenes"
+          />
           <button
             onClick={() => setSoloHormiga(v => !v)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--r-md)] text-sm font-medium border transition-all"
@@ -144,7 +158,7 @@ export default function ControlGastos() {
             🐜 Solo hormiga
           </button>
           {hayFiltros && (
-            <button onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria(''); setSoloHormiga(false) }}
+            <button onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria(''); setFiltroOrigen(''); setSoloHormiga(false) }}
               className="btn-ghost flex items-center gap-1 text-sm">
               <X className="w-4 h-4" /> Limpiar
             </button>

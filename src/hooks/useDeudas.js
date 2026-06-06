@@ -74,7 +74,7 @@ export function useDeudas() {
         monto: Number(monto),
         clasificacion: 'necesidad',
         fecha: hoy,
-        origen: 'web',
+        origen: 'deuda',
       }),
     ])
     refetch()
@@ -95,7 +95,7 @@ export function useDeudas() {
         monto: Number(monto),
         clasificacion: 'necesidad',
         fecha: hoy,
-        origen: 'web',
+        origen: 'deuda',
       }),
     ])
     refetchCreditos()
