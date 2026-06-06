@@ -61,15 +61,22 @@ export function useDeudas() {
   }
 
   const abonar = async (deuda_id, monto, notas = '') => {
-    await supabase.from('abonos_deuda').insert({
-      deuda_id, monto: Number(monto),
-      fecha: new Date().toISOString().split('T')[0], notas,
-    })
+    const hoy = new Date().toISOString().split('T')[0]
     const deuda = deudas?.find(d => d.id === deuda_id)
-    if (deuda) {
-      const nuevo = Math.max(0, Number(deuda.saldo_actual) - Number(monto))
-      await supabase.from('deudas').update({ saldo_actual: nuevo, liquidada: nuevo === 0 }).eq('id', deuda_id)
-    }
+    const nuevo = deuda ? Math.max(0, Number(deuda.saldo_actual) - Number(monto)) : null
+
+    await Promise.all([
+      supabase.from('abonos_deuda').insert({ deuda_id, monto: Number(monto), fecha: hoy, notas }),
+      deuda && supabase.from('deudas').update({ saldo_actual: nuevo, liquidada: nuevo === 0 }).eq('id', deuda_id),
+      supabase.from('transacciones').insert({
+        user_id: user.id,
+        descripcion: `Pago deuda: ${deuda?.nombre ?? 'Deuda'}`,
+        monto: Number(monto),
+        clasificacion: 'necesidad',
+        fecha: hoy,
+        origen: 'deuda',
+      }),
+    ])
     refetch()
   }
 
@@ -79,10 +86,17 @@ export function useDeudas() {
     if (!credito) return
     const nuevoSaldo = Math.max(0, Number(credito.saldo_utilizado) - Number(monto))
     const hoy = new Date().toISOString().split('T')[0]
-    // Ejecutar en paralelo: reducir saldo + registrar pago en historial
     await Promise.all([
       supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId),
       supabase.from('pagos_credito').insert({ credito_id: creditoId, user_id: user.id, monto: Number(monto), fecha: hoy }),
+      supabase.from('transacciones').insert({
+        user_id: user.id,
+        descripcion: `Pago tarjeta: ${credito.nombre}`,
+        monto: Number(monto),
+        clasificacion: 'necesidad',
+        fecha: hoy,
+        origen: 'deuda',
+      }),
     ])
     refetchCreditos()
   }

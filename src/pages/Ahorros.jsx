@@ -55,7 +55,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
   }
 
   return (
-    <div className="card p-4" style={completado ? { borderWidth: 2, borderColor: 'var(--ahorro-bg)' } : {}}>
+    <div className="card p-4 self-start" style={completado ? { borderWidth: 2, borderColor: 'var(--ahorro-bg)' } : {}}>
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-bold text-gray-900 text-sm">{ahorro.concepto}</p>
@@ -208,7 +208,7 @@ export default function Ahorros() {
           ? <div className="grid grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-36 animate-pulse bg-gray-50" />)}</div>
           : ahorros.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">Sin metas de ahorro este mes. ¡Crea la primera!</div>
-            : <div className="grid grid-cols-3 gap-4">
+            : <div className="grid grid-cols-3 gap-4 items-start">
                 {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} />)}
               </div>}
 
