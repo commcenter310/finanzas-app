@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
 import { formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import { useToast } from '../components/ui/Toast'
@@ -16,7 +16,7 @@ const CLASIF_OPTS = [
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '' }
 
 export default function GastosFijos() {
-  const { gastos, loading, saving, totales, agregar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount } = useGastosFijos()
+  const { gastos, loading, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
   const hoyDia = new Date().getDate()
@@ -29,16 +29,41 @@ export default function GastosFijos() {
   }, [autoCopiadosCount, toast])
 
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const setF = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
-  const handleAgregar = async () => {
-    if (!form.concepto || !form.monto_previsto) return
-    await agregar({ ...form, monto_actual: 0, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null })
-    setForm(FORM_VACIO)
+  const abrirEditar = (g) => {
+    setEditandoId(g.id)
+    setForm({
+      concepto:      g.concepto,
+      monto_previsto: g.monto_previsto,
+      clasificacion: g.clasificacion,
+      es_recurrente: g.es_recurrente,
+      dia_cobro:     g.dia_cobro ?? '',
+    })
+    setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cerrarForm = () => {
     setMostrarForm(false)
-    toast('Gasto fijo guardado ✓', 'success')
+    setEditandoId(null)
+    setForm(FORM_VACIO)
+  }
+
+  const handleGuardar = async () => {
+    if (!form.concepto || !form.monto_previsto) return
+    const datos = { ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null }
+    if (editandoId) {
+      await actualizar(editandoId, datos)
+      toast('Gasto fijo actualizado ✓', 'success')
+    } else {
+      await agregar({ ...datos, monto_actual: 0 })
+      toast('Gasto fijo guardado ✓', 'success')
+    }
+    cerrarForm()
   }
 
   const pagados = gastos.filter(g => g.pagado).length
@@ -97,7 +122,7 @@ export default function GastosFijos() {
 
         {/* Acciones */}
         <div className="flex justify-end gap-2">
-          <button onClick={() => setMostrarForm(v => !v)}
+          <button onClick={() => { cerrarForm(); setMostrarForm(v => !v) }}
             className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> Agregar gasto fijo
           </button>
@@ -106,7 +131,7 @@ export default function GastosFijos() {
         {/* Formulario */}
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-100">
-            <h3 className="font-bold text-gray-900 mb-4">Nuevo gasto fijo</h3>
+            <h3 className="font-bold text-gray-900 mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               <div className="col-span-2 lg:col-span-1">
                 <label className="label">Concepto</label>
@@ -143,10 +168,10 @@ export default function GastosFijos() {
                 Se repite cada mes
               </label>
               <div className="flex gap-2">
-                <button className="btn-primary px-6" onClick={handleAgregar} disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar'}
+                <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>
+                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
                 </button>
-                <button className="btn-ghost" onClick={() => { setMostrarForm(false); setForm(FORM_VACIO) }}>
+                <button className="btn-ghost" onClick={cerrarForm}>
                   Cancelar
                 </button>
               </div>
@@ -206,10 +231,16 @@ export default function GastosFijos() {
                         )}
                       </div>
                     </div>
-                    <button onClick={() => setConfirmDelete(g.id)}
-                      className="w-7 h-7 ml-2 flex-shrink-0 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-200 transition-all">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-1 ml-2 flex-shrink-0">
+                      <button onClick={() => abrirEditar(g)}
+                        className="w-7 h-7 rounded-lg hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-300 transition-all">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => setConfirmDelete(g.id)}
+                        className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Monto */}
