@@ -44,6 +44,16 @@ Every data hook uses `useSupabaseQuery(queryFn, deps)` — a thin wrapper that r
 
 All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule display in Dashboard. Color tokens are `--necesidad`, `--deseo`, `--ahorro` in CSS.
 
+`gastosHormiga` in `useDashboard` only counts transactions classified as `deseo` below the `umbral_hormiga` threshold — a cheap medicine (necesidad) is not an "ant expense", a coffee (deseo) is.
+
+### Créditos ↔ Deudas integration
+
+`useDeudas` returns a **unified list** of manual debts (`deudas` table) + credit cards from `creditos` that have `saldo_utilizado > 0`. Credit cards are mapped to the same "debt shape" with a synthetic ID `credito_${id}` and a `tipo: 'credito'` flag the UI uses to branch.
+
+- `abonarCredito(creditoId, monto)` reduces `creditos.saldo_utilizado` AND inserts a row into `pagos_credito` (in parallel via `Promise.all`).
+- The credit card payment history reuses the `abonos_deuda` field name, mapped from `pagos_credito`, so the UI renders both with one code path.
+- `pagos_credito` is the credit-card mirror of `abonos_deuda` (manual debts).
+
 ### Design tokens
 
 `src/finni-tokens.css` defines all CSS custom properties (colors, surfaces, shadows). Tailwind is configured to use these tokens. Use `var(--token-name)` in inline styles; use Tailwind utility classes for spacing/layout.
@@ -60,12 +70,13 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 | File | Purpose |
 |---|---|
-| `src/hooks/useDashboard.js` | Central calculations: porAsignar, saldoAnterior, 50/30/20, categorías en riesgo, gastos hormiga |
+| `src/hooks/useDashboard.js` | Central calculations: porAsignar, saldoAnterior, 50/30/20, categorías en riesgo, gastos hormiga (deseo only) |
 | `src/hooks/useIngresos.js` | Income CRUD; filters by `fecha_recepcion` range |
 | `src/hooks/useGastosFijos.js` | Fixed expenses; auto-copies `es_recurrente=true` rows when navigating to an empty month |
+| `src/hooks/useDeudas.js` | Unifies manual debts + credit cards with balance into one list; `abonarCredito` writes to `pagos_credito` |
 | `src/utils/constantes.js` | `formatMXN`, `MESES`, `CLASIFICACIONES`, default categories/payment methods |
-| `supabase-schema.sql` | Full DB schema — reference before adding tables or columns |
+| `supabase-schema.sql` | Full DB schema — reference before adding tables or columns. Note `pagos_credito` (credit-card payment history) and `abonos_deuda` (manual debt payments) |
 
 ### Making code changes
 
-When editing files >100 KB (e.g. `HuskyMascot.jsx` which contains a base64 sprite), avoid the Read/Edit tools — use a small Node.js `.mjs` script to do string replacements, then delete the script. The `$` character in `String.prototype.replace()` replacement strings is special; pass a function `() => newStr` instead of the string directly to avoid accidental substitution.
+When editing very large files (>100 KB, e.g. anything embedding base64 data), avoid the Read/Edit tools — use a small Node.js `.mjs` script to do string replacements, then delete the script. The `$` character in `String.prototype.replace()` replacement strings is special; pass a function `() => newStr` instead of the string directly to avoid accidental substitution.
