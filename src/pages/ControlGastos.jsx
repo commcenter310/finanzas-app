@@ -142,10 +142,11 @@ export default function ControlGastos() {
             value={filtroOrigen}
             onChange={setFiltroOrigen}
             options={[
-              { value: 'web',          label: 'Manual'        },
-              { value: 'gastos_fijos', label: 'Gastos fijos'  },
-              { value: 'deuda',        label: 'Pagos deuda'   },
-              { value: 'whatsapp',     label: 'WhatsApp'      },
+              { value: 'web',          label: 'Manual'            },
+              { value: 'gastos_fijos', label: 'Gastos fijos'      },
+              { value: 'deuda',        label: 'Pagos deuda'       },
+              { value: 'ahorro',       label: 'Depósitos ahorro'  },
+              { value: 'whatsapp',     label: 'WhatsApp'          },
             ]}
             placeholder="Todos los orígenes"
           />
@@ -266,8 +267,8 @@ export default function ControlGastos() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filtradas.map(t => {
-                      const esAuto = t.origen === 'gastos_fijos' || t.origen === 'deuda'
-                      const origenLabel = t.origen === 'gastos_fijos' ? '🧾 Gasto fijo' : t.origen === 'deuda' ? '💳 Pago deuda' : null
+                      const esAuto = t.origen === 'gastos_fijos' || t.origen === 'deuda' || t.origen === 'ahorro'
+                      const origenLabel = t.origen === 'gastos_fijos' ? '🧾 Gasto fijo' : t.origen === 'deuda' ? '💳 Pago deuda' : t.origen === 'ahorro' ? '🐷 Ahorro' : null
                       return (
                       <tr key={t.id} className="hover:bg-gray-50 group">
                         <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">{t.fecha}</td>

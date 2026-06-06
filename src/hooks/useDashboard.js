@@ -106,6 +106,7 @@ export function useDashboard() {
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
   // Excluir transacciones auto-generadas por gastos_fijos (ya contadas en totalFijos)
   const txSinFijos    = transacciones?.filter(t => t.origen !== 'gastos_fijos') ?? []
+  // Nota: 'deuda' y 'ahorro' SÍ se incluyen en totalTx (no tienen fuente duplicada en el dashboard)
   const totalTx       = txSinFijos.reduce((s, t) => s + Number(t.monto), 0)
   const totalGastos   = totalFijos + totalTx
 

@@ -60,6 +60,7 @@ export function useAhorros() {
         monto:          montoNum,
         clasificacion:  'ahorro',
         fecha,
+        origen:         'ahorro',
         metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
       }),
       supabase.from('ahorros').update({
