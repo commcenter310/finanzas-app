@@ -3,11 +3,12 @@ import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X
+  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: '/',                 icon: LayoutDashboard, label: 'Dashboard'         },
+  { to: '/plan-quincena',    icon: CalendarRange,   label: 'Plan de Quincena'  },
   { to: '/ingresos',         icon: TrendingUp,      label: 'Ingresos'          },
   { to: '/gastos-fijos',     icon: Receipt,         label: 'Gastos Fijos'      },
   { to: '/gastos-variables', icon: BarChart3,        label: 'Presupuesto'       },

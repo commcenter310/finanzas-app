@@ -11,6 +11,7 @@ import ControlGastos   from './pages/ControlGastos'
 import Creditos        from './pages/Creditos'
 import Deudas          from './pages/Deudas'
 import Ahorros         from './pages/Ahorros'
+import PlanQuincena    from './pages/PlanQuincena'
 import Tendencias      from './pages/Tendencias'
 import Perfil          from './pages/Perfil'
 import WhatsappLog     from './pages/WhatsappLog'
@@ -32,6 +33,7 @@ function ProtectedRoutes() {
     <MesProvider>
       <Routes>
         <Route path="/"                 element={<Dashboard />} />
+        <Route path="/plan-quincena"    element={<PlanQuincena />} />
         <Route path="/ingresos"         element={<Ingresos />} />
         <Route path="/gastos-fijos"     element={<GastosFijos />}     />
         <Route path="/gastos-variables" element={<GastosVariables />} />

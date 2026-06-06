@@ -48,3 +48,22 @@ export const getMesAnioActual = () => {
   const d = new Date()
   return { mes: d.getMonth() + 1, anio: d.getFullYear() }
 }
+
+// ── Quincenas ──────────────────────────────────────────────────────────────
+// Q1 = días 1–15 · Q2 = días 16–último día del mes
+export const rangoQuincena = (mes, anio, q) => {
+  const ultimoDia = new Date(anio, mes, 0).getDate()
+  const diaInicio = q === 1 ? 1 : 16
+  const diaFin    = q === 1 ? 15 : ultimoDia
+  const mm = String(mes).padStart(2, '0')
+  return {
+    diaInicio,
+    diaFin,
+    fechaInicio: `${anio}-${mm}-${String(diaInicio).padStart(2, '0')}`,
+    fechaFin:    `${anio}-${mm}-${String(diaFin).padStart(2, '0')}`,
+  }
+}
+
+// Devuelve 1 o 2 según el día del mes de la fecha dada (hoy por defecto)
+export const quincenaActual = (fecha = new Date()) =>
+  fecha.getDate() <= 15 ? 1 : 2
