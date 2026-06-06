@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
 import { formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Repeat, CheckCircle2, Circle, Copy } from 'lucide-react'
+import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import { useToast } from '../components/ui/Toast'
@@ -13,225 +13,243 @@ const CLASIF_OPTS = [
   { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
 ]
 
+const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '' }
+
 export default function GastosFijos() {
   const { gastos, loading, saving, totales, agregar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
+  const hoyDia = new Date().getDate()
 
-  // Mostrar toast cuando se auto-copian recurrentes
   useEffect(() => {
     if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
       prevAutoCopRef.current = autoCopiadosCount
-      toast(`✅ ${autoCopiadosCount} gastos recurrentes copiados automáticamente`, 'success')
+      toast(`✅ ${autoCopiadosCount} gastos recurrentes cargados para este mes`, 'success')
     }
   }, [autoCopiadosCount, toast])
-  const [mostrarForm, setMostrarForm] = useState(false)
-  const [form, setForm] = useState({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false, dia_cobro: '' })
-  const [copiando, setCopiando] = useState(false)
-  const [msgCopia, setMsgCopia] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState(null)
 
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [form, setForm] = useState(FORM_VACIO)
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const setF = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
   const handleAgregar = async () => {
     if (!form.concepto || !form.monto_previsto) return
-    await agregar({ ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null })
-    setForm({ concepto:'', monto_previsto:'', monto_actual:'', clasificacion:'necesidad', es_recurrente: false, dia_cobro: '' })
+    await agregar({ ...form, monto_actual: 0, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null })
+    setForm(FORM_VACIO)
     setMostrarForm(false)
-    toast('Factura guardada ✓', 'success')
-  }
-
-  const handleCopiar = async () => {
-    setCopiando(true)
-    const { copiados } = await copiarRecurrentes()
-    setMsgCopia(copiados > 0 ? `✅ ${copiados} gastos recurrentes copiados` : 'ℹ️ No hay recurrentes en el mes anterior')
-    setCopiando(false)
-    setTimeout(() => setMsgCopia(''), 3000)
+    toast('Gasto fijo guardado ✓', 'success')
   }
 
   const pagados = gastos.filter(g => g.pagado).length
   const total   = gastos.length
+  const pctPagado = total > 0 ? (pagados / total) * 100 : 0
+
+  // Clasifica urgencia de cada gasto
+  const urgencia = (g) => {
+    if (g.pagado || !g.dia_cobro) return 'normal'
+    if (g.dia_cobro < hoyDia) return 'vencido'
+    if (g.dia_cobro - hoyDia <= 3) return 'proximo'
+    return 'normal'
+  }
 
   return (
     <Layout titulo="Gastos Fijos">
-      <div className="space-y-4">
+      <div className="space-y-5">
 
-        {/* Tarjetas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-          {[
-            { label: 'Total Previsto', value: formatMXN(totales.previsto) },
-            { label: 'Total Pagado',   value: formatMXN(totales.actual)   },
-            { label: 'Diferencia',     value: formatMXN(totales.previsto - totales.actual) },
-            { label: 'Progreso',       value: `${pagados} / ${total}`, sub: 'Facturas pagadas' },
-          ].map(({ label, value, sub }) => (
-            <div key={label} className="card p-4">
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{label}</p>
-              <p className="text-xl font-bold font-mono text-primary-700">{value}</p>
-              {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-            </div>
-          ))}
+        {/* Resumen */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Por pagar</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>
+              {formatMXN(totales.previsto - totales.actual)}
+            </p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Ya pagado</p>
+            <p className="text-xl font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>
+              {formatMXN(totales.actual)}
+            </p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total del mes</p>
+            <p className="text-xl font-bold font-mono text-gray-700">{formatMXN(totales.previsto)}</p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Progreso</p>
+            <p className="text-xl font-bold font-mono text-primary-700">{pagados}/{total} facturas</p>
+          </div>
         </div>
 
-        {/* Barra de progreso de pagos */}
+        {/* Barra de progreso */}
         {total > 0 && (
-          <div className="card p-4">
+          <div className="card px-5 py-3">
             <div className="flex justify-between text-sm mb-2">
-              <span className="font-semibold text-gray-700">Facturas pagadas</span>
-              <span className="font-mono text-gray-500">{pagados}/{total}</span>
+              <span className="font-semibold text-gray-700">Facturas pagadas este mes</span>
+              <span className="font-mono text-gray-500">{pctPagado.toFixed(0)}%</span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-primary-700 rounded-full transition-all duration-500"
-                style={{ width: `${total > 0 ? (pagados / total) * 100 : 0}%` }} />
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${pctPagado}%`, background: 'var(--ahorro)' }} />
             </div>
           </div>
         )}
 
-        {/* Tabla */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-50">
-            <h2 className="font-bold text-gray-900">Facturas del Mes</h2>
-            <div className="flex items-center gap-2">
-              {msgCopia && <span className="text-xs text-gray-500">{msgCopia}</span>}
-              <button onClick={handleCopiar} disabled={copiando}
-                className="btn-secondary flex items-center gap-1.5 text-sm py-1.5 px-3">
-                <Copy className="w-3.5 h-3.5" />
-                {copiando ? 'Copiando...' : 'Copiar recurrentes'}
-              </button>
-              <button onClick={() => setMostrarForm(v => !v)}
-                className="btn-primary flex items-center gap-1.5 text-sm py-1.5 px-3">
-                <Plus className="w-4 h-4" /> Agregar
-              </button>
-            </div>
-          </div>
-
-          {/* Formulario */}
-          {mostrarForm && (
-            <div className="p-4 bg-primary-50 border-b border-primary-100">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
-                <div className="col-span-2">
-                  <label className="label">Concepto</label>
-                  <input className="input text-sm" placeholder="Ej: Gimnasio, Spotify..."
-                    value={form.concepto} onChange={e => setF('concepto', e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Previsto ($)</label>
-                  <input type="number" className="input text-sm font-mono"
-                    value={form.monto_previsto} onChange={e => setF('monto_previsto', e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Actual ($)</label>
-                  <input type="number" className="input text-sm font-mono"
-                    value={form.monto_actual} onChange={e => setF('monto_actual', e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Día de cobro</label>
-                  <input type="number" min="1" max="31" className="input text-sm font-mono"
-                    placeholder="Ej: 15"
-                    value={form.dia_cobro} onChange={e => setF('dia_cobro', e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Tipo</label>
-                  <FilterSelect
-                    value={form.clasificacion}
-                    onChange={v => setF('clasificacion', v)}
-                    options={CLASIF_OPTS}
-                    placeholder="Tipo"
-                    showClear={false}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                  <input type="checkbox" className="accent-primary-700 w-4 h-4"
-                    checked={form.es_recurrente} onChange={e => setF('es_recurrente', e.target.checked)} />
-                  <Repeat className="w-3.5 h-3.5 text-gray-400" />
-                  Gasto recurrente (se copiará cada mes)
-                </label>
-                <div className="flex gap-2">
-                  <button className="btn-primary text-sm py-1.5 px-4" onClick={handleAgregar} disabled={saving}>
-                    {saving ? 'Guardando...' : 'Guardar'}
-                  </button>
-                  <button className="btn-ghost text-sm" onClick={() => setMostrarForm(false)}>Cancelar</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Lista */}
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px]">
-            <thead>
-              <tr className="border-b border-gray-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide w-8">✓</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Concepto</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Previsto</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Actual</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Día cobro</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Pagado</th>
-                <th className="px-4 py-3 w-12"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading
-                ? Array(4).fill(0).map((_,i) => (
-                  <tr key={i}><td colSpan={7} className="px-4 py-3"><div className="h-5 bg-gray-50 rounded animate-pulse" /></td></tr>
-                ))
-                : gastos.length === 0
-                  ? <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-300 text-sm">Sin facturas este mes</td></tr>
-                  : gastos.map(g => (
-                    <tr key={g.id} className={`hover:bg-gray-50 group ${g.pagado ? 'opacity-70' : ''}`}>
-                      <td className="px-4 py-3">
-                        <button onClick={() => togglePagado(g)}>
-                          {g.pagado
-                            ? <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--ahorro)' }} />
-                            : <Circle className="w-5 h-5 text-gray-300 hover:text-primary-400" />}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-800">{g.concepto}</span>
-                          {g.es_recurrente && <Repeat className="w-3 h-3 text-gray-300" title="Recurrente" />}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-gray-500 text-sm">{formatMXN(g.monto_previsto)}</td>
-                      <td className="px-4 py-3 font-mono font-semibold text-sm">
-                        {Number(g.monto_actual) > Number(g.monto_previsto)
-                          ? <span style={{ color: 'var(--negative-fg)' }}>{formatMXN(g.monto_actual)}</span>
-                          : <span className="text-gray-700">{formatMXN(g.monto_actual)}</span>}
-                      </td>
-                      <td className="px-4 py-3"><span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span></td>
-                      <td className="px-4 py-3 text-sm font-mono text-gray-500">
-                        {g.dia_cobro ? `Día ${g.dia_cobro}` : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">{g.fecha_pago ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => setConfirmDelete(g.id)}
-                          className="w-7 h-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all text-gray-300">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-            {gastos.length > 0 && (
-              <tfoot className="border-t border-gray-100 bg-gray-50">
-                <tr>
-                  <td colSpan={2} className="px-4 py-3 font-bold text-gray-700 text-sm">TOTAL</td>
-                  <td className="px-4 py-3 font-mono font-bold text-gray-500">{formatMXN(totales.previsto)}</td>
-                  <td className="px-4 py-3 font-mono font-bold text-primary-700">{formatMXN(totales.actual)}</td>
-                  <td colSpan={4} />
-                </tr>
-              </tfoot>
-            )}
-          </table>
-          </div>
+        {/* Acciones */}
+        <div className="flex justify-end gap-2">
+          <button onClick={() => setMostrarForm(v => !v)}
+            className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Agregar gasto fijo
+          </button>
         </div>
 
+        {/* Formulario */}
+        {mostrarForm && (
+          <div className="card p-5 border-2 border-primary-100">
+            <h3 className="font-bold text-gray-900 mb-4">Nuevo gasto fijo</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <div className="col-span-2 lg:col-span-1">
+                <label className="label">Concepto</label>
+                <input className="input" placeholder="Ej: Netflix, Renta, Luz..."
+                  value={form.concepto} onChange={e => setF('concepto', e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Monto ($)</label>
+                <input type="number" className="input font-mono" placeholder="0.00"
+                  value={form.monto_previsto} onChange={e => setF('monto_previsto', e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Día de cobro</label>
+                <input type="number" min="1" max="31" className="input font-mono"
+                  placeholder="Ej: 15"
+                  value={form.dia_cobro} onChange={e => setF('dia_cobro', e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Clasificación</label>
+                <FilterSelect
+                  value={form.clasificacion}
+                  onChange={v => setF('clasificacion', v)}
+                  options={CLASIF_OPTS}
+                  placeholder="Tipo"
+                  showClear={false}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                <input type="checkbox" className="accent-primary-700 w-4 h-4"
+                  checked={form.es_recurrente} onChange={e => setF('es_recurrente', e.target.checked)} />
+                <Repeat className="w-3.5 h-3.5 text-gray-400" />
+                Se repite cada mes
+              </label>
+              <div className="flex gap-2">
+                <button className="btn-primary px-6" onClick={handleAgregar} disabled={saving}>
+                  {saving ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button className="btn-ghost" onClick={() => { setMostrarForm(false); setForm(FORM_VACIO) }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tarjetas */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="card h-32 animate-pulse bg-gray-50" />
+            ))}
+          </div>
+        ) : gastos.length === 0 ? (
+          <div className="card p-16 text-center text-gray-300 text-sm">
+            Sin gastos fijos este mes. ¡Agrega el primero!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+            {gastos.map(g => {
+              const u = urgencia(g)
+              return (
+                <div key={g.id}
+                  className="card p-4 self-start transition-all"
+                  style={
+                    g.pagado      ? { opacity: 0.65 } :
+                    u === 'vencido' ? { borderColor: 'var(--negative)', borderWidth: 2 } :
+                    u === 'proximo' ? { borderColor: 'var(--deseo)',    borderWidth: 2 } :
+                    {}
+                  }
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-bold text-gray-900 text-sm truncate">{g.concepto}</p>
+                        {g.es_recurrente && <Repeat className="w-3 h-3 text-gray-300 flex-shrink-0" title="Recurrente" />}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className={`badge-${g.clasificacion} text-xs`}>{g.clasificacion}</span>
+                        {g.dia_cobro && (
+                          <span className="flex items-center gap-1 text-xs font-mono text-gray-400">
+                            <CalendarClock className="w-3 h-3" />
+                            Día {g.dia_cobro}
+                          </span>
+                        )}
+                        {u === 'vencido' && (
+                          <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--negative-fg)' }}>
+                            <AlertCircle className="w-3 h-3" /> Vencido
+                          </span>
+                        )}
+                        {u === 'proximo' && (
+                          <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--deseo-fg)' }}>
+                            <AlertCircle className="w-3 h-3" /> Próximo
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button onClick={() => setConfirmDelete(g.id)}
+                      className="w-7 h-7 ml-2 flex-shrink-0 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-200 transition-all">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Monto */}
+                  <div className="flex items-end justify-between mb-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Monto</p>
+                      <p className="text-2xl font-bold font-mono" style={{ color: g.pagado ? 'var(--ahorro-fg)' : 'var(--fg-1)' }}>
+                        {formatMXN(g.monto_previsto)}
+                      </p>
+                    </div>
+                    {g.pagado && g.fecha_pago && (
+                      <p className="text-xs text-gray-400 font-mono">Pagado {g.fecha_pago}</p>
+                    )}
+                  </div>
+
+                  {/* Botón pago */}
+                  <button
+                    onClick={() => togglePagado(g)}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-all"
+                    style={g.pagado
+                      ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }
+                      : { background: 'var(--surface-2, #f3f4f6)', color: 'var(--fg-2)' }
+                    }
+                  >
+                    {g.pagado
+                      ? <><CheckCircle2 className="w-4 h-4" /> Pagado — desmarcar</>
+                      : <><Circle className="w-4 h-4" /> Marcar como pagado</>
+                    }
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
       </div>
+
       <ConfirmModal
         open={!!confirmDelete}
-        titulo="¿Eliminar factura?"
+        titulo="¿Eliminar gasto fijo?"
         descripcion="Esta acción no se puede deshacer."
         onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
         onCancel={() => setConfirmDelete(null)}
