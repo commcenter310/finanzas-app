@@ -21,8 +21,8 @@ export function useDashboard() {
       .from('ingresos')
       .select('monto_actual, monto_presupuesto')
       .eq('user_id', user.id)
-      .gte('fecha_recepcion', inicioMes)
-      .lte('fecha_recepcion', finMes)
+      .eq('mes', mes)
+      .eq('anio', anio)
     if (error) throw error
     return data || []
   }, [user?.id, mes, anio])
@@ -68,8 +68,8 @@ export function useDashboard() {
       .from('ingresos')
       .select('monto_actual')
       .eq('user_id', user.id)
-      .gte('fecha_recepcion', inicioMesPrev)
-      .lte('fecha_recepcion', finMesPrev)
+      .eq('mes', mesPrev)
+      .eq('anio', anioPrev)
     if (error) throw error
     return data || []
   }, [user?.id, mesPrev, anioPrev])

@@ -166,8 +166,17 @@ export default function Ingresos() {
   const { ingresos, loading, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
   const hoy = new Date().toISOString().split('T')[0]
-  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '' })
+  const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
   const [confirmDelete, setConfirmDelete] = useState(null)
+
+  // Al cambiar la fecha, auto-sugerir mes siguiente si el día es ≥ 25
+  // (nómina del día 30 cubre gastos del 30 al 15 del mes siguiente)
+  const handleFechaChange = (v) => {
+    const [anioF, mesF, diaStr] = v.split('-').map(Number)
+    const mesAplica  = diaStr >= 25 ? (mesF === 12 ? 1  : mesF + 1)  : mesF
+    const anioAplica = diaStr >= 25 ? (mesF === 12 ? anioF + 1 : anioF) : anioF
+    setForm(f => ({ ...f, fecha_recepcion: v, mes: mesAplica, anio: anioAplica }))
+  }
 
   const handleAgregar = async () => {
     // Requerido: concepto, monto_actual (dinero recibido) y fecha
@@ -179,7 +188,7 @@ export default function Ingresos() {
     }
     const { error } = await agregar(datos)
     if (!error) {
-      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '' })
+      setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
       setMostrarForm(false)
     }
   }
@@ -236,8 +245,27 @@ export default function Ingresos() {
                   <label className="label">Fecha en que llegó <span className="text-negative">*</span></label>
                   <DatePicker
                     value={form.fecha_recepcion}
-                    onChange={v => setForm(f => ({ ...f, fecha_recepcion: v }))}
+                    onChange={handleFechaChange}
                   />
+                </div>
+              </div>
+              {/* Segunda fila: mes de aplicación */}
+              <div className="flex items-end gap-4 mb-3">
+                <div>
+                  <label className="label">¿A qué mes aplica este ingreso?</label>
+                  <MesPicker
+                    mesVal={form.mes}   anioVal={form.anio}
+                    onChange={(m, a) => setForm(f => ({ ...f, mes: m, anio: a }))}
+                    mesBase={form.mes}  anioBase={form.anio}
+                  />
+                  {(() => {
+                    const mesRec = parseInt(form.fecha_recepcion.split('-')[1])
+                    return mesRec !== form.mes && (
+                      <p className="text-xs mt-1.5" style={{ color: 'var(--primary)' }}>
+                        💡 Recibido en {MESES[mesRec - 1]}, aplicará en {MESES[form.mes - 1]}
+                      </p>
+                    )
+                  })()}
                 </div>
               </div>
               <div className="flex gap-2">
