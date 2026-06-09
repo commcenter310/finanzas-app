@@ -24,8 +24,8 @@ export default function PlanQuincena() {
   const { mes, anio } = useMes()
   const toast = useToast()
   const {
-    quincena, setQuincena, loading, saving,
-    ingresoEsperado, ingresoRecibido,
+    modo, setModo, esMes, rango, loading, saving,
+    ingresoEsperado, ingresoRecibido, ingresoEstimado, usandoEstimado,
     compromisos, metasAhorro,
     totalCompromisos, totalApartado, libreSiApartasTodo, disponibleAhora, countApartados,
     apartar, quitarApartado, editarMonto, agregarManual, apartarTodo,
@@ -38,7 +38,6 @@ export default function PlanQuincena() {
   const [formManual, setFormManual] = useState(FORM_MANUAL)
   const setFM = (k, v) => setFormManual(f => ({ ...f, [k]: v }))
 
-  const rango = rangoQuincena(mes, anio, quincena)
   const pendientes = compromisos.filter(c => !c.apartadoRow)
   const totalItems = compromisos.length
 
@@ -80,20 +79,21 @@ export default function PlanQuincena() {
         {/* Selector de quincena */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            {[1, 2].map(q => {
-              const r = rangoQuincena(mes, anio, q)
-              const active = quincena === q
+            {[
+              { k: 'q1',  label: '1ª Quincena', sub: () => { const r = rangoQuincena(mes, anio, 1); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+              { k: 'q2',  label: '2ª Quincena', sub: () => { const r = rangoQuincena(mes, anio, 2); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+              { k: 'mes', label: 'Mes completo', sub: () => MESES[mes - 1] },
+            ].map(({ k, label, sub }) => {
+              const active = modo === k
               return (
-                <button key={q} onClick={() => setQuincena(q)}
+                <button key={k} onClick={() => setModo(k)}
                   className="px-4 py-2 text-sm font-semibold transition-colors leading-tight text-center"
                   style={{
                     background: active ? 'var(--primary-700)' : 'var(--surface-2)',
                     color: active ? '#fff' : 'var(--fg-3)',
                   }}>
-                  <div>{q}ª Quincena</div>
-                  <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>
-                    {r.diaInicio}–{r.diaFin} {MESES[mes - 1].slice(0, 3)}
-                  </div>
+                  <div>{label}</div>
+                  <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>{sub()}</div>
                 </button>
               )
             })}
@@ -111,11 +111,15 @@ export default function PlanQuincena() {
           <div className="card p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--positive-fg)' }} />
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Ingreso quincena</p>
+              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">
+                {esMes ? 'Ingreso del mes' : 'Ingreso quincena'}
+              </p>
             </div>
             <p className="text-xl font-bold font-mono text-gray-800">{formatMXN(ingresoEsperado)}</p>
             <p className="text-xs text-gray-400 mt-0.5">
-              {ingresoRecibido > 0 ? `${formatMXN(ingresoRecibido)} recibido` : 'esperado'}
+              {usandoEstimado
+                ? '≈ estimado de tu nómina'
+                : ingresoRecibido > 0 ? `${formatMXN(ingresoRecibido)} recibido` : 'esperado'}
             </p>
           </div>
           <div className="card p-4">
