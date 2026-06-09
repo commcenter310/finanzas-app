@@ -72,6 +72,12 @@ export const quincenaActual = (fecha = new Date()) =>
 export const PERIODOS_ANIO = { quincenal: 24, mensual: 12, semanal: 52 }
 export const FRECUENCIA_LABEL = { quincenal: 'Quincenal', mensual: 'Mensual', semanal: 'Semanal' }
 
+// "7,12" → [7, 12]   ·   [7,12] → "7,12"
+export const parseMesesPrima = (s) =>
+  (typeof s === 'string' ? s : '').split(',').map(x => Number(x.trim())).filter(n => n >= 1 && n <= 12)
+export const serializeMesesPrima = (arr) =>
+  (arr ?? []).filter(n => n >= 1 && n <= 12).join(',')
+
 // Calcula prestaciones e ingreso proyectado de una nómina.
 // Prima vacacional y aguinaldo se calculan como "días de sueldo base".
 // sueldo diario = sueldo base mensual / 30 (convención común en México).

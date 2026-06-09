@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNominas } from '../../hooks/useNominas'
-import { calcNomina, formatMXN, FRECUENCIA_LABEL } from '../../utils/constantes'
+import { calcNomina, formatMXN, FRECUENCIA_LABEL, MESES, parseMesesPrima, serializeMesesPrima } from '../../utils/constantes'
 import { Plus, Trash2, Pencil, Star, Briefcase, Wallet, Calculator } from 'lucide-react'
 import FilterSelect from '../ui/FilterSelect'
 import ConfirmModal from '../ui/ConfirmModal'
@@ -8,10 +8,12 @@ import ConfirmModal from '../ui/ConfirmModal'
 const FORM_VACIO = {
   nombre: '', es_principal: false, tipo: 'sueldo', frecuencia: 'quincenal',
   monto_neto: '', sueldo_base_mensual: '',
-  tiene_aguinaldo: false, dias_aguinaldo: '',
-  tiene_prima_vacacional: false, dias_prima_vacacional: '', veces_prima_al_anio: '2',
-  tiene_utilidades: false, monto_utilidades: '',
+  tiene_aguinaldo: false, dias_aguinaldo: '', mes_aguinaldo: '12',
+  tiene_prima_vacacional: false, dias_prima_vacacional: '', veces_prima_al_anio: '2', meses_prima: [],
+  tiene_utilidades: false, monto_utilidades: '', mes_utilidades: '5',
 }
+
+const MESES_OPTS = MESES.map((m, i) => ({ value: String(i + 1), label: m }))
 
 const TIPO_OPTS = [
   { value: 'sueldo',     label: '💼 Sueldo (con prestaciones)' },
@@ -36,11 +38,14 @@ const formAPayload = (f) => ({
   sueldo_base_mensual: toNum(f.sueldo_base_mensual),
   tiene_aguinaldo: f.tipo === 'sueldo' && f.tiene_aguinaldo,
   dias_aguinaldo: toNum(f.dias_aguinaldo),
+  mes_aguinaldo: f.tipo === 'sueldo' && f.tiene_aguinaldo ? (toNum(f.mes_aguinaldo) || null) : null,
   tiene_prima_vacacional: f.tipo === 'sueldo' && f.tiene_prima_vacacional,
   dias_prima_vacacional: toNum(f.dias_prima_vacacional),
   veces_prima_al_anio: toNum(f.veces_prima_al_anio) || 1,
+  meses_prima: f.tipo === 'sueldo' && f.tiene_prima_vacacional ? serializeMesesPrima((f.meses_prima ?? []).map(Number)) : null,
   tiene_utilidades: f.tipo === 'sueldo' && f.tiene_utilidades,
   monto_utilidades: toNum(f.monto_utilidades),
+  mes_utilidades: f.tipo === 'sueldo' && f.tiene_utilidades ? (toNum(f.mes_utilidades) || null) : null,
 })
 
 export default function NominasSection() {
@@ -63,14 +68,23 @@ export default function NominasSection() {
       nombre: n.nombre, es_principal: n.es_principal, tipo: n.tipo, frecuencia: n.frecuencia,
       monto_neto: n.monto_neto ?? '', sueldo_base_mensual: n.sueldo_base_mensual ?? '',
       tiene_aguinaldo: n.tiene_aguinaldo, dias_aguinaldo: n.dias_aguinaldo ?? '',
+      mes_aguinaldo: n.mes_aguinaldo ? String(n.mes_aguinaldo) : '12',
       tiene_prima_vacacional: n.tiene_prima_vacacional, dias_prima_vacacional: n.dias_prima_vacacional ?? '',
       veces_prima_al_anio: String(n.veces_prima_al_anio ?? 2),
+      meses_prima: parseMesesPrima(n.meses_prima).map(String),
       tiene_utilidades: n.tiene_utilidades, monto_utilidades: n.monto_utilidades ?? '',
+      mes_utilidades: n.mes_utilidades ? String(n.mes_utilidades) : '5',
     })
     setMostrarForm(true)
   }
 
   const cerrar = () => { setMostrarForm(false); setEditandoId(null); setForm(FORM_VACIO) }
+
+  const setMesPrima = (idx, val) => setForm(f => {
+    const arr = [...(f.meses_prima ?? [])]
+    arr[idx] = val
+    return { ...f, meses_prima: arr }
+  })
 
   const guardar = async () => {
     if (!form.nombre || !form.monto_neto) return
@@ -162,10 +176,14 @@ export default function NominasSection() {
                 Recibo aguinaldo
               </label>
               {form.tiene_aguinaldo && (
-                <div className="flex items-center gap-2 mb-3 pl-6">
-                  <input type="number" className="input text-sm font-mono w-24" placeholder="días"
+                <div className="flex items-center gap-2 mb-3 pl-6 flex-wrap">
+                  <input type="number" className="input text-sm font-mono w-20" placeholder="días"
                     value={form.dias_aguinaldo} onChange={e => setF('dias_aguinaldo', e.target.value)} />
-                  <span className="text-sm text-gray-500">días de sueldo →</span>
+                  <span className="text-sm text-gray-500">días, en</span>
+                  <div className="w-36">
+                    <FilterSelect value={form.mes_aguinaldo} onChange={v => setF('mes_aguinaldo', v)} options={MESES_OPTS} placeholder="Mes" showClear={false} />
+                  </div>
+                  <span className="text-sm text-gray-500">→</span>
                   <span className="text-sm font-mono font-bold" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(preview.aguinaldo)}</span>
                 </div>
               )}
@@ -177,16 +195,26 @@ export default function NominasSection() {
                 Recibo prima vacacional
               </label>
               {form.tiene_prima_vacacional && (
-                <div className="flex items-center gap-2 mb-3 pl-6 flex-wrap">
-                  <input type="number" className="input text-sm font-mono w-20" placeholder="días"
-                    value={form.dias_prima_vacacional} onChange={e => setF('dias_prima_vacacional', e.target.value)} />
-                  <span className="text-sm text-gray-500">días,</span>
-                  <input type="number" className="input text-sm font-mono w-16" placeholder="veces"
-                    value={form.veces_prima_al_anio} onChange={e => setF('veces_prima_al_anio', e.target.value)} />
-                  <span className="text-sm text-gray-500">veces/año →</span>
-                  <span className="text-sm font-mono font-bold" style={{ color: 'var(--ahorro-fg)' }}>
-                    {formatMXN(preview.primaAnual)} <span className="font-normal text-gray-400">({formatMXN(preview.primaPorEvento)} c/u)</span>
-                  </span>
+                <div className="pl-6 mb-3">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <input type="number" className="input text-sm font-mono w-20" placeholder="días"
+                      value={form.dias_prima_vacacional} onChange={e => setF('dias_prima_vacacional', e.target.value)} />
+                    <span className="text-sm text-gray-500">días,</span>
+                    <input type="number" min="1" max="4" className="input text-sm font-mono w-16" placeholder="veces"
+                      value={form.veces_prima_al_anio} onChange={e => setF('veces_prima_al_anio', e.target.value)} />
+                    <span className="text-sm text-gray-500">veces/año →</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: 'var(--ahorro-fg)' }}>
+                      {formatMXN(preview.primaAnual)} <span className="font-normal text-gray-400">({formatMXN(preview.primaPorEvento)} c/u)</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-gray-500">Se paga en:</span>
+                    {Array.from({ length: Math.max(1, Number(form.veces_prima_al_anio) || 1) }).map((_, i) => (
+                      <div key={i} className="w-32">
+                        <FilterSelect value={form.meses_prima?.[i] ?? ''} onChange={v => setMesPrima(i, v)} options={MESES_OPTS} placeholder={`Mes ${i + 1}`} showClear={false} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -197,10 +225,13 @@ export default function NominasSection() {
                 Recibo utilidades (PTU)
               </label>
               {form.tiene_utilidades && (
-                <div className="flex items-center gap-2 pl-6">
+                <div className="flex items-center gap-2 pl-6 flex-wrap">
                   <input type="number" className="input text-sm font-mono w-32" placeholder="monto estimado"
                     value={form.monto_utilidades} onChange={e => setF('monto_utilidades', e.target.value)} />
-                  <span className="text-sm text-gray-500">al año</span>
+                  <span className="text-sm text-gray-500">al año, en</span>
+                  <div className="w-36">
+                    <FilterSelect value={form.mes_utilidades} onChange={v => setF('mes_utilidades', v)} options={MESES_OPTS} placeholder="Mes" showClear={false} />
+                  </div>
                 </div>
               )}
             </div>

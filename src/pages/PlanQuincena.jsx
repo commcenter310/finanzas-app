@@ -10,6 +10,7 @@ import {
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import { useToast } from '../components/ui/Toast'
+import ProyeccionView from '../components/plan/ProyeccionView'
 
 const TIPO_META = {
   gasto_fijo: { icon: Receipt,    emoji: '🧾', label: 'Gasto fijo' },
@@ -31,6 +32,7 @@ export default function PlanQuincena() {
     apartar, quitarApartado, editarMonto, agregarManual, apartarTodo,
   } = usePlanQuincena()
 
+  const [vista, setVista] = useState('plan')
   const [confirmQuitar, setConfirmQuitar] = useState(null)
   const [editId, setEditId] = useState(null)
   const [editValor, setEditValor] = useState('')
@@ -75,6 +77,22 @@ export default function PlanQuincena() {
   return (
     <Layout titulo="Plan de Quincena">
       <div className="space-y-5">
+
+        {/* Tabs: plan actual vs proyección */}
+        <div className="flex gap-2">
+          {[['plan', 'Plan actual'], ['proyeccion', 'Proyección 12 meses']].map(([k, label]) => (
+            <button key={k} onClick={() => setVista(k)}
+              className="px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
+              style={vista === k
+                ? { background: 'var(--primary-700)', color: '#fff' }
+                : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-2)' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {vista === 'proyeccion' ? <ProyeccionView /> : (
+        <>
 
         {/* Selector de quincena */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -300,6 +318,8 @@ export default function PlanQuincena() {
         <p className="text-xs text-gray-400 text-center">
           Los gastos fijos y deudas se sugieren según su día de cobro. Click en el monto apartado para ajustarlo.
         </p>
+        </>
+        )}
       </div>
 
       <ConfirmModal
