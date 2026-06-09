@@ -106,9 +106,14 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
             mesVal={form.mes}
             anioVal={form.anio}
             onChange={(m, a) => setForm(f => ({ ...f, mes: m, anio: a }))}
-            mesBase={mesCtx}
-            anioBase={anioCtx}
+            mesBase={form.mes}
+            anioBase={form.anio}
           />
+          {form.mes !== ingreso.mes && (
+            <p className="text-[10px] mt-1" style={{ color: 'var(--primary)' }}>
+              ↪ Se moverá a {MESES[form.mes - 1]}
+            </p>
+          )}
         </td>
         <td className="px-4 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
