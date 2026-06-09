@@ -6,6 +6,7 @@ import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { formatMXN } from '../utils/constantes'
 import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
+import NominasSection from '../components/perfil/NominasSection'
 
 const TIPO_METODO_OPTS = [
   { value: 'debito',   label: 'Débito',   dotColor: 'var(--fg-3)'    },
@@ -282,6 +283,9 @@ export default function Perfil() {
           </div>
 
         </div>
+
+        {/* ── Ingresos y Nómina ── */}
+        <NominasSection />
 
         {/* ── Fila 2: Métodos de pago + Categorías ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
