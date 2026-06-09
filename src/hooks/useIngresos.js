@@ -55,14 +55,20 @@ export function useIngresos() {
 
   const actualizar = async (id, datos) => {
     setSaving(true)
-    const updates = { ...datos }
-    // Solo auto-derivar mes/anio si NO vienen explícitamente del form (para no pisar la selección manual)
-    if (datos.fecha_recepcion && datos.mes == null && datos.anio == null) {
-      const [anioFecha, mesFecha] = datos.fecha_recepcion.split('-').map(Number)
-      updates.mes = mesFecha
-      updates.anio = anioFecha
+    // Extraer y forzar mes/anio como enteros explícitamente
+    const { mes: mesForm, anio: anioForm, ...campos } = datos
+    const fecha = datos.fecha_recepcion
+    const [anioFecha, mesFecha] = fecha ? fecha.split('-').map(Number) : [anioForm, mesForm]
+    const updates = {
+      ...campos,
+      mes:  mesForm  != null ? Number(mesForm)  : mesFecha,
+      anio: anioForm != null ? Number(anioForm) : anioFecha,
     }
-    const { error } = await supabase.from('ingresos').update(updates).eq('id', id)
+    const { error } = await supabase
+      .from('ingresos')
+      .update(updates)
+      .eq('id', id)
+      .select()
     setSaving(false)
     if (!error) refetch()
     return { error }

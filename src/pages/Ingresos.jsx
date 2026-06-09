@@ -6,6 +6,7 @@ import { formatMXN, MESES } from '../utils/constantes'
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
+import { useToast } from '../components/ui/Toast'
 
 // ── Selector de mes al que aplica el ingreso ─────────────────────────────────
 // Muestra 3 opciones: mes anterior / mes actual / mes siguiente
@@ -47,7 +48,9 @@ function MesPicker({ mesVal, anioVal, onChange, mesBase, anioBase }) {
 
 function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   const { mes: mesCtx, anio: anioCtx } = useMes()
+  const toast = useToast()
   const [editando, setEditando] = useState(false)
+  const [guardando, setGuardando] = useState(false)
   const [form, setForm] = useState({
     concepto:          ingreso.concepto,
     monto_presupuesto: ingreso.monto_presupuesto,
@@ -59,8 +62,16 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   })
 
   const guardar = async () => {
-    await onUpdate(ingreso.id, form)
-    setEditando(false)
+    setGuardando(true)
+    // Capturar form explícitamente para evitar cierre estale
+    const datosActuales = { ...form }
+    const { error } = await onUpdate(ingreso.id, datosActuales)
+    setGuardando(false)
+    if (error) {
+      toast('Error al guardar: ' + (error.message ?? 'intenta de nuevo'), 'error')
+    } else {
+      setEditando(false)
+    }
   }
 
   const cancelar = () => {
@@ -117,8 +128,8 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
         </td>
         <td className="px-4 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
-            <button onClick={guardar}
-              className="w-7 h-7 text-white rounded-lg flex items-center justify-center" style={{ background: 'var(--ahorro)' }}>
+            <button onClick={guardar} disabled={guardando}
+              className="w-7 h-7 text-white rounded-lg flex items-center justify-center" style={{ background: 'var(--ahorro)', opacity: guardando ? 0.6 : 1 }}>
               <Check className="w-3.5 h-3.5" />
             </button>
             <button onClick={cancelar}
