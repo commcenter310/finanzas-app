@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useIngresos } from '../hooks/useIngresos'
 import { useMes } from '../context/MesContext'
@@ -61,13 +61,18 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
     anio:              ingreso.anio,
   })
 
+  // Ref siempre apunta al form más reciente — evita cierre estale en guardar
+  const formRef = useRef(form)
+  formRef.current = form
+
   const guardar = async () => {
     setGuardando(true)
-    // Capturar form explícitamente para evitar cierre estale
-    const datosActuales = { ...form }
+    const datosActuales = { ...formRef.current }
+    console.log('[Ingresos] guardando:', datosActuales.mes, datosActuales.anio, '→ id:', ingreso.id)
     const { error } = await onUpdate(ingreso.id, datosActuales)
     setGuardando(false)
     if (error) {
+      console.error('[Ingresos] error update:', error)
       toast('Error al guardar: ' + (error.message ?? 'intenta de nuevo'), 'error')
     } else {
       setEditando(false)
