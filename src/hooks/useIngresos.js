@@ -9,14 +9,19 @@ export function useIngresos() {
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
 
-  // Filtrar por mes/anio: permite que una nómina del día 30 "aplique" al mes siguiente
+  // Página Ingresos: filtra por fecha_recepcion (cuándo llegó el dinero)
+  // → siempre puedes encontrar un ingreso en el mes en que lo recibiste
+  // → el "mes de aplicación" (mes/anio) lo maneja el Dashboard por separado
+  const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`
+  const finMes    = new Date(anio, mes, 0).toISOString().split('T')[0]
+
   const { data: ingresos, loading, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
       .select('*')
       .eq('user_id', user.id)
-      .eq('mes', mes)
-      .eq('anio', anio)
+      .gte('fecha_recepcion', inicioMes)
+      .lte('fecha_recepcion', finMes)
       .order('fecha_recepcion', { ascending: true })
     if (error) throw error
     return data ?? []
