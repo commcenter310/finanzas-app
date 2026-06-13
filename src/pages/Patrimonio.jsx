@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { usePatrimonio } from '../hooks/usePatrimonio'
 import { formatMXN, MESES } from '../utils/constantes'
 import { Plus, Pencil, Trash2, Save, TrendingUp, TrendingDown, Landmark } from 'lucide-react'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend, ReferenceLine
@@ -31,6 +32,7 @@ export default function Patrimonio() {
   const [form, setForm]               = useState(FORM_VACIO)
   const [snapshotMsg, setSnapshotMsg]       = useState('')
   const [confirmSnap, setConfirmSnap]       = useState(false)
+  const [confirmDelete, setConfirmDelete]   = useState(null)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const hoy = new Date()
@@ -213,7 +215,7 @@ export default function Patrimonio() {
                                 className="w-7 h-7 rounded-lg hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-300">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => eliminar(a.id)}
+                              <button onClick={() => setConfirmDelete(a)}
                                 className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -314,6 +316,14 @@ export default function Patrimonio() {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmDelete}
+        titulo="¿Eliminar activo?"
+        descripcion={confirmDelete ? `${confirmDelete.nombre} — ${formatMXN(confirmDelete.monto)}` : ''}
+        onConfirm={() => { eliminar(confirmDelete.id); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
   )
 }
