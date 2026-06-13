@@ -14,6 +14,7 @@ export function useIngresos() {
   // → el "mes de aplicación" (mes/anio) lo maneja el Dashboard por separado
   const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`
   const finMes    = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const uid = user?.id
 
   const { data: ingresos, loading, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -25,7 +26,7 @@ export function useIngresos() {
       .order('fecha_recepcion', { ascending: true })
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `ingresos:lista:${uid}:${mes}:${anio}`)
 
   const totales = {
     presupuesto: ingresos?.reduce((s, i) => s + Number(i.monto_presupuesto), 0) ?? 0,

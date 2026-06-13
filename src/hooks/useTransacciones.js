@@ -11,6 +11,7 @@ export function useTransacciones() {
 
   const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
   const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const uid = user?.id
 
   const { data: transacciones, loading, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -26,7 +27,7 @@ export function useTransacciones() {
       .order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `tx:lista:${uid}:${mes}:${anio}`)
 
   const { data: categorias } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('categorias')
@@ -34,13 +35,13 @@ export function useTransacciones() {
       .eq('user_id', user.id).eq('activa', true)
       .order('clasificacion').order('nombre')
     return data ?? []
-  }, [user?.id])
+  }, [uid], `categorias:${uid}`)
 
   const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
       .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `metodos:${uid}`)
 
   const actualizarSaldoCredito = (creditoId, delta) => {
     if (!creditoId) return Promise.resolve({ error: null })

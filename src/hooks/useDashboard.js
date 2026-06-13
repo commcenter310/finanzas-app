@@ -16,6 +16,7 @@ export function useDashboard() {
   const inicioMesPrev = `${anioPrev}-${String(mesPrev).padStart(2,'0')}-01`
   const finMesPrev    = new Date(anioPrev, mesPrev, 0).toISOString().split('T')[0]
 
+  const uid = user?.id
   const { data: ingresos, loading: loadingIngresos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
@@ -25,7 +26,7 @@ export function useDashboard() {
       .eq('anio', anio)
     if (error) throw error
     return data || []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `dash:ingresos:${uid}:${mes}:${anio}`)
 
   const { data: gastosFijos, loading: loadingFijos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -34,7 +35,7 @@ export function useDashboard() {
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
     if (error) throw error
     return data || []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `dash:fijos:${uid}:${mes}:${anio}`)
 
   const { data: transacciones, loading: loadingTx } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -50,7 +51,7 @@ export function useDashboard() {
       .order('created_at', { ascending: false })
     if (error) throw error
     return data || []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `dash:tx:${uid}:${mes}:${anio}`)
 
   // Gastos fijos pendientes de pago este mes (para aviso en Dashboard)
   const { data: fijosPendientes } = useSupabaseQuery(async () => {
@@ -60,7 +61,7 @@ export function useDashboard() {
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio).eq('pagado', false)
       .order('dia_cobro', { ascending: true, nullsFirst: false })
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `dash:fijosPend:${uid}:${mes}:${anio}`)
 
   // ── Queries del mes anterior (se cargan en paralelo, sin bloquear el skeleton principal) ──
   const { data: ingresosPrev } = useSupabaseQuery(async () => {
@@ -72,7 +73,7 @@ export function useDashboard() {
       .eq('anio', anioPrev)
     if (error) throw error
     return data || []
-  }, [user?.id, mesPrev, anioPrev])
+  }, [uid, mesPrev, anioPrev], `dash:ingresosPrev:${uid}:${mesPrev}:${anioPrev}`)
 
   const { data: gastosFijosPrev } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -81,17 +82,17 @@ export function useDashboard() {
       .eq('user_id', user.id).eq('mes', mesPrev).eq('anio', anioPrev)
     if (error) throw error
     return data || []
-  }, [user?.id, mesPrev, anioPrev])
+  }, [uid, mesPrev, anioPrev], `dash:fijosPrev:${uid}:${mesPrev}:${anioPrev}`)
 
   const { data: transaccionesPrev } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('transacciones')
-      .select('monto')
+      .select('monto, origen')
       .eq('user_id', user.id)
       .gte('fecha', inicioMesPrev).lte('fecha', finMesPrev)
     if (error) throw error
     return data || []
-  }, [user?.id, mesPrev, anioPrev])
+  }, [uid, mesPrev, anioPrev], `dash:txPrev:${uid}:${mesPrev}:${anioPrev}`)
 
   const { data: presupuestos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -100,7 +101,7 @@ export function useDashboard() {
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
     if (error) throw error
     return data || []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `dash:presupuestos:${uid}:${mes}:${anio}`)
 
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
