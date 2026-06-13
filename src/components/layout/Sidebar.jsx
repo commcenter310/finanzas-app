@@ -6,21 +6,47 @@ import {
   Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange
 } from 'lucide-react'
 
-const NAV_ITEMS = [
-  { to: '/',                 icon: LayoutDashboard, label: 'Dashboard'         },
-  { to: '/plan-quincena',    icon: CalendarRange,   label: 'Plan de Quincena'  },
-  { to: '/ingresos',         icon: TrendingUp,      label: 'Ingresos'          },
-  { to: '/gastos-fijos',     icon: Receipt,         label: 'Gastos Fijos'      },
-  { to: '/gastos-variables', icon: BarChart3,        label: 'Presupuesto'       },
-  { to: '/control-gastos',   icon: List,            label: 'Control de Gastos' },
-  { to: '/creditos',         icon: CreditCard,      label: 'Créditos'          },
-  { to: '/deudas',           icon: AlertCircle,     label: 'Deudas'            },
-  { to: '/ahorros',          icon: PiggyBank,       label: 'Ahorros'           },
-  { to: '/tendencias',       icon: LineChart,       label: 'Tendencias'        },
-  { to: '/patrimonio',       icon: Landmark,        label: 'Patrimonio'        },
-  { to: '/simulador',        icon: Calculator,      label: 'Simulador'         },
-  { to: '/whatsapp',         icon: MessageSquare,   label: 'WhatsApp Log'      },
-  { to: '/perfil',           icon: Settings,        label: 'Perfil'            },
+// Navegación agrupada por uso: lo diario arriba, lo de consulta abajo
+const NAV_GROUPS = [
+  {
+    titulo: 'Día a día',
+    items: [
+      { to: '/',               icon: LayoutDashboard, label: 'Dashboard'         },
+      { to: '/control-gastos', icon: List,            label: 'Control de Gastos' },
+      { to: '/plan-quincena',  icon: CalendarRange,   label: 'Plan de Quincena'  },
+    ],
+  },
+  {
+    titulo: 'Planeación',
+    items: [
+      { to: '/ingresos',         icon: TrendingUp, label: 'Ingresos'     },
+      { to: '/gastos-fijos',     icon: Receipt,    label: 'Gastos Fijos' },
+      { to: '/gastos-variables', icon: BarChart3,  label: 'Presupuesto'  },
+      { to: '/ahorros',          icon: PiggyBank,  label: 'Ahorros'      },
+    ],
+  },
+  {
+    titulo: 'Deuda',
+    items: [
+      { to: '/creditos',  icon: CreditCard, label: 'Créditos'  },
+      { to: '/deudas',    icon: AlertCircle, label: 'Deudas'    },
+      { to: '/simulador', icon: Calculator, label: 'Simulador' },
+    ],
+  },
+  {
+    titulo: 'Análisis',
+    items: [
+      { to: '/tendencias', icon: LineChart, label: 'Tendencias' },
+      { to: '/patrimonio', icon: Landmark,  label: 'Patrimonio' },
+    ],
+  },
+  {
+    titulo: 'Ajustes',
+    items: [
+      { to: '/whatsapp', icon: MessageSquare, label: 'WhatsApp Log' },
+      { to: '/perfil',   icon: Settings,      label: 'Perfil'       },
+    ],
+  },
 ]
 
 const GLASS_SIDEBAR = {
@@ -76,39 +102,49 @@ export default function Sidebar({ open, onClose }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm transition-all w-full
-               ${isActive
-                ? 'font-bold'
-                : 'font-medium'}`
-            }
-            style={({ isActive }) => isActive
-              ? { background: 'var(--primary-50)', color: 'var(--primary-700)' }
-              : { color: 'var(--fg-2)' }
-            }
-            onMouseEnter={e => {
-              if (!e.currentTarget.classList.contains('font-bold')) {
-                e.currentTarget.style.background = 'var(--surface-3)'
-                e.currentTarget.style.color = 'var(--fg-1)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (!e.currentTarget.classList.contains('font-bold')) {
-                e.currentTarget.style.background = ''
-                e.currentTarget.style.color = 'var(--fg-2)'
-              }
-            }}
-          >
-            <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
-            {label}
-          </NavLink>
+      <nav className="flex-1 px-3 py-3 overflow-y-auto">
+        {NAV_GROUPS.map(({ titulo, items }) => (
+          <div key={titulo} className="mb-3 last:mb-0">
+            <p
+              className="px-3 mb-1 text-[10px] font-bold uppercase tracking-[0.08em]"
+              style={{ color: 'var(--fg-4)' }}
+            >
+              {titulo}
+            </p>
+            <div className="space-y-0.5">
+              {items.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm transition-all w-full
+                     ${isActive ? 'font-bold' : 'font-medium'}`
+                  }
+                  style={({ isActive }) => isActive
+                    ? { background: 'var(--primary-50)', color: 'var(--primary-700)' }
+                    : { color: 'var(--fg-2)' }
+                  }
+                  onMouseEnter={e => {
+                    if (!e.currentTarget.classList.contains('font-bold')) {
+                      e.currentTarget.style.background = 'var(--surface-3)'
+                      e.currentTarget.style.color = 'var(--fg-1)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!e.currentTarget.classList.contains('font-bold')) {
+                      e.currentTarget.style.background = ''
+                      e.currentTarget.style.color = 'var(--fg-2)'
+                    }
+                  }}
+                >
+                  <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
