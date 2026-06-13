@@ -5,6 +5,7 @@ import { formatMXN, MESES } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import ErrorState from '../components/ui/ErrorState'
 
 // Finni chart palette
 const COLORES_CATEGORIA = [
@@ -69,7 +70,7 @@ const STAT_CONFIG = (totalIngresos, totalGastos, porAsignar, ahorro) => [
 export default function Dashboard() {
   const { mes } = useMes()
   const {
-    loading, totalIngresos, ingresoEsperado, proyeccion, totalGastos, porAsignar,
+    loading, error, refetch, totalIngresos, ingresoEsperado, proyeccion, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
     categoriasEnRiesgo, gastosHormiga,
     saldoAnterior, mesPrev, anioPrev, fijosPendientes,
@@ -88,6 +89,17 @@ export default function Dashboard() {
   ]
 
   const tarjetas = STAT_CONFIG(totalIngresos, totalGastos, porAsignar, ahorro)
+
+  // Solo mostramos el error de pantalla completa si no hay nada que mostrar.
+  // Con cache (SWR), si hay datos previos los dejamos visibles aunque falle el refetch.
+  const hayDatos = transacciones.length > 0 || totalIngresos > 0 || totalGastos > 0
+  if (error && !loading && !hayDatos) {
+    return (
+      <Layout titulo="Dashboard">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Dashboard">

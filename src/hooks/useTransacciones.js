@@ -13,7 +13,7 @@ export function useTransacciones() {
   const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
   const uid = user?.id
 
-  const { data: transacciones, loading, refetch } = useSupabaseQuery(async () => {
+  const { data: transacciones, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
@@ -103,5 +103,5 @@ export function useTransacciones() {
     ahorro:    transacciones?.filter(t => t.clasificacion === 'ahorro').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
   }
 
-  return { transacciones: transacciones ?? [], categorias: categorias ?? [], metodos: metodos ?? [], loading, saving, totales, agregar, actualizar, eliminar }
+  return { transacciones: transacciones ?? [], categorias: categorias ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar }
 }

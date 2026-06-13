@@ -7,6 +7,7 @@ import { Plus, Trash2, Search, X, MessageSquare, Pencil, Lock } from 'lucide-rea
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
+import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 
 const CLASIF_OPTS = [
@@ -22,7 +23,7 @@ const FORM_VACIO = {
 
 export default function ControlGastos() {
   const { profile } = useAuth()
-  const { transacciones, categorias, metodos, loading, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
+  const { transacciones, categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
   const umbral = profile?.umbral_hormiga ?? 100
   const toast  = useToast()
 
@@ -96,6 +97,14 @@ export default function ControlGastos() {
   }), [transacciones, busqueda, filtroClasif, filtroCategoria, filtroOrigen, soloHormiga, umbral])
 
   const hayFiltros = busqueda || filtroClasif || filtroCategoria || filtroOrigen || soloHormiga
+
+  if (error && !loading && transacciones.length === 0) {
+    return (
+      <Layout titulo="Control de Gastos">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Control de Gastos">

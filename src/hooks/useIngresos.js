@@ -16,7 +16,7 @@ export function useIngresos() {
   const finMes    = new Date(anio, mes, 0).toISOString().split('T')[0]
   const uid = user?.id
 
-  const { data: ingresos, loading, refetch } = useSupabaseQuery(async () => {
+  const { data: ingresos, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
       .select('*')
@@ -83,5 +83,5 @@ export function useIngresos() {
     return { error }
   }
 
-  return { ingresos: ingresos ?? [], loading, saving, totales, agregar, actualizar, eliminar }
+  return { ingresos: ingresos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar }
 }

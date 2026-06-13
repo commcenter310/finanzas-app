@@ -18,7 +18,7 @@ export function useDashboard() {
   const finMesPrev    = new Date(anioPrev, mesPrev, 0).toISOString().split('T')[0]
 
   const uid = user?.id
-  const { data: ingresos, loading: loadingIngresos } = useSupabaseQuery(async () => {
+  const { data: ingresos, loading: loadingIngresos, error: errIngresos, refetch: refetchIngresos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
       .select('monto_actual, monto_presupuesto')
@@ -29,7 +29,7 @@ export function useDashboard() {
     return data || []
   }, [uid, mes, anio], `dash:ingresos:${uid}:${mes}:${anio}`)
 
-  const { data: gastosFijos, loading: loadingFijos } = useSupabaseQuery(async () => {
+  const { data: gastosFijos, loading: loadingFijos, error: errFijos, refetch: refetchFijos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('gastos_fijos')
       .select('monto_previsto, monto_actual, clasificacion, pagado')
@@ -38,7 +38,7 @@ export function useDashboard() {
     return data || []
   }, [uid, mes, anio], `dash:fijos:${uid}:${mes}:${anio}`)
 
-  const { data: transacciones, loading: loadingTx } = useSupabaseQuery(async () => {
+  const { data: transacciones, loading: loadingTx, error: errTx, refetch: refetchTx } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
@@ -223,6 +223,8 @@ export function useDashboard() {
 
   return {
     loading: loadingIngresos || loadingFijos || loadingTx,
+    error: errIngresos || errFijos || errTx || null,
+    refetch: () => { refetchIngresos(); refetchFijos(); refetchTx() },
     fijosPendientes: fijosPendientes ?? [],
     saldoAnterior,
     mesPrev,

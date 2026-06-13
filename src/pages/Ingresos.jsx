@@ -6,6 +6,7 @@ import { formatMXN, MESES } from '../utils/constantes'
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
+import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 
 // ── Selector de mes al que aplica el ingreso ─────────────────────────────────
@@ -177,7 +178,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
 
 export default function Ingresos() {
   const { mes, anio } = useMes()
-  const { ingresos, loading, saving, totales, agregar, actualizar, eliminar } = useIngresos()
+  const { ingresos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
   const hoy = new Date().toISOString().split('T')[0]
   const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
@@ -205,6 +206,14 @@ export default function Ingresos() {
       setForm({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
       setMostrarForm(false)
     }
+  }
+
+  if (error && !loading && ingresos.length === 0) {
+    return (
+      <Layout titulo="Ingresos">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
   }
 
   return (
