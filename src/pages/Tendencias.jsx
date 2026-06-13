@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { MESES, formatMXN } from '../utils/constantes'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Legend, CartesianGrid, Cell, ReferenceLine
+  ResponsiveContainer, Legend, CartesianGrid, ReferenceLine
 } from 'recharts'
 
 export default function Tendencias() {

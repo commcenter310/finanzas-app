@@ -54,7 +54,7 @@ export default function SimuladorCredito() {
 
   const resultado = useMemo(
     () => listo ? simular(montoNum, tasaNum, pagoNum) : null,
-    [montoNum, tasaNum, pagoNum]
+    [montoNum, tasaNum, pagoNum, listo]
   )
 
   const comparativos = useMemo(() => {

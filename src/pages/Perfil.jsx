@@ -1,9 +1,10 @@
+// Perfil sincroniza el form con datos cargados async (profile) vía effects de sync
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react'
 import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
-import { formatMXN } from '../utils/constantes'
 import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
@@ -30,6 +31,7 @@ export default function Perfil() {
   const [savingBasico, setSavingBasico] = useState(false)
   const [msgBasico, setMsgBasico] = useState('')
 
+  // Sembrar el form cuando carga/cambia el profile (sync de dato externo → estado)
   useEffect(() => {
     setNombre(profile?.nombre ?? '')
     setTelefono(profile?.telefono ?? '')

@@ -29,18 +29,24 @@ export function useSupabaseQuery(queryFn, deps = [], cacheKey = null) {
     } finally {
       setLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // deps es dinámico por diseño (hook genérico de consultas)
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
   }, deps)
 
   useEffect(() => {
     if (cacheKey != null && cache.has(cacheKey)) {
-      // Hay dato cacheado para esta key → píntalo ya y revalida sin skeleton
+      // Hay dato cacheado para esta key → píntalo ya y revalida sin skeleton.
+      // setState directo aquí es intencional: queremos pintar el cache al montar.
+      /* eslint-disable react-hooks/set-state-in-effect */
       setData(cache.get(cacheKey))
       setLoading(false)
+      /* eslint-enable react-hooks/set-state-in-effect */
       fetch({ silent: true })
     } else {
       fetch()
     }
+  // cacheKey va de la mano con deps (se construye a partir de las mismas vars)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetch])
 
   const refetch = useCallback(() => fetch(), [fetch])

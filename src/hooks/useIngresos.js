@@ -41,7 +41,9 @@ export function useIngresos() {
     const [anioFecha, mesFecha] = fecha.split('-').map(Number)
     const mesAplicar  = datos.mes  != null ? datos.mes  : mesFecha
     const anioAplicar = datos.anio != null ? datos.anio : anioFecha
-    const { mes: _mes, anio: _anio, ...campos } = datos
+    const campos = { ...datos }
+    delete campos.mes
+    delete campos.anio
     const { error } = await supabase.from('ingresos').insert({
       ...campos,
       user_id: user.id,

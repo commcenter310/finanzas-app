@@ -59,10 +59,12 @@ export default function DatePicker({ value, onChange, className = '', placeholde
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  // Sincronizar vista si cambia value externamente
+  // Sincronizar vista si cambia value externamente (sync de prop → estado, intencional)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (selected) { setViewMonth(selected.getMonth()); setViewYear(selected.getFullYear()) }
-  }, [value]) // eslint-disable-line
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }

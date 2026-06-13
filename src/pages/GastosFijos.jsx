@@ -16,7 +16,7 @@ const CLASIF_OPTS = [
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '' }
 
 export default function GastosFijos() {
-  const { gastos, loading, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount } = useGastosFijos()
+  const { gastos, loading, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
   const hoyDia = new Date().getDate()

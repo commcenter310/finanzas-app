@@ -26,7 +26,7 @@ export default function PlanQuincena() {
   const toast = useToast()
   const {
     modo, setModo, esMes, rango, loading, saving,
-    ingresoEsperado, ingresoRecibido, ingresoEstimado, usandoEstimado,
+    ingresoEsperado, ingresoRecibido, usandoEstimado,
     compromisos, metasAhorro,
     totalCompromisos, totalApartado, libreSiApartasTodo, disponibleAhora, countApartados,
     apartar, quitarApartado, editarMonto, agregarManual, apartarTodo,
