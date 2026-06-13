@@ -3,7 +3,7 @@ import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare, Landmark } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // Finni chart palette
@@ -67,11 +67,11 @@ const STAT_CONFIG = (totalIngresos, totalGastos, porAsignar, ahorro) => [
 ]
 
 export default function Dashboard() {
-  const { mes, anio } = useMes()
+  const { mes } = useMes()
   const {
     loading, totalIngresos, ingresoEsperado, proyeccion, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
-    totalPresupuestado, categoriasEnRiesgo, gastosHormiga,
+    categoriasEnRiesgo, gastosHormiga,
     saldoAnterior, mesPrev, anioPrev, fijosPendientes,
   } = useDashboard()
 

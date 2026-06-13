@@ -35,10 +35,18 @@ Every data hook uses `useSupabaseQuery(queryFn, deps)` — a thin wrapper that r
 
 ### Income / balance logic (important)
 
-- **`ingresos`** — filtered by `fecha_recepcion` date range (not `mes`/`anio`). When inserting, `mes`/`anio` are derived from `fecha_recepcion` for backward compatibility.
-- **`transacciones`** — filtered by `fecha` date range (same pattern).
+Income has **two distinct concepts** so a payday late in a month can fund the next:
+- **When the money arrived** (`fecha_recepcion`) — the **Ingresos page** (`useIngresos`) filters by this date range, so you always find an income in the month you received it.
+- **Which month it applies to** (`mes`/`anio`) — the **Dashboard** (`useDashboard`) filters income by these fields. A nómina received May 30 can be marked `mes=6` so it counts toward June's balance. The Ingresos form auto-suggests next month when `fecha_recepcion` day ≥ 25, and the `MesPicker` lets you override.
+
+- **`transacciones`** — filtered by `fecha` date range.
 - **`gastos_fijos`** — filtered by `mes`/`anio` fields.
 - **`porAsignar`** in `useDashboard` = `saldoArrastrado + totalIngresos − totalGastos`, where `saldoArrastrado` is the positive remainder from the previous month. Returns `null` (not 0) when there are no ingresos and no previous-month data, so the UI can show "Sin ingresos aún" instead of a misleading negative number.
+- **`ingresoEsperado` / `proyeccion`** in `useDashboard` — if the user configured nóminas, the Dashboard compares registered vs expected income (`calcNomina`) and projects the end-of-month balance by extrapolating variable spending at the current pace.
+
+### Data fetching cache
+
+`useSupabaseQuery(queryFn, deps, cacheKey?)` accepts an optional `cacheKey`. When given, it uses a module-level stale-while-revalidate cache that survives unmount: navigating away and back paints cached data instantly and revalidates in the background (no skeleton). The `cacheKey` **must** include the same variables as `deps` (e.g. `dash:tx:${uid}:${mes}:${anio}`). Hooks without a `cacheKey` behave as before (no cache). Adopted in `useDashboard`, `useTransacciones`, `useIngresos`.
 
 ### Classification system
 
