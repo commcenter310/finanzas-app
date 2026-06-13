@@ -69,7 +69,7 @@ const STAT_CONFIG = (totalIngresos, totalGastos, porAsignar, ahorro) => [
 export default function Dashboard() {
   const { mes, anio } = useMes()
   const {
-    loading, totalIngresos, totalGastos, porAsignar,
+    loading, totalIngresos, ingresoEsperado, proyeccion, totalGastos, porAsignar,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
     totalPresupuestado, categoriasEnRiesgo, gastosHormiga,
     saldoAnterior, mesPrev, anioPrev, fijosPendientes,
@@ -159,6 +159,85 @@ export default function Dashboard() {
                 {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* ── Proyección del mes (ingreso esperado + saldo proyectado) ── */}
+        {!loading && ((ingresoEsperado != null && ingresoEsperado > 0) || (proyeccion.esMesActual && proyeccion.saldoProyectado !== null)) && (
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+                Proyección de {MESES[mes - 1]}
+              </h2>
+              <Link to="/plan-quincena"
+                className="text-xs font-semibold flex items-center gap-1 hover:gap-1.5 transition-all"
+                style={{ color: 'var(--primary-600)' }}>
+                Ver plan <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Ingreso registrado vs esperado */}
+            {ingresoEsperado != null && ingresoEsperado > 0 && (() => {
+              const pct = Math.min((totalIngresos / ingresoEsperado) * 100, 100)
+              const completo = totalIngresos >= ingresoEsperado - 0.5
+              const faltante = Math.max(0, ingresoEsperado - totalIngresos)
+              return (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1.5">
+                    <span className="font-semibold" style={{ color: 'var(--fg-1)' }}>
+                      Ingreso registrado
+                    </span>
+                    <span className="tabular" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
+                      <span style={{ color: 'var(--positive-fg)', fontWeight: 700 }}>{formatMXN(totalIngresos)}</span>
+                      <span style={{ color: 'var(--fg-4)' }}> / ~</span>
+                      {formatMXN(ingresoEsperado)}
+                    </span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                    <div className="h-full rounded-full"
+                      style={{
+                        width: `${pct}%`,
+                        background: completo ? 'var(--positive)' : 'var(--primary)',
+                        transition: 'width var(--dur-slow) var(--ease-out)',
+                      }} />
+                  </div>
+                  {!completo && faltante > 0.5 && (
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--fg-3)' }}>
+                      Faltan {formatMXN(faltante)} por registrar según tu nómina.{' '}
+                      <Link to="/ingresos" className="font-semibold" style={{ color: 'var(--primary-600)' }}>
+                        ¿Capturar quincena?
+                      </Link>
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Saldo proyectado a fin de mes */}
+            {proyeccion.esMesActual && proyeccion.saldoProyectado !== null && (
+              <div
+                className="flex items-center justify-between gap-4 px-4 py-3 rounded-[var(--r-md)]"
+                style={{
+                  background: proyeccion.saldoProyectado >= 0 ? 'var(--positive-bg)' : 'var(--negative-bg)',
+                }}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>
+                    A este ritmo terminarás {MESES[mes - 1]} con
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
+                    Gasto proyectado: {formatMXN(proyeccion.gastoProyectado)} · día {proyeccion.diaActual} de {proyeccion.diasMes}
+                  </p>
+                </div>
+                <p className="text-xl font-bold tabular flex-shrink-0"
+                  style={{
+                    color: proyeccion.saldoProyectado >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                  {proyeccion.saldoProyectado >= 0 ? '+' : ''}{formatMXN(proyeccion.saldoProyectado)}
+                </p>
+              </div>
+            )}
           </div>
         )}
 

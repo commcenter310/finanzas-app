@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { calcNomina, parseMesesPrima } from '../utils/constantes'
 
 export function useDashboard() {
   const { user, profile } = useAuth()
@@ -103,6 +104,12 @@ export function useDashboard() {
     return data || []
   }, [uid, mes, anio], `dash:presupuestos:${uid}:${mes}:${anio}`)
 
+  // Nóminas configuradas → ingreso esperado del mes (para comparar vs registrado)
+  const { data: nominas } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('nominas').select('*').eq('user_id', user.id)
+    return data ?? []
+  }, [uid], `nominas:${uid}`)
+
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
   // Excluir transacciones auto-generadas por gastos_fijos (ya contadas en totalFijos)
@@ -151,6 +158,48 @@ export function useDashboard() {
 
   const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
 
+  // ── Ingreso esperado del mes según las nóminas configuradas ──────────────
+  // null = el usuario no ha configurado ninguna nómina (no mostramos la comparación)
+  const ingresoEsperado = (() => {
+    const noms = nominas ?? []
+    if (noms.length === 0) return null
+    // Ordinario mensual: suma del neto anualizado / 12 de cada nómina
+    let total = noms.reduce((s, n) => s + calcNomina(n).ingresoOrdinarioAnual / 12, 0)
+    // Extraordinarios que caen en este mes (aguinaldo, prima, utilidades)
+    noms.forEach(n => {
+      const c = calcNomina(n)
+      if (n.tiene_aguinaldo && n.mes_aguinaldo === mes) total += c.aguinaldo
+      if (n.tiene_prima_vacacional && parseMesesPrima(n.meses_prima).includes(mes)) total += c.primaPorEvento
+      if (n.tiene_utilidades && n.mes_utilidades === mes) total += c.utilidades
+    })
+    return total
+  })()
+
+  // ── Proyección de fin de mes ─────────────────────────────────────────────
+  // Extrapola el gasto variable al ritmo actual; los fijos ya se conocen completos.
+  const proyeccion = (() => {
+    const hoy = new Date()
+    const esMesActual = mes === (hoy.getMonth() + 1) && anio === hoy.getFullYear()
+    const diasMes = new Date(anio, mes, 0).getDate()
+    const diaActual = esMesActual ? hoy.getDate() : diasMes
+    // Solo proyectamos hacia adelante en el mes en curso
+    const gastoVariableProyectado = esMesActual && diaActual > 0
+      ? (totalTx / diaActual) * diasMes
+      : totalTx
+    const gastoProyectado = totalFijos + gastoVariableProyectado
+    const baseIngreso = ingresoEsperado != null && ingresoEsperado > totalIngresos
+      ? ingresoEsperado
+      : totalIngresos
+    const hayBase = baseIngreso > 0 || saldoArrastrado > 0
+    return {
+      esMesActual,
+      diaActual,
+      diasMes,
+      gastoProyectado,
+      saldoProyectado: hayBase ? saldoArrastrado + baseIngreso - gastoProyectado : null,
+    }
+  })()
+
 
   const umbral = profile?.umbral_hormiga ?? 100
   // Solo cuentan como "hormiga" los gastos de deseo: una medicina de $50 no es hormiga, un café sí
@@ -179,6 +228,8 @@ export function useDashboard() {
     mesPrev,
     anioPrev,
     totalIngresos,
+    ingresoEsperado,
+    proyeccion,
     totalGastos,
     porAsignar,
     necesidad,
