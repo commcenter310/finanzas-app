@@ -90,6 +90,16 @@ export default function Dashboard() {
 
   const tarjetas = STAT_CONFIG(totalIngresos, totalGastos, porAsignar, ahorro)
 
+  // Usuario nuevo: sin nómina, sin ingresos, sin gastos → mostramos guía de inicio
+  const sinNada = !loading && ingresoEsperado === null
+    && totalIngresos === 0 && totalGastos === 0 && transacciones.length === 0
+  const pasosOnboarding = [
+    { emoji: '💰', label: 'Configura tu nómina',     desc: 'Para ver tu ingreso esperado y proyecciones', to: '/perfil'          },
+    { emoji: '📥', label: 'Registra tus ingresos',    desc: 'Cuánto dinero recibes este mes',              to: '/ingresos'        },
+    { emoji: '🧾', label: 'Registra tu primer gasto', desc: 'Empieza a llevar el control',                 to: '/control-gastos'  },
+    { emoji: '📊', label: 'Define tu presupuesto',    desc: 'Pon límites por categoría',                   to: '/gastos-variables' },
+  ]
+
   // Solo mostramos el error de pantalla completa si no hay nada que mostrar.
   // Con cache (SWR), si hay datos previos los dejamos visibles aunque falle el refetch.
   const hayDatos = transacciones.length > 0 || totalIngresos > 0 || totalGastos > 0
@@ -104,6 +114,33 @@ export default function Dashboard() {
   return (
     <Layout titulo="Dashboard">
       <div className="space-y-5">
+
+        {/* ── Bienvenida / primeros pasos (usuario nuevo) ── */}
+        {sinNada && (
+          <div className="card p-6" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
+            <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 18 }}>
+              👋 ¡Bienvenido a Finni Apoyo!
+            </h2>
+            <p className="text-sm mb-4" style={{ color: 'var(--fg-3)' }}>
+              Configura lo básico para sacarle todo el provecho. Te toma menos de 2 minutos.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {pasosOnboarding.map((p, i) => (
+                <Link key={p.to} to={p.to}
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] bg-white transition-all hover:shadow-md">
+                  <span className="text-2xl flex-shrink-0">{p.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold" style={{ color: 'var(--fg-1)' }}>
+                      {i + 1}. {p.label}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>{p.desc}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--primary-600)' }} />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Stat Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
