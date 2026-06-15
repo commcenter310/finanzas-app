@@ -228,15 +228,24 @@ export async function processMessage(telefono, texto) {
   // 7. Ingreso
   if (result.tipo === 'ingreso') {
     const hoy = new Date()
-    const mesAct = hoy.getMonth() + 1
-    const anioAct = hoy.getFullYear()
+    const fechaRecepcion = hoy.toISOString().split('T')[0]
+    const dia     = hoy.getDate()
+    const mesRec  = hoy.getMonth() + 1
+    const anioRec = hoy.getFullYear()
+    // Mismo criterio que la web: si el dinero llega a fin de mes (día ≥ 25),
+    // se aplica al mes siguiente (la nómina del 30 cubre la quincena del mes que entra)
+    const aplicaSiguiente = dia >= 25
+    const MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    const mesAplica  = aplicaSiguiente ? (mesRec === 12 ? 1 : mesRec + 1) : mesRec
+    const anioAplica = aplicaSiguiente ? (mesRec === 12 ? anioRec + 1 : anioRec) : anioRec
     const { error } = await supabaseAdmin.from('ingresos').insert({
       user_id: profile.id,
       concepto: result.descripcion || 'Ingreso WhatsApp',
       monto_actual: Number(result.monto),
       monto_presupuesto: 0,
-      mes: mesAct,
-      anio: anioAct,
+      fecha_recepcion: fechaRecepcion,
+      mes: mesAplica,
+      anio: anioAplica,
     })
     if (error) {
       await sendMessage(telefono, '❌ Error al guardar el ingreso. Intenta de nuevo.')
@@ -246,8 +255,9 @@ export async function processMessage(telefono, texto) {
     const respuesta = [
       `✅ *Ingreso registrado*`,
       `💰 +${fmx(result.monto)} — ${result.descripcion || 'Ingreso'}`,
-      `📅 ${hoy.toISOString().split('T')[0]}`,
-    ].join('\n')
+      `📅 ${fechaRecepcion}`,
+      aplicaSiguiente ? `📆 Aplica a ${MES[mesAplica - 1]} (lo recibiste a fin de mes)` : null,
+    ].filter(Boolean).join('\n')
     await sendMessage(telefono, respuesta)
     await logMessage(telefono, texto, respuesta, null, true, null)
     return
