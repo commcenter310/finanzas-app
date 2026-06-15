@@ -265,7 +265,9 @@ export default function ControlGastos() {
                 </div>
               )
               : (
-                <div className="overflow-x-auto">
+                <>
+                {/* Desktop: tabla */}
+                <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full min-w-[640px]">
                   <thead>
                     <tr className="border-b border-gray-50">
@@ -333,6 +335,63 @@ export default function ControlGastos() {
                   </tfoot>
                 </table>
                 </div>
+
+                {/* Mobile: tarjetas apiladas */}
+                <div className="lg:hidden divide-y divide-gray-50">
+                  {filtradas.map(t => {
+                    const esAuto = t.origen === 'gastos_fijos' || t.origen === 'deuda' || t.origen === 'ahorro'
+                    const origenLabel = t.origen === 'gastos_fijos' ? '🧾 Gasto fijo' : t.origen === 'deuda' ? '💳 Pago deuda' : t.origen === 'ahorro' ? '🐷 Ahorro' : null
+                    return (
+                      <div key={t.id} className="px-4 py-3 flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-medium text-gray-800 text-sm">{t.descripcion}</p>
+                            {t.origen === 'whatsapp' && <MessageSquare className="w-3 h-3 text-gray-300" />}
+                            {origenLabel && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 whitespace-nowrap">
+                                {origenLabel}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className={`badge-${t.clasificacion}`}>{t.clasificacion}</span>
+                            <span className="text-xs text-gray-500">
+                              {t.categorias ? `${t.categorias.icono} ${t.categorias.nombre}` : '—'}
+                            </span>
+                            <span className="text-xs text-gray-300 font-mono">· {t.fecha}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                          <span className="font-bold text-sm tabular whitespace-nowrap" style={{ color: 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>
+                            -{formatMXN(t.monto)}
+                          </span>
+                          <div className="flex gap-1">
+                            {esAuto
+                              ? <span className="w-7 h-7 flex items-center justify-center" title="Edita desde Gastos Fijos o Deudas">
+                                  <Lock className="w-3 h-3 text-gray-300" />
+                                </span>
+                              : <button onClick={() => abrirEditar(t)}
+                                  className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-400">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                            }
+                            <button onClick={() => setConfirmDelete(t)}
+                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-400">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="px-4 py-3 flex items-center justify-between bg-gray-50 font-bold text-sm">
+                    <span className="text-gray-700">{hayFiltros ? 'Subtotal filtrado' : 'TOTAL'}</span>
+                    <span className="font-mono text-primary-700">
+                      -{formatMXN(filtradas.reduce((s, t) => s + Number(t.monto), 0))}
+                    </span>
+                  </div>
+                </div>
+                </>
               )}
         </div>
 

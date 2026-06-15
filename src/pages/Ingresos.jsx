@@ -95,7 +95,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
           <input className="input text-sm py-1.5" value={form.concepto}
             onChange={e => setForm(f => ({ ...f, concepto: e.target.value }))} />
         </td>
-        <td className="px-4 py-2">
+        <td className="px-4 py-2 hidden sm:table-cell">
           <input type="number" className="input text-sm py-1.5 font-mono" value={form.monto_presupuesto}
             onChange={e => setForm(f => ({ ...f, monto_presupuesto: e.target.value }))} />
         </td>
@@ -103,8 +103,8 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
           <input type="number" className="input text-sm py-1.5 font-mono" value={form.monto_actual}
             onChange={e => setForm(f => ({ ...f, monto_actual: e.target.value }))} />
         </td>
-        <td className="px-4 py-2" />
-        <td className="px-4 py-2">
+        <td className="px-4 py-2 hidden sm:table-cell" />
+        <td className="px-4 py-2 hidden sm:table-cell">
           <DatePicker
             className="w-full"
             value={form.fecha_recepcion}
@@ -144,14 +144,14 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   return (
     <tr className="hover:bg-gray-50 group">
       <td className="px-4 py-3 font-medium text-gray-800">{ingreso.concepto}</td>
-      <td className="px-4 py-3 font-mono text-gray-500 text-sm">{formatMXN(ingreso.monto_presupuesto)}</td>
+      <td className="px-4 py-3 font-mono text-gray-500 text-sm hidden sm:table-cell">{formatMXN(ingreso.monto_presupuesto)}</td>
       <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(ingreso.monto_actual)}</td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 hidden sm:table-cell">
         <span className={`text-sm font-mono ${diff >= 0 ? 'text-positive' : 'text-negative'}`}>
           {diff >= 0 ? '+' : ''}{formatMXN(diff)}
         </span>
       </td>
-      <td className="px-4 py-3 text-gray-400 text-sm">{ingreso.fecha_recepcion ?? '—'}</td>
+      <td className="px-4 py-3 text-gray-400 text-sm hidden sm:table-cell">{ingreso.fecha_recepcion ?? '—'}</td>
       <td className="px-4 py-3">
         <span
           className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
@@ -300,13 +300,21 @@ export default function Ingresos() {
             </div>
           )}
 
-          {/* Tabla */}
+          {/* Tabla (en móvil se ocultan columnas secundarias) */}
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[500px]">
+          <table className="w-full sm:min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-50">
-                {['Concepto','Presupuestado','Recibido','Diferencia','Fecha recibido','Aplica en',''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                {[
+                  { h: 'Concepto' },
+                  { h: 'Presupuestado', cls: 'hidden sm:table-cell' },
+                  { h: 'Recibido' },
+                  { h: 'Diferencia', cls: 'hidden sm:table-cell' },
+                  { h: 'Fecha recibido', cls: 'hidden sm:table-cell' },
+                  { h: 'Aplica en' },
+                  { h: '' },
+                ].map(({ h, cls }) => (
+                  <th key={h} className={`px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide ${cls ?? ''}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -325,9 +333,10 @@ export default function Ingresos() {
               <tfoot className="border-t border-gray-100 bg-gray-50">
                 <tr>
                   <td className="px-4 py-3 font-bold text-gray-700 text-sm">TOTAL</td>
-                  <td className="px-4 py-3 font-mono font-bold text-gray-500">{formatMXN(totales.presupuesto)}</td>
+                  <td className="px-4 py-3 font-mono font-bold text-gray-500 hidden sm:table-cell">{formatMXN(totales.presupuesto)}</td>
                   <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(totales.actual)}</td>
-                  <td colSpan={4} />
+                  <td className="hidden sm:table-cell" colSpan={3} />
+                  <td />
                 </tr>
               </tfoot>
             )}

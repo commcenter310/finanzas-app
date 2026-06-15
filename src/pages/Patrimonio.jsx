@@ -192,7 +192,9 @@ export default function Patrimonio() {
             : activos.length === 0
               ? <div className="py-12 text-center text-gray-300 text-sm">No tienes activos registrados · Agrega tu primera propiedad, inversión o cuenta</div>
               : (
-                <div className="overflow-x-auto">
+                <>
+                {/* Desktop: tabla */}
+                <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full min-w-[400px]">
                   <thead>
                     <tr className="border-b border-gray-50">
@@ -234,6 +236,37 @@ export default function Patrimonio() {
                   </tfoot>
                 </table>
                 </div>
+
+                {/* Mobile: tarjetas apiladas */}
+                <div className="lg:hidden divide-y divide-gray-50">
+                  {activos.map(a => {
+                    const tipo = TIPOS.find(t => t.value === a.tipo)
+                    return (
+                      <div key={a.id} className="px-4 py-3 flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-gray-800 text-sm truncate">{a.nombre}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{tipo?.label ?? a.tipo}</p>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-600 text-sm whitespace-nowrap">{formatMXN(a.monto)}</span>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button onClick={() => abrirEditar(a)}
+                            className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center text-gray-400">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setConfirmDelete(a)}
+                            className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-400">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="px-4 py-3 flex items-center justify-between bg-gray-50 font-bold text-sm">
+                    <span className="text-gray-700">Total Activos</span>
+                    <span className="font-mono text-emerald-600">{formatMXN(totalActivos)}</span>
+                  </div>
+                </div>
+                </>
               )}
         </div>
 
