@@ -1,0 +1,172 @@
+import { describe, it, expect } from 'vitest'
+import {
+  sumarTransaccionesSinFijos, calcularTotalGastos, calcularSaldoAnterior,
+  calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
+  calcularIngresoEsperado, calcularProyeccion,
+} from './calculos'
+
+describe('sumarTransaccionesSinFijos', () => {
+  it('excluye las transacciones con origen gastos_fijos (evita doble conteo)', () => {
+    const tx = [
+      { monto: 100, origen: 'manual' },
+      { monto: 200, origen: 'gastos_fijos' }, // no debe contar
+      { monto: 50,  origen: 'whatsapp' },
+    ]
+    expect(sumarTransaccionesSinFijos(tx)).toBe(150)
+  })
+  it('incluye deuda y ahorro (no se duplican en el dashboard)', () => {
+    const tx = [{ monto: 100, origen: 'deuda' }, { monto: 300, origen: 'ahorro' }]
+    expect(sumarTransaccionesSinFijos(tx)).toBe(400)
+  })
+  it('maneja null/undefined', () => {
+    expect(sumarTransaccionesSinFijos(null)).toBe(0)
+    expect(sumarTransaccionesSinFijos(undefined)).toBe(0)
+    expect(sumarTransaccionesSinFijos([])).toBe(0)
+  })
+})
+
+describe('calcularTotalGastos', () => {
+  it('suma fijos (monto_actual) + transacciones variables', () => {
+    const fijos = [{ monto_actual: 1000 }, { monto_actual: 500 }]
+    const tx = [{ monto: 200, origen: 'manual' }, { monto: 300, origen: 'gastos_fijos' }]
+    const r = calcularTotalGastos(fijos, tx)
+    expect(r.totalFijos).toBe(1500)
+    expect(r.totalTx).toBe(200) // excluye el origen gastos_fijos
+    expect(r.totalGastos).toBe(1700)
+  })
+  it('arranca en 0 sin datos', () => {
+    expect(calcularTotalGastos(null, null)).toEqual({ totalFijos: 0, totalTx: 0, totalGastos: 0 })
+  })
+})
+
+describe('calcularSaldoAnterior', () => {
+  it('devuelve null cuando no hay ningún dato del mes anterior', () => {
+    expect(calcularSaldoAnterior(undefined, undefined, undefined)).toBeNull()
+  })
+  it('positivo cuando sobró dinero', () => {
+    const saldo = calcularSaldoAnterior(
+      [{ monto_actual: 10000 }], [{ monto_actual: 3000 }], [{ monto: 2000, origen: 'manual' }]
+    )
+    expect(saldo).toBe(5000) // 10000 - 3000 - 2000
+  })
+  it('negativo cuando se gastó de más', () => {
+    const saldo = calcularSaldoAnterior([{ monto_actual: 1000 }], [], [{ monto: 1500, origen: 'manual' }])
+    expect(saldo).toBe(-500)
+  })
+  it('excluye gastos_fijos del mes anterior para no duplicar', () => {
+    const saldo = calcularSaldoAnterior(
+      [{ monto_actual: 5000 }], [{ monto_actual: 1000 }],
+      [{ monto: 1000, origen: 'gastos_fijos' }, { monto: 500, origen: 'manual' }]
+    )
+    expect(saldo).toBe(3500) // 5000 - 1000 - 500 (el de gastos_fijos no cuenta)
+  })
+})
+
+describe('calcularSaldoArrastrado', () => {
+  it('solo arrastra saldo positivo', () => {
+    expect(calcularSaldoArrastrado(5000)).toBe(5000)
+    expect(calcularSaldoArrastrado(-500)).toBe(0) // no se heredan deudas
+    expect(calcularSaldoArrastrado(null)).toBe(0)
+  })
+})
+
+describe('calcularPorAsignar', () => {
+  it('null cuando no hay ingresos ni saldo anterior (evita negativo engañoso)', () => {
+    expect(calcularPorAsignar({ totalIngresos: 0, totalGastos: 0, saldoAnterior: null })).toBeNull()
+  })
+  it('ingresos − gastos + saldo positivo arrastrado', () => {
+    expect(calcularPorAsignar({ totalIngresos: 10000, totalGastos: 4000, saldoAnterior: 2000 })).toBe(8000)
+  })
+  it('no arrastra el déficit del mes anterior', () => {
+    // saldoAnterior negativo no resta; solo cuentan ingresos − gastos
+    expect(calcularPorAsignar({ totalIngresos: 10000, totalGastos: 4000, saldoAnterior: -3000 })).toBe(6000)
+  })
+  it('puede ser negativo si gastas más de lo que entró este mes', () => {
+    expect(calcularPorAsignar({ totalIngresos: 5000, totalGastos: 8000, saldoAnterior: 0 })).toBe(-3000)
+  })
+})
+
+describe('calcularGastosHormiga', () => {
+  const tx = [
+    { monto: 50,  clasificacion: 'deseo' },      // hormiga
+    { monto: 50,  clasificacion: 'necesidad' },  // NO (medicina barata)
+    { monto: 200, clasificacion: 'deseo' },      // NO (sobre el umbral)
+    { monto: 30,  clasificacion: 'deseo' },      // hormiga
+  ]
+  it('solo cuenta deseos bajo el umbral', () => {
+    const r = calcularGastosHormiga(tx, 100)
+    expect(r.count).toBe(2)
+    expect(r.total).toBe(80)
+    expect(r.umbral).toBe(100)
+  })
+  it('una necesidad barata no es hormiga', () => {
+    const r = calcularGastosHormiga([{ monto: 50, clasificacion: 'necesidad' }], 100)
+    expect(r.count).toBe(0)
+  })
+})
+
+describe('calcularIngresoEsperado', () => {
+  it('null sin nóminas configuradas', () => {
+    expect(calcularIngresoEsperado([], 6)).toBeNull()
+    expect(calcularIngresoEsperado(null, 6)).toBeNull()
+  })
+  it('ordinario: neto quincenal × 24 / 12', () => {
+    const nominas = [{ monto_neto: 10000, frecuencia: 'quincenal', tipo: 'sueldo' }]
+    // 10000 * 24 / 12 = 20000 mensual
+    expect(calcularIngresoEsperado(nominas, 6)).toBe(20000)
+  })
+  it('suma aguinaldo solo en su mes', () => {
+    const nominas = [{
+      monto_neto: 10000, frecuencia: 'quincenal', tipo: 'sueldo',
+      sueldo_base_mensual: 12000, tiene_aguinaldo: true, dias_aguinaldo: 15, mes_aguinaldo: 12,
+    }]
+    const sinAguinaldo = calcularIngresoEsperado(nominas, 6)  // junio: sin aguinaldo
+    const conAguinaldo = calcularIngresoEsperado(nominas, 12) // diciembre: con aguinaldo
+    expect(conAguinaldo).toBeGreaterThan(sinAguinaldo)
+    // aguinaldo = (12000/30) * 15 = 6000
+    expect(conAguinaldo - sinAguinaldo).toBe(6000)
+  })
+})
+
+describe('calcularProyeccion', () => {
+  it('en mes pasado no proyecta, usa el gasto real', () => {
+    // hoy fijo en julio; proyectamos junio (mes pasado)
+    const hoy = new Date(2026, 6, 10) // 10 jul 2026
+    const r = calcularProyeccion({
+      totalTx: 3000, totalFijos: 2000, totalIngresos: 10000,
+      ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    expect(r.esMesActual).toBe(false)
+    expect(r.gastoProyectado).toBe(5000) // 2000 fijos + 3000 tx reales (sin extrapolar)
+    expect(r.saldoProyectado).toBe(5000) // 10000 - 5000
+  })
+  it('en mes actual extrapola el gasto variable al ritmo del día', () => {
+    const hoy = new Date(2026, 5, 15) // 15 jun, mes de 30 días
+    const r = calcularProyeccion({
+      totalTx: 1500, totalFijos: 2000, totalIngresos: 20000,
+      ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    expect(r.esMesActual).toBe(true)
+    expect(r.diaActual).toBe(15)
+    expect(r.diasMes).toBe(30)
+    // gasto variable proyectado = 1500 / 15 * 30 = 3000; + 2000 fijos = 5000
+    expect(r.gastoProyectado).toBe(5000)
+    expect(r.saldoProyectado).toBe(15000) // 20000 - 5000
+  })
+  it('usa ingresoEsperado si es mayor que lo registrado', () => {
+    const hoy = new Date(2026, 5, 30)
+    const r = calcularProyeccion({
+      totalTx: 0, totalFijos: 0, totalIngresos: 10000,
+      ingresoEsperado: 20000, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    expect(r.saldoProyectado).toBe(20000) // usa esperado (20000), no registrado (10000)
+  })
+  it('saldoProyectado null si no hay base de ingreso', () => {
+    const hoy = new Date(2026, 5, 15)
+    const r = calcularProyeccion({
+      totalTx: 100, totalFijos: 0, totalIngresos: 0,
+      ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    expect(r.saldoProyectado).toBeNull()
+  })
+})

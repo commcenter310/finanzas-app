@@ -5,13 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev       # Start Vite dev server (http://localhost:5173)
-npm run build     # Production build → dist/
-npm run lint      # ESLint check
-npm run preview   # Preview production build locally
+npm run dev        # Start Vite dev server (http://localhost:5173)
+npm run build      # Production build → dist/
+npm run lint       # ESLint check
+npm run preview    # Preview production build locally
+npm test           # Run unit tests once (Vitest)
+npm run test:watch # Run tests in watch mode
 ```
 
-No test suite exists. Verify changes with `npm run build` before committing.
+Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/utils/constantes.js` (`calcNomina`), covered by `*.test.js` next to them. Run `npm test` and `npm run build` before committing changes to calculations.
 
 ## Architecture
 

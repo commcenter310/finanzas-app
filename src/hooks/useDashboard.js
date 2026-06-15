@@ -2,7 +2,10 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
-import { calcNomina, parseMesesPrima } from '../utils/constantes'
+import {
+  calcularTotalGastos, calcularSaldoAnterior, calcularSaldoArrastrado,
+  calcularPorAsignar, calcularGastosHormiga, calcularIngresoEsperado, calcularProyeccion,
+} from '../utils/calculos'
 
 export function useDashboard() {
   const { user, profile } = useAuth()
@@ -111,29 +114,12 @@ export function useDashboard() {
   }, [uid], `nominas:${uid}`)
 
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
-  const totalFijos    = gastosFijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-  // Excluir transacciones auto-generadas por gastos_fijos (ya contadas en totalFijos)
   const txSinFijos    = transacciones?.filter(t => t.origen !== 'gastos_fijos') ?? []
-  // Nota: 'deuda' y 'ahorro' SÍ se incluyen en totalTx (no tienen fuente duplicada en el dashboard)
-  const totalTx       = txSinFijos.reduce((s, t) => s + Number(t.monto), 0)
-  const totalGastos   = totalFijos + totalTx
+  const { totalFijos, totalTx, totalGastos } = calcularTotalGastos(gastosFijos, transacciones)
 
-  // Saldo arrastrado del mes anterior
-  const saldoAnterior = (() => {
-    const prevIng   = ingresosPrev?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
-    const prevFijos = gastosFijosPrev?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-    // También excluir gastos_fijos del mes anterior para evitar doble conteo
-    const prevTxFilt = transaccionesPrev?.filter(t => t.origen !== 'gastos_fijos') ?? []
-    const prevTx    = prevTxFilt.reduce((s, t) => s + Number(t.monto), 0)
-    if (!ingresosPrev && !gastosFijosPrev && !transaccionesPrev) return null
-    return prevIng - prevFijos - prevTx
-  })()
-
-  // Solo arrastramos saldo positivo (no deudas del mes anterior)
-  const saldoArrastrado = saldoAnterior !== null && saldoAnterior > 0 ? saldoAnterior : 0
-  // Si no hay ingresos ni saldo anterior, porAsignar = null para evitar negativo engañoso
-  const sinDatos = totalIngresos === 0 && saldoAnterior === null
-  const porAsignar = sinDatos ? null : saldoArrastrado + totalIngresos - totalGastos
+  const saldoAnterior   = calcularSaldoAnterior(ingresosPrev, gastosFijosPrev, transaccionesPrev)
+  const saldoArrastrado = calcularSaldoArrastrado(saldoAnterior)
+  const porAsignar      = calcularPorAsignar({ totalIngresos, totalGastos, saldoAnterior })
 
   const necesidad = [
     ...gastosFijos?.filter(g => g.clasificacion === 'necesidad') ?? [],
@@ -158,59 +144,17 @@ export function useDashboard() {
 
   const totalPresupuestado = presupuestos?.reduce((s, p) => s + Number(p.monto_limite ?? 0), 0) ?? 0
 
-  // ── Ingreso esperado del mes según las nóminas configuradas ──────────────
-  // null = el usuario no ha configurado ninguna nómina (no mostramos la comparación)
-  const ingresoEsperado = (() => {
-    const noms = nominas ?? []
-    if (noms.length === 0) return null
-    // Ordinario mensual: suma del neto anualizado / 12 de cada nómina
-    let total = noms.reduce((s, n) => s + calcNomina(n).ingresoOrdinarioAnual / 12, 0)
-    // Extraordinarios que caen en este mes (aguinaldo, prima, utilidades)
-    noms.forEach(n => {
-      const c = calcNomina(n)
-      if (n.tiene_aguinaldo && n.mes_aguinaldo === mes) total += c.aguinaldo
-      if (n.tiene_prima_vacacional && parseMesesPrima(n.meses_prima).includes(mes)) total += c.primaPorEvento
-      if (n.tiene_utilidades && n.mes_utilidades === mes) total += c.utilidades
-    })
-    return total
-  })()
+  // Ingreso esperado del mes según nóminas (null = sin nóminas configuradas)
+  const ingresoEsperado = calcularIngresoEsperado(nominas, mes)
 
-  // ── Proyección de fin de mes ─────────────────────────────────────────────
-  // Extrapola el gasto variable al ritmo actual; los fijos ya se conocen completos.
-  const proyeccion = (() => {
-    const hoy = new Date()
-    const esMesActual = mes === (hoy.getMonth() + 1) && anio === hoy.getFullYear()
-    const diasMes = new Date(anio, mes, 0).getDate()
-    const diaActual = esMesActual ? hoy.getDate() : diasMes
-    // Solo proyectamos hacia adelante en el mes en curso
-    const gastoVariableProyectado = esMesActual && diaActual > 0
-      ? (totalTx / diaActual) * diasMes
-      : totalTx
-    const gastoProyectado = totalFijos + gastoVariableProyectado
-    const baseIngreso = ingresoEsperado != null && ingresoEsperado > totalIngresos
-      ? ingresoEsperado
-      : totalIngresos
-    const hayBase = baseIngreso > 0 || saldoArrastrado > 0
-    return {
-      esMesActual,
-      diaActual,
-      diasMes,
-      gastoProyectado,
-      saldoProyectado: hayBase ? saldoArrastrado + baseIngreso - gastoProyectado : null,
-    }
-  })()
+  // Proyección de fin de mes (extrapola gasto variable al ritmo actual)
+  const proyeccion = calcularProyeccion({
+    totalTx, totalFijos, totalIngresos, ingresoEsperado, saldoArrastrado, mes, anio,
+  })
 
 
   const umbral = profile?.umbral_hormiga ?? 100
-  // Solo cuentan como "hormiga" los gastos de deseo: una medicina de $50 no es hormiga, un café sí
-  const hormigaTx = transacciones?.filter(t =>
-    Number(t.monto) <= umbral && t.clasificacion === 'deseo'
-  ) ?? []
-  const gastosHormiga = {
-    count: hormigaTx.length,
-    total: hormigaTx.reduce((s, t) => s + Number(t.monto), 0),
-    umbral,
-  }
+  const gastosHormiga = calcularGastosHormiga(transacciones, umbral)
 
   const categoriasEnRiesgo = presupuestos
     ?.map(p => {
