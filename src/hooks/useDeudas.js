@@ -7,15 +7,16 @@ export function useDeudas() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
 
+  const uid = user?.id
   // ── Deudas manuales ──────────────────────────────────────────────────────
-  const { data: deudas, loading, refetch } = useSupabaseQuery(async () => {
+  const { data: deudas, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase.from('deudas')
       .select('*, abonos_deuda(*)')
       .eq('user_id', user.id).eq('liquidada', false)
       .order('saldo_actual', { ascending: false })
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `deudas:${uid}`)
 
   // ── Tarjetas con saldo pendiente (se muestran automáticamente como deudas) ──
   const { data: creditosConSaldo, refetch: refetchCreditos } = useSupabaseQuery(async () => {
@@ -27,7 +28,7 @@ export function useDeudas() {
       .gt('saldo_utilizado', 0)
       .order('saldo_utilizado', { ascending: false })
     return data ?? []
-  }, [user?.id])
+  }, [uid], `deudas:creditos:${uid}`)
 
   // Mapear créditos al mismo "shape" que una deuda para unificar la lista
   const tarjetasComoDeuda = (creditosConSaldo ?? []).map(c => ({
@@ -131,6 +132,8 @@ export function useDeudas() {
   return {
     deudas: todasDeudas,
     loading,
+    error,
+    refetch,
     saving,
     totalDeuda,
     totalPagoMensual,

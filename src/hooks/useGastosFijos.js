@@ -12,7 +12,9 @@ export function useGastosFijos() {
   // Ref para evitar auto-copiar más de una vez por mes/año
   const autoCopiadoKeyRef = useRef(null)
 
-  const { data: gastos, loading, refetch } = useSupabaseQuery(async () => {
+  // Sin cacheKey a propósito: el efecto de auto-copia de recurrentes depende de
+  // datos frescos; cachear un mes vacío podría disparar inserts duplicados.
+  const { data: gastos, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('gastos_fijos')
       .select('*, categorias(nombre, icono)')
@@ -113,5 +115,5 @@ export function useGastosFijos() {
     })
   }, [loading, gastos, mes, anio]) // eslint-disable-line
 
-  return { gastos: gastos ?? [], loading, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
+  return { gastos: gastos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
 }

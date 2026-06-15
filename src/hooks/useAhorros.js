@@ -9,20 +9,21 @@ export function useAhorros() {
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
 
-  const { data: ahorros, loading, refetch } = useSupabaseQuery(async () => {
+  const uid = user?.id
+  const { data: ahorros, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ahorros').select('*')
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
       .order('created_at', { ascending: true })
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `ahorros:${uid}:${mes}:${anio}`)
 
   const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
       .select('id, nombre').eq('user_id', user.id).eq('activo', true)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `metodos:${uid}`)
 
   const totales = {
     meta:   ahorros?.reduce((s, a) => s + Number(a.monto_meta), 0) ?? 0,
@@ -72,5 +73,5 @@ export function useAhorros() {
     return { error: errTx || errAhorro }
   }
 
-  return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, saving, totales, agregar, actualizar, eliminar, depositar }
+  return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
 }

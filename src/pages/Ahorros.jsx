@@ -5,6 +5,7 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
+import ErrorState   from '../components/ui/ErrorState'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
@@ -129,7 +130,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
 }
 
 export default function Ahorros() {
-  const { ahorros, metodos, loading, saving, totales, agregar, actualizar, eliminar, depositar } = useAhorros()
+  const { ahorros, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar } = useAhorros()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -143,6 +144,14 @@ export default function Ahorros() {
   }
 
   const pctTotal = totales.meta > 0 ? Math.min((totales.actual / totales.meta) * 100, 100) : 0
+
+  if (error && !loading && ahorros.length === 0) {
+    return (
+      <Layout titulo="Ahorros">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Ahorros">

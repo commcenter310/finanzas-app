@@ -7,21 +7,22 @@ export function usePatrimonio() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
 
-  const { data: activos, loading: loadingActivos, refetch: refetchActivos } = useSupabaseQuery(async () => {
+  const uid = user?.id
+  const { data: activos, loading: loadingActivos, error: errActivos, refetch: refetchActivos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('activos').select('*').eq('user_id', user.id).eq('activo', true)
       .order('tipo').order('nombre')
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `activos:${uid}`)
 
-  const { data: creditos, loading: loadingCreditos } = useSupabaseQuery(async () => {
+  const { data: creditos, loading: loadingCreditos, refetch: refetchCreditos } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('creditos').select('id, nombre, saldo_utilizado, limite_credito')
       .eq('user_id', user.id).eq('activo', true).order('nombre')
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `patrimonio:creditos:${uid}`)
 
   const { data: snapshots, loading: loadingSnaps, refetch: refetchSnaps } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -29,7 +30,7 @@ export function usePatrimonio() {
       .order('anio').order('mes').limit(24)
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `snapshots:${uid}`)
 
   const totalActivos   = activos?.reduce((s, a) => s + Number(a.monto), 0) ?? 0
   const totalDeudas    = creditos?.reduce((s, c) => s + Number(c.saldo_utilizado ?? 0), 0) ?? 0
@@ -74,6 +75,8 @@ export function usePatrimonio() {
 
   return {
     loading: loadingActivos || loadingCreditos || loadingSnaps,
+    error: errActivos || null,
+    refetch: () => { refetchActivos(); refetchCreditos(); refetchSnaps() },
     saving,
     activos:  activos  ?? [],
     creditos: creditos ?? [],

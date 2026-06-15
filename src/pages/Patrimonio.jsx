@@ -4,6 +4,7 @@ import { usePatrimonio } from '../hooks/usePatrimonio'
 import { formatMXN, MESES } from '../utils/constantes'
 import { Plus, Pencil, Trash2, Save, TrendingUp, TrendingDown, Landmark } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import ErrorState from '../components/ui/ErrorState'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend, ReferenceLine
@@ -21,7 +22,7 @@ const FORM_VACIO = { nombre: '', tipo: 'cuenta', monto: '' }
 
 export default function Patrimonio() {
   const {
-    loading, saving,
+    loading, error, refetch, saving,
     activos, creditos, snapshots,
     totalActivos, totalDeudas, patrimonioNeto,
     agregar, actualizar, eliminar, guardarSnapshot,
@@ -84,6 +85,14 @@ export default function Patrimonio() {
 
   const colorPN = patrimonioNeto >= 0 ? 'text-emerald-600' : 'text-red-600'
   const colorPNbg = patrimonioNeto >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'
+
+  if (error && !loading && activos.length === 0 && snapshots.length === 0) {
+    return (
+      <Layout titulo="Patrimonio Neto">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Patrimonio Neto">

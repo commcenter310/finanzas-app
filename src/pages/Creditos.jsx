@@ -4,6 +4,7 @@ import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import ErrorState from '../components/ui/ErrorState'
 
 // ── Resumen global de utilización ────────────────────────────────────────────
 function ResumenGeneral({ creditos }) {
@@ -262,7 +263,7 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
 const FORM_VACIO = { nombre:'', fecha_corte:'', fecha_pago:'', limite_credito:'', saldo_utilizado:'', metodo_vinculado_id:'' }
 
 export default function Creditos() {
-  const { creditos, metodos, loading, saving, agregar, actualizar, eliminar, vincularMetodo } = useCreditos()
+  const { creditos, metodos, loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo } = useCreditos()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -306,6 +307,14 @@ export default function Creditos() {
   }
 
   const totalSaldo = creditos.reduce((s, c) => s + Number(c.saldo_utilizado ?? 0), 0)
+
+  if (error && !loading && creditos.length === 0) {
+    return (
+      <Layout titulo="Créditos">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Créditos">

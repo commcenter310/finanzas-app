@@ -22,7 +22,7 @@ export function usePlanQuincena() {
     : rangoQuincena(mes, anio, quincenaSel)
 
   // ── Ingresos del periodo (automático por fecha_recepcion) ─────────────────
-  const { data: ingresos, loading: loadingIng } = useSupabaseQuery(async () => {
+  const { data: ingresos, loading: loadingIng, error: errIng, refetch: refetchIng } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ingresos')
       .select('id, concepto, monto_presupuesto, monto_actual, fecha_recepcion')
@@ -34,7 +34,7 @@ export function usePlanQuincena() {
   }, [user?.id, mes, anio, modo])
 
   // ── Gastos fijos del mes ──────────────────────────────────────────────────
-  const { data: gastosFijos, loading: loadingGF } = useSupabaseQuery(async () => {
+  const { data: gastosFijos, loading: loadingGF, refetch: refetchGF } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('gastos_fijos')
       .select('id, concepto, monto_previsto, clasificacion, dia_cobro, pagado')
@@ -44,7 +44,7 @@ export function usePlanQuincena() {
   }, [user?.id, mes, anio])
 
   // ── Deudas activas con pago mensual ───────────────────────────────────────
-  const { data: deudas, loading: loadingD } = useSupabaseQuery(async () => {
+  const { data: deudas, loading: loadingD, refetch: refetchD } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('deudas')
       .select('id, nombre, pago_mensual, fecha_proximo_pago')
@@ -210,6 +210,8 @@ export function usePlanQuincena() {
   return {
     modo, setModo, esMes, rango,
     loading: loadingIng || loadingGF || loadingD || loadingA,
+    error: errIng || null,
+    recargar: () => { refetchIng(); refetchGF(); refetchD(); refetch() },
     saving,
     ingresos: ingresos ?? [],
     ingresoEsperado, ingresoRecibido, ingresoEstimado, usandoEstimado,

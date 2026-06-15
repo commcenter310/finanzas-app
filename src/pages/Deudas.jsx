@@ -6,11 +6,12 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
+import ErrorState   from '../components/ui/ErrorState'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
 export default function Deudas() {
-  const { deudas, loading, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, actualizar, abonar, abonarCredito, eliminar } = useDeudas()
+  const { deudas, loading, error, refetch, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, actualizar, abonar, abonarCredito, eliminar } = useDeudas()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -71,6 +72,14 @@ export default function Deudas() {
       await abonar(deudaId, monto)
     }
     setMontoAbono(m => ({ ...m, [deudaId]: '' }))
+  }
+
+  if (error && !loading && deudas.length === 0) {
+    return (
+      <Layout titulo="Deudas">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
   }
 
   return (

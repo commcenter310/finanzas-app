@@ -5,6 +5,7 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
+import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 
 const CLASIF_OPTS = [
@@ -16,7 +17,7 @@ const CLASIF_OPTS = [
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '' }
 
 export default function GastosFijos() {
-  const { gastos, loading, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
+  const { gastos, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
   const hoyDia = new Date().getDate()
@@ -76,6 +77,14 @@ export default function GastosFijos() {
     if (g.dia_cobro < hoyDia) return 'vencido'
     if (g.dia_cobro - hoyDia <= 3) return 'proximo'
     return 'normal'
+  }
+
+  if (error && !loading && gastos.length === 0) {
+    return (
+      <Layout titulo="Gastos Fijos">
+        <ErrorState onRetry={refetch} mensaje={error} />
+      </Layout>
+    )
   }
 
   return (

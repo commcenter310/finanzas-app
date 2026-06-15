@@ -7,20 +7,21 @@ export function useCreditos() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
 
-  const { data: creditos, loading, refetch } = useSupabaseQuery(async () => {
+  const uid = user?.id
+  const { data: creditos, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('creditos').select('*').eq('user_id', user.id).eq('activo', true)
       .order('nombre')
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `creditos:${uid}`)
 
   const { data: metodos, refetch: refetchMetodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
       .select('id, nombre, tipo, credito_id')
       .eq('user_id', user.id).eq('activo', true)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `metodos:${uid}`)
 
   const agregar = async (datos) => {
     setSaving(true)
@@ -54,5 +55,5 @@ export function useCreditos() {
     refetchMetodos()
   }
 
-  return { creditos: creditos ?? [], metodos: metodos ?? [], loading, saving, agregar, actualizar, eliminar, vincularMetodo }
+  return { creditos: creditos ?? [], metodos: metodos ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
 }

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
+import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 import ProyeccionView from '../components/plan/ProyeccionView'
 
@@ -25,7 +26,7 @@ export default function PlanQuincena() {
   const { mes, anio } = useMes()
   const toast = useToast()
   const {
-    modo, setModo, esMes, rango, loading, saving,
+    modo, setModo, esMes, rango, loading, error, recargar, saving,
     ingresoEsperado, ingresoRecibido, usandoEstimado,
     compromisos, metasAhorro,
     totalCompromisos, totalApartado, libreSiApartasTodo, disponibleAhora, countApartados,
@@ -72,6 +73,14 @@ export default function PlanQuincena() {
       toast('Apartado agregado ✓', 'success')
       setFormManual(FORM_MANUAL); setMostrarManual(false)
     }
+  }
+
+  if (error && !loading && compromisos.length === 0) {
+    return (
+      <Layout titulo="Plan de Quincena">
+        <ErrorState onRetry={recargar} mensaje={error} />
+      </Layout>
+    )
   }
 
   return (
