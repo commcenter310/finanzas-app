@@ -3,35 +3,39 @@ import Layout from '../components/layout/Layout'
 import { formatMXN } from '../utils/constantes'
 import { Calculator, TrendingDown, AlertTriangle } from 'lucide-react'
 
-function simular(monto, tasaAnual, pagoMensual) {
-  const tasaMensual = tasaAnual / 100 / 12
-  if (tasaMensual <= 0) return { imposible: false, meses: 0, totalIntereses: 0, totalPagado: monto, tabla: [] }
-  if (pagoMensual <= monto * tasaMensual) return { imposible: true }
+// Simula la amortización de un crédito.
+// periodosPorAnio: 12 = pago mensual · 24 = pago quincenal (muchos préstamos bancarios)
+function simular(monto, tasaAnual, pagoPeriodo, periodosPorAnio = 12) {
+  const tasaPeriodo = tasaAnual / 100 / periodosPorAnio
+  if (tasaPeriodo <= 0) return { imposible: false, periodos: 0, totalIntereses: 0, totalPagado: monto, tabla: [] }
+  if (pagoPeriodo <= monto * tasaPeriodo) return { imposible: true }
 
   let saldo = monto
   let totalIntereses = 0
   const tabla = []
 
-  while (saldo > 0.01 && tabla.length < 600) {
-    const interes    = saldo * tasaMensual
-    const amortizacion = Math.min(pagoMensual - interes, saldo)
+  // Cap alto porque en quincenal hay el doble de periodos
+  while (saldo > 0.01 && tabla.length < 1200) {
+    const interes      = saldo * tasaPeriodo
+    const amortizacion = Math.min(pagoPeriodo - interes, saldo)
     saldo -= amortizacion
     totalIntereses += interes
     tabla.push({
-      mes:          tabla.length + 1,
+      n:            tabla.length + 1,
       pago:         amortizacion + interes,
-      interes:      interes,
-      amortizacion: amortizacion,
+      interes,
+      amortizacion,
       saldo:        Math.max(saldo, 0),
     })
   }
 
   const fechaFin = new Date()
-  fechaFin.setMonth(fechaFin.getMonth() + tabla.length)
+  if (periodosPorAnio === 24) fechaFin.setDate(fechaFin.getDate() + tabla.length * 15)
+  else                        fechaFin.setMonth(fechaFin.getMonth() + tabla.length)
 
   return {
     imposible: false,
-    meses:          tabla.length,
+    periodos:       tabla.length,
     totalIntereses,
     totalPagado:    monto + totalIntereses,
     tabla,
@@ -39,13 +43,31 @@ function simular(monto, tasaAnual, pagoMensual) {
   }
 }
 
+// Texto humano de la duración. En quincenal muestra el equivalente en meses.
+function duracionLabel(periodos, esQuincenal) {
+  if (esQuincenal) {
+    const meses = periodos / 2
+    const mesesStr = Number.isInteger(meses) ? `${meses}` : meses.toFixed(1)
+    return { grande: `${periodos} quincenas`, chico: `≈ ${mesesStr} meses` }
+  }
+  const grande = periodos < 12 ? `${periodos} meses` : `${Math.floor(periodos / 12)}a ${periodos % 12}m`
+  return { grande, chico: null }
+}
+
 const COMPARATIVOS = [0, 500, 1000, 2000]
 
 export default function SimuladorCredito() {
-  const [monto,    setMonto]    = useState('')
-  const [tasa,     setTasa]     = useState('')
-  const [pago,     setPago]     = useState('')
-  const [verTabla, setVerTabla] = useState(false)
+  const [monto,      setMonto]      = useState('')
+  const [tasa,       setTasa]       = useState('')
+  const [pago,       setPago]       = useState('')
+  const [frecuencia, setFrecuencia] = useState('mensual') // 'mensual' | 'quincenal'
+  const [verTabla,   setVerTabla]   = useState(false)
+
+  const esQuincenal     = frecuencia === 'quincenal'
+  const periodosPorAnio = esQuincenal ? 24 : 12
+  const unidad          = esQuincenal ? 'quincena' : 'mes'
+  const unidadPlural    = esQuincenal ? 'quincenas' : 'meses'
+  const unidadAbrev     = esQuincenal ? 'q' : 'm'
 
   const montoNum = Number(monto)
   const tasaNum  = Number(tasa)
@@ -53,19 +75,21 @@ export default function SimuladorCredito() {
   const listo    = montoNum > 0 && tasaNum > 0 && pagoNum > 0
 
   const resultado = useMemo(
-    () => listo ? simular(montoNum, tasaNum, pagoNum) : null,
-    [montoNum, tasaNum, pagoNum, listo]
+    () => listo ? simular(montoNum, tasaNum, pagoNum, periodosPorAnio) : null,
+    [montoNum, tasaNum, pagoNum, periodosPorAnio, listo]
   )
 
   const comparativos = useMemo(() => {
     if (!listo) return []
     return COMPARATIVOS.map(extra => {
-      const r = simular(montoNum, tasaNum, pagoNum + extra)
+      const r = simular(montoNum, tasaNum, pagoNum + extra, periodosPorAnio)
       return { extra, ...r }
     })
-  }, [montoNum, tasaNum, pagoNum, listo])
+  }, [montoNum, tasaNum, pagoNum, periodosPorAnio, listo])
 
-  const pagoMinEstimado = montoNum > 0 ? (montoNum * 0.015).toFixed(0) : ''
+  // Interés por periodo del primer pago — referencia de pago mínimo para no crecer la deuda
+  const interesPeriodo = montoNum > 0 && tasaNum > 0 ? montoNum * (tasaNum / 100 / periodosPorAnio) : 0
+  const pagoMinEstimado = montoNum > 0 ? (montoNum * (esQuincenal ? 0.0075 : 0.015)).toFixed(0) : ''
 
   return (
     <Layout titulo="Simulador de Crédito">
@@ -77,6 +101,33 @@ export default function SimuladorCredito() {
             <div className="flex items-center gap-2 mb-2">
               <Calculator className="w-5 h-5 text-primary-700" />
               <h2 className="font-bold text-gray-900">Datos del Crédito</h2>
+            </div>
+
+            {/* Frecuencia de pago */}
+            <div>
+              <label className="label">Frecuencia de pago</label>
+              <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                {[
+                  { v: 'mensual',   t: 'Mensual'   },
+                  { v: 'quincenal', t: 'Quincenal' },
+                ].map(op => {
+                  const active = frecuencia === op.v
+                  return (
+                    <button key={op.v} type="button"
+                      onClick={() => setFrecuencia(op.v)}
+                      className="flex-1 py-2 text-sm font-semibold transition-colors"
+                      style={{
+                        background: active ? 'var(--primary)' : 'var(--surface-2)',
+                        color:      active ? '#fff' : 'var(--fg-3)',
+                      }}>
+                      {op.t}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Muchos préstamos bancarios se pagan por quincena (2 pagos al mes).
+              </p>
             </div>
 
             <div>
@@ -98,12 +149,12 @@ export default function SimuladorCredito() {
               </p>
             </div>
             <div>
-              <label className="label">Pago mensual que harás ($)</label>
+              <label className="label">Pago {esQuincenal ? 'quincenal' : 'mensual'} que harás ($)</label>
               <input type="number" className="input font-mono" placeholder={pagoMinEstimado || '2,000'}
                 value={pago} onChange={e => setPago(e.target.value)} />
               {pagoMinEstimado && (
                 <p className="text-xs text-gray-400 mt-1">
-                  Pago mínimo estimado (~1.5%): {formatMXN(Number(pagoMinEstimado))}
+                  Pago mínimo estimado: {formatMXN(Number(pagoMinEstimado))} por {unidad}
                 </p>
               )}
             </div>
@@ -123,50 +174,51 @@ export default function SimuladorCredito() {
                 <AlertTriangle className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--negative)' }} />
                 <p className="font-bold text-lg mb-1" style={{ color: 'var(--negative-fg)' }}>Pago insuficiente</p>
                 <p className="text-sm text-gray-500">
-                  El pago mensual no cubre ni los intereses.<br />
-                  Interés mensual: {formatMXN(montoNum * (tasaNum / 100 / 12))}
+                  El pago por {unidad} no cubre ni los intereses.<br />
+                  Interés por {unidad}: {formatMXN(interesPeriodo)}
                 </p>
                 <p className="text-xs text-gray-400 mt-3">
-                  Necesitas pagar más de {formatMXN(montoNum * (tasaNum / 100 / 12))} solo para no crecer la deuda.
+                  Necesitas pagar más de {formatMXN(interesPeriodo)} cada {unidad} solo para no crecer la deuda.
                 </p>
               </div>
             )}
 
-            {listo && resultado && !resultado.imposible && (
-              <div className="space-y-4">
-                <h2 className="font-bold text-gray-900">Resultado</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
-                    <p className="text-xs text-gray-400 mb-1">Tiempo para liquidar</p>
-                    <p className="text-2xl font-bold font-mono text-primary-700">
-                      {resultado.meses < 12
-                        ? `${resultado.meses} meses`
-                        : `${Math.floor(resultado.meses/12)}a ${resultado.meses % 12}m`}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">~{resultado.fechaFin}</p>
-                  </div>
-                  <div className="rounded-xl p-4 border" style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
-                    <p className="text-xs text-gray-400 mb-1">Intereses totales</p>
-                    <p className="text-2xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(resultado.totalIntereses)}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {((resultado.totalIntereses / montoNum) * 100).toFixed(0)}% del monto original
-                    </p>
-                  </div>
-                  <div className="rounded-xl p-4 border" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
-                    <p className="text-xs text-gray-400 mb-1">Costo total</p>
-                    <p className="text-2xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(resultado.totalPagado)}</p>
-                    <p className="text-xs text-gray-400 mt-1">Capital + intereses</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <p className="text-xs text-gray-400 mb-1">Pago mensual</p>
-                    <p className="text-2xl font-bold font-mono text-gray-700">{formatMXN(pagoNum)}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {((pagoNum / montoNum) * 100).toFixed(1)}% del capital
-                    </p>
+            {listo && resultado && !resultado.imposible && (() => {
+              const dur = duracionLabel(resultado.periodos, esQuincenal)
+              return (
+                <div className="space-y-4">
+                  <h2 className="font-bold text-gray-900">Resultado</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
+                      <p className="text-xs text-gray-400 mb-1">Tiempo para liquidar</p>
+                      <p className="text-2xl font-bold font-mono text-primary-700">{dur.grande}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {dur.chico ? `${dur.chico} · ` : ''}~{resultado.fechaFin}
+                      </p>
+                    </div>
+                    <div className="rounded-xl p-4 border" style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
+                      <p className="text-xs text-gray-400 mb-1">Intereses totales</p>
+                      <p className="text-2xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(resultado.totalIntereses)}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {((resultado.totalIntereses / montoNum) * 100).toFixed(0)}% del monto original
+                      </p>
+                    </div>
+                    <div className="rounded-xl p-4 border" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
+                      <p className="text-xs text-gray-400 mb-1">Costo total</p>
+                      <p className="text-2xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(resultado.totalPagado)}</p>
+                      <p className="text-xs text-gray-400 mt-1">Capital + intereses</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-xs text-gray-400 mb-1">Pago por {unidad}</p>
+                      <p className="text-2xl font-bold font-mono text-gray-700">{formatMXN(pagoNum)}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {((pagoNum / montoNum) * 100).toFixed(1)}% del capital
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         </div>
 
@@ -181,16 +233,17 @@ export default function SimuladorCredito() {
               <table className="w-full min-w-[480px]">
                 <thead>
                   <tr className="border-b border-gray-50">
-                    {['Pago mensual','Meses','Intereses totales','Costo total','Ahorro vs. base'].map(h => (
+                    {[`Pago por ${unidad}`, unidadPlural.charAt(0).toUpperCase() + unidadPlural.slice(1), 'Intereses totales', 'Costo total', 'Ahorro vs. base'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {comparativos.map(({ extra, imposible, meses, totalIntereses, totalPagado }) => {
+                  {comparativos.map(({ extra, imposible, periodos, totalIntereses, totalPagado }) => {
                     if (imposible) return null
                     const ahorro = comparativos[0].totalIntereses - totalIntereses
                     const esBase = extra === 0
+                    const dur = duracionLabel(periodos, esQuincenal)
                     return (
                       <tr key={extra} className={esBase ? 'bg-primary-50' : 'hover:bg-gray-50'}>
                         <td className="px-4 py-3 font-mono font-bold text-gray-800">
@@ -198,7 +251,7 @@ export default function SimuladorCredito() {
                           {extra > 0 && <span className="text-emerald-600 text-xs ml-1">(+{formatMXN(extra)})</span>}
                         </td>
                         <td className="px-4 py-3 font-mono text-gray-700">
-                          {meses < 12 ? `${meses}m` : `${Math.floor(meses/12)}a ${meses%12}m`}
+                          {esQuincenal ? `${periodos}${unidadAbrev} (${dur.chico?.replace('≈ ', '~')})` : dur.grande}
                         </td>
                         <td className="px-4 py-3 font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(totalIntereses)}</td>
                         <td className="px-4 py-3 font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalPagado)}</td>
@@ -220,7 +273,7 @@ export default function SimuladorCredito() {
             <button
               onClick={() => setVerTabla(v => !v)}
               className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              <span>Tabla de amortización ({resultado.tabla.length} pagos)</span>
+              <span>Tabla de amortización ({resultado.tabla.length} pagos {esQuincenal ? 'quincenales' : 'mensuales'})</span>
               <span className="text-gray-400 text-xs">{verTabla ? 'Ocultar ▲' : 'Ver detalle ▼'}</span>
             </button>
             {verTabla && (
@@ -235,8 +288,8 @@ export default function SimuladorCredito() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {resultado.tabla.map(row => (
-                      <tr key={row.mes} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-gray-400 font-mono">{row.mes}</td>
+                      <tr key={row.n} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-gray-400 font-mono">{row.n}</td>
                         <td className="px-4 py-2 font-mono text-gray-700">{formatMXN(row.pago)}</td>
                         <td className="px-4 py-2 font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(row.interes)}</td>
                         <td className="px-4 py-2 font-mono" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(row.amortizacion)}</td>
