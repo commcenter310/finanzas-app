@@ -14,10 +14,10 @@ const CLASIF_OPTS = [
   { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
 ]
 
-const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '' }
+const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '' }
 
 export default function GastosFijos() {
-  const { gastos, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
+  const { gastos, categorias, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
   const hoyDia = new Date().getDate()
@@ -35,6 +35,12 @@ export default function GastosFijos() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const setF = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
+  // Al elegir categoría, hereda su clasificación (necesidad/deseo/ahorro)
+  const onCategoriaChange = (catId) => {
+    const cat = categorias.find(c => c.id === Number(catId))
+    setForm(f => ({ ...f, categoria_id: catId, clasificacion: cat?.clasificacion ?? f.clasificacion }))
+  }
+
   const abrirEditar = (g) => {
     setEditandoId(g.id)
     setForm({
@@ -43,6 +49,7 @@ export default function GastosFijos() {
       clasificacion: g.clasificacion,
       es_recurrente: g.es_recurrente,
       dia_cobro:     g.dia_cobro ?? '',
+      categoria_id:  g.categoria_id ?? '',
     })
     setMostrarForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -56,7 +63,7 @@ export default function GastosFijos() {
 
   const handleGuardar = async () => {
     if (!form.concepto || !form.monto_previsto) return
-    const datos = { ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null }
+    const datos = { ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
     if (editandoId) {
       await actualizar(editandoId, datos)
       toast('Gasto fijo actualizado ✓', 'success')
@@ -141,7 +148,7 @@ export default function GastosFijos() {
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-100">
             <h3 className="font-bold text-gray-900 mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
               <div className="col-span-2 lg:col-span-1">
                 <label className="label">Concepto</label>
                 <input className="input" placeholder="Ej: Netflix, Renta, Luz..."
@@ -151,6 +158,15 @@ export default function GastosFijos() {
                 <label className="label">Monto ($)</label>
                 <input type="number" className="input font-mono" placeholder="0.00"
                   value={form.monto_previsto} onChange={e => setF('monto_previsto', e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Categoría</label>
+                <FilterSelect
+                  value={form.categoria_id}
+                  onChange={onCategoriaChange}
+                  options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
+                  placeholder="Sin categoría"
+                />
               </div>
               <div>
                 <label className="label">Día de cobro</label>
@@ -222,6 +238,9 @@ export default function GastosFijos() {
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <span className={`badge-${g.clasificacion} text-xs`}>{g.clasificacion}</span>
+                        {g.categorias && (
+                          <span className="text-xs text-gray-400">{g.categorias.icono} {g.categorias.nombre}</span>
+                        )}
                         {g.dia_cobro && (
                           <span className="flex items-center gap-1 text-xs font-mono text-gray-400">
                             <CalendarClock className="w-3 h-3" />

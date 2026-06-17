@@ -25,6 +25,14 @@ export function useGastosFijos() {
     return data ?? []
   }, [user?.id, mes, anio])
 
+  const { data: categorias } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('categorias')
+      .select('id, nombre, icono, clasificacion')
+      .eq('user_id', user.id).eq('activa', true)
+      .order('clasificacion').order('nombre')
+    return data ?? []
+  }, [user?.id])
+
   const totales = {
     previsto: gastos?.reduce((s, g) => s + Number(g.monto_previsto), 0) ?? 0,
     actual:   gastos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0,
@@ -56,6 +64,7 @@ export function useGastosFijos() {
         descripcion: gasto.concepto,
         monto: Number(gasto.monto_previsto),
         clasificacion: gasto.clasificacion,
+        categoria_id: gasto.categoria_id ?? null,
         fecha: hoy,
         origen: 'gastos_fijos',
       }).select('id').single()
@@ -115,5 +124,5 @@ export function useGastosFijos() {
     })
   }, [loading, gastos, mes, anio]) // eslint-disable-line
 
-  return { gastos: gastos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
+  return { gastos: gastos ?? [], categorias: categorias ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
 }

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { ensureCategoria } from '../utils/categorias'
 
 export function useAhorros() {
   const { user } = useAuth()
@@ -54,12 +55,14 @@ export function useAhorros() {
   const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
     setSaving(true)
     const montoNum = Number(monto)
+    const catId = await ensureCategoria(user.id, { nombre: 'Ahorro', icono: '🐷', clasificacion: 'ahorro' })
     const [{ error: errTx }, { error: errAhorro }] = await Promise.all([
       supabase.from('transacciones').insert({
         user_id:        user.id,
         descripcion:    `Ahorro: ${ahorro.concepto}`,
         monto:          montoNum,
         clasificacion:  'ahorro',
+        categoria_id:   catId,
         fecha,
         origen:         'ahorro',
         metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
