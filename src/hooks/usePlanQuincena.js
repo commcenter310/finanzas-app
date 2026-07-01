@@ -58,9 +58,9 @@ export function usePlanQuincena() {
   const { data: metasAhorro } = useSupabaseQuery(async () => {
     const { data } = await supabase
       .from('ahorros').select('id, concepto')
-      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+      .eq('user_id', user.id)
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [user?.id])
 
   // ── Nómina principal (para estimar ingreso si no hay ingresos registrados) ─
   const { data: nominaPrincipal } = useSupabaseQuery(async () => {

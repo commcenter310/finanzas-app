@@ -11,14 +11,16 @@ export function useAhorros() {
   const [saving, setSaving] = useState(false)
 
   const uid = user?.id
+  // Los fondos de ahorro son PERMANENTES: no dependen del mes. Una meta creada
+  // en cualquier mes se ve siempre y su saldo (monto_actual) acumula en el tiempo.
   const { data: ahorros, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('ahorros').select('*')
-      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: true })
     if (error) throw error
     return data ?? []
-  }, [uid, mes, anio], `ahorros:${uid}:${mes}:${anio}`)
+  }, [uid], `ahorros:${uid}`)
 
   const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
