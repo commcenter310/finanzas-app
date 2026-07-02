@@ -66,6 +66,20 @@ export const calcularIngresoEsperado = (nominas, mes) => {
   return total
 }
 
+// Días reales hasta la próxima ocurrencia de un día del mes (ej. "día 30 de pago").
+// Usa el calendario real: meses de 28/29/30/31 días. Si el día objetivo no existe
+// en el mes (ej. día 31 en junio), se recorre al último día de ese mes.
+export const diasHastaDiaDelMes = (diaObjetivo, desde = new Date()) => {
+  if (diaObjetivo == null) return null
+  const hoy = desde.getDate()
+  const diasEsteMes = new Date(desde.getFullYear(), desde.getMonth() + 1, 0).getDate()
+  if (diaObjetivo >= hoy) {
+    return Math.min(diaObjetivo, diasEsteMes) - hoy
+  }
+  const diasProxMes = new Date(desde.getFullYear(), desde.getMonth() + 2, 0).getDate()
+  return (diasEsteMes - hoy) + Math.min(diaObjetivo, diasProxMes)
+}
+
 // Proyección de fin de mes: extrapola el gasto variable al ritmo actual.
 // Los gastos fijos ya se conocen completos; solo se proyecta lo variable.
 export const calcularProyeccion = ({

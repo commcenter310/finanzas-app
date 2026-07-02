@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   sumarTransaccionesSinFijos, calcularTotalGastos, calcularSaldoAnterior,
   calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
-  calcularIngresoEsperado, calcularProyeccion,
+  calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -125,6 +125,29 @@ describe('calcularIngresoEsperado', () => {
     expect(conAguinaldo).toBeGreaterThan(sinAguinaldo)
     // aguinaldo = (12000/30) * 15 = 6000
     expect(conAguinaldo - sinAguinaldo).toBe(6000)
+  })
+})
+
+describe('diasHastaDiaDelMes', () => {
+  it('mismo mes: del 15 al 20 son 5 días', () => {
+    expect(diasHastaDiaDelMes(20, new Date(2026, 5, 15))).toBe(5) // jun 2026
+  })
+  it('cruce de mes con calendario real: 31 ene → día 1 es 1 día (no 0 ni negativo)', () => {
+    expect(diasHastaDiaDelMes(1, new Date(2026, 0, 31))).toBe(1) // ene 31 → feb 1
+  })
+  it('febrero: pago día 30 y hoy es 28 feb → el pago cae hoy (último día del mes)', () => {
+    // Convención bancaria: si el día no existe en el mes, se recorre al último día
+    expect(diasHastaDiaDelMes(30, new Date(2026, 1, 28))).toBe(0) // feb 2026 tiene 28
+  })
+  it('día 31 en mes de 30 días → clampa al último día del mes', () => {
+    expect(diasHastaDiaDelMes(31, new Date(2026, 5, 15))).toBe(15) // jun 15 → jun 30
+  })
+  it('el bug viejo: hoy 31, pago día 1 → con fórmula "30-hoy+dia" daba 0; real es 1', () => {
+    // Fórmula vieja: 30 - 31 + 1 = 0 ❌ · Real: mañana = 1 ✓
+    expect(diasHastaDiaDelMes(1, new Date(2026, 6, 31))).toBe(1) // jul 31 → ago 1
+  })
+  it('null → null (sin fecha configurada, no NaN)', () => {
+    expect(diasHastaDiaDelMes(null)).toBeNull()
   })
 })
 

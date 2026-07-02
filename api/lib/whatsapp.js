@@ -529,15 +529,24 @@ async function buildCreditos(userId) {
 
   if (!creditos?.length) return 'No tienes créditos registrados.'
 
-  const hoy  = new Date().getDate()
+  const ahora = new Date()
+  const hoy   = ahora.getDate()
+  // Días reales hasta un día del mes (meses de 28-31 días; día inexistente → último del mes)
+  const diasHasta = (diaObj) => {
+    if (diaObj == null) return null
+    const diasEsteMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate()
+    if (diaObj >= hoy) return Math.min(diaObj, diasEsteMes) - hoy
+    const diasProxMes = new Date(ahora.getFullYear(), ahora.getMonth() + 2, 0).getDate()
+    return (diasEsteMes - hoy) + Math.min(diaObj, diasProxMes)
+  }
 
   const lista = creditos.map(c => {
     const enRango  = c.mejor_fecha_inicio && c.mejor_fecha_fin
       ? hoy >= c.mejor_fecha_inicio && hoy <= c.mejor_fecha_fin : false
-    const diasPago = c.fecha_pago >= hoy ? c.fecha_pago - hoy : 30 - hoy + c.fecha_pago
+    const diasPago = diasHasta(c.fecha_pago)
     return [
       `💳 *${c.nombre}*`,
-      `Corte: día ${c.fecha_corte} | Pago: día ${c.fecha_pago} (${diasPago} días)`,
+      `Corte: día ${c.fecha_corte ?? '?'} | Pago: día ${c.fecha_pago ?? '?'}${diasPago != null ? ` (${diasPago} días)` : ''}`,
       c.limite_credito ? `Saldo: ${fmx(c.saldo_utilizado)} de ${fmx(c.limite_credito)}` : `Saldo: ${fmx(c.saldo_utilizado)}`,
       enRango ? '✅ Buena fecha para usar' : `Mejor usar entre días ${c.mejor_fecha_inicio ?? '?'} y ${c.mejor_fecha_fin ?? '?'}`,
     ].join('\n')

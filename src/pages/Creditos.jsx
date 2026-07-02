@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Layout from '../components/layout/Layout'
 import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
+import { diasHastaDiaDelMes } from '../utils/calculos'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import ErrorState from '../components/ui/ErrorState'
@@ -106,10 +107,12 @@ function ResumenGeneral({ creditos }) {
 
 function calcularFechasOptimas(fechaCorte) {
   const buf = 5
+  // Días del mes en curso para el "wrap" de rangos que cruzan de mes
+  const diasMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
   return {
-    inicioOptimo: fechaCorte === 31 ? 1 : fechaCorte + 1,
-    finOptimo:    fechaCorte - buf > 0 ? fechaCorte - buf : 31 + fechaCorte - buf,
-    inicioEvitar: fechaCorte - buf + 1 > 0 ? fechaCorte - buf + 1 : 31 + fechaCorte - buf + 1,
+    inicioOptimo: fechaCorte >= diasMes ? 1 : fechaCorte + 1,
+    finOptimo:    fechaCorte - buf > 0 ? fechaCorte - buf : diasMes + fechaCorte - buf,
+    inicioEvitar: fechaCorte - buf + 1 > 0 ? fechaCorte - buf + 1 : diasMes + fechaCorte - buf + 1,
     finEvitar:    fechaCorte,
   }
 }
@@ -122,10 +125,9 @@ function estaEnRango(hoy, inicio, fin) {
 
 function getAlerta(credito) {
   const hoy = new Date().getDate()
-  const diasParaCorte = credito.fecha_corte >= hoy
-    ? credito.fecha_corte - hoy : 30 - hoy + credito.fecha_corte
-  const diasParaPago = credito.fecha_pago >= hoy
-    ? credito.fecha_pago - hoy : 30 - hoy + credito.fecha_pago
+  // Días con calendario real (meses de 28-31 días)
+  const diasParaCorte = diasHastaDiaDelMes(credito.fecha_corte) ?? 99
+  const diasParaPago  = diasHastaDiaDelMes(credito.fecha_pago)  ?? 99
   const { inicioOptimo, finOptimo, inicioEvitar, finEvitar } = calcularFechasOptimas(credito.fecha_corte)
   return {
     diasParaCorte, diasParaPago,
