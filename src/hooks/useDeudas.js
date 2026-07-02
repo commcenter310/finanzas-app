@@ -65,16 +65,19 @@ export function useDeudas() {
   const abonar = async (deuda_id, monto, notas = '') => {
     const hoy = new Date().toISOString().split('T')[0]
     const deuda = deudas?.find(d => d.id === deuda_id)
-    const nuevo = deuda ? Math.max(0, Number(deuda.saldo_actual) - Number(monto)) : null
+    // Sobrepago: registrar solo hasta el saldo real, no más
+    const saldo = Number(deuda?.saldo_actual ?? 0)
+    const montoAplicado = deuda ? Math.min(Number(monto), saldo) : Number(monto)
+    const nuevo = deuda ? Math.max(0, saldo - montoAplicado) : null
     const catId = await ensureCategoria(user.id, { nombre: 'Deudas', icono: '💳', clasificacion: 'necesidad' })
 
     await Promise.all([
-      supabase.from('abonos_deuda').insert({ deuda_id, monto: Number(monto), fecha: hoy, notas }),
+      supabase.from('abonos_deuda').insert({ deuda_id, monto: montoAplicado, fecha: hoy, notas }),
       deuda && supabase.from('deudas').update({ saldo_actual: nuevo, liquidada: nuevo === 0 }).eq('id', deuda_id),
       supabase.from('transacciones').insert({
         user_id: user.id,
         descripcion: `Pago deuda: ${deuda?.nombre ?? 'Deuda'}`,
-        monto: Number(monto),
+        monto: montoAplicado,
         clasificacion: 'necesidad',
         categoria_id: catId,
         fecha: hoy,
@@ -82,22 +85,26 @@ export function useDeudas() {
       }),
     ])
     refetch()
+    return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
   }
 
   // Pagar saldo de tarjeta de crédito → actualiza saldo_utilizado Y guarda historial
   const abonarCredito = async (creditoId, monto) => {
     const credito = creditosConSaldo?.find(c => c.id === creditoId)
-    if (!credito) return
-    const nuevoSaldo = Math.max(0, Number(credito.saldo_utilizado) - Number(monto))
+    if (!credito) return { recortado: false }
+    // Sobrepago: registrar solo hasta el saldo utilizado real
+    const saldo = Number(credito.saldo_utilizado)
+    const montoAplicado = Math.min(Number(monto), saldo)
+    const nuevoSaldo = Math.max(0, saldo - montoAplicado)
     const hoy = new Date().toISOString().split('T')[0]
     const catId = await ensureCategoria(user.id, { nombre: 'Deudas', icono: '💳', clasificacion: 'necesidad' })
     await Promise.all([
       supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId),
-      supabase.from('pagos_credito').insert({ credito_id: creditoId, user_id: user.id, monto: Number(monto), fecha: hoy }),
+      supabase.from('pagos_credito').insert({ credito_id: creditoId, user_id: user.id, monto: montoAplicado, fecha: hoy }),
       supabase.from('transacciones').insert({
         user_id: user.id,
         descripcion: `Pago tarjeta: ${credito.nombre}`,
-        monto: Number(monto),
+        monto: montoAplicado,
         clasificacion: 'necesidad',
         categoria_id: catId,
         fecha: hoy,
@@ -105,6 +112,7 @@ export function useDeudas() {
       }),
     ])
     refetchCreditos()
+    return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
   }
 
   const actualizar = async (id, datos) => {

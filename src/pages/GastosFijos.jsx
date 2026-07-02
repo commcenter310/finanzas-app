@@ -5,6 +5,7 @@ import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
+import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 
@@ -34,6 +35,30 @@ export default function GastosFijos() {
   const [form, setForm] = useState(FORM_VACIO)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const setF = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  // Diálogo de pago: pregunta monto y fecha REALES antes de marcar pagado
+  const [pagando, setPagando] = useState(null) // gasto en proceso de pago
+  const [formPago, setFormPago] = useState({ monto: '', fecha: '' })
+
+  const abrirDialogoPago = (g) => {
+    // Fecha sugerida: el día de cobro del gasto en su mes, o hoy si no tiene
+    const hoy = new Date().toISOString().split('T')[0]
+    let fechaSugerida = hoy
+    if (g.dia_cobro && g.mes && g.anio) {
+      const diasDelMes = new Date(g.anio, g.mes, 0).getDate()
+      const dia = Math.min(g.dia_cobro, diasDelMes)
+      fechaSugerida = `${g.anio}-${String(g.mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+    }
+    setFormPago({ monto: g.monto_previsto, fecha: fechaSugerida })
+    setPagando(g)
+  }
+
+  const confirmarPago = async () => {
+    if (!pagando) return
+    await togglePagado(pagando, { monto: formPago.monto, fecha: formPago.fecha })
+    toast('Pago registrado ✓', 'success')
+    setPagando(null)
+  }
 
   // Al elegir categoría, hereda su clasificación (necesidad/deseo/ahorro)
   const onCategoriaChange = (catId) => {
@@ -284,9 +309,9 @@ export default function GastosFijos() {
                     )}
                   </div>
 
-                  {/* Botón pago */}
+                  {/* Botón pago: al marcar pide monto/fecha reales; desmarcar es directo */}
                   <button
-                    onClick={() => togglePagado(g)}
+                    onClick={() => g.pagado ? togglePagado(g) : abrirDialogoPago(g)}
                     className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-all"
                     style={g.pagado
                       ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }
@@ -313,6 +338,48 @@ export default function GastosFijos() {
         onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
         onCancel={() => setConfirmDelete(null)}
       />
+
+      {/* Diálogo de pago: monto y fecha reales */}
+      {pagando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="card p-6 w-full max-w-sm shadow-xl">
+            <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--fg-1)' }}>
+              Pagar: {pagando.concepto}
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--fg-3)' }}>
+              Confirma cuánto pagaste y qué día (pre-llenado con lo previsto).
+            </p>
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="label">¿Cuánto pagaste? ($)</label>
+                <input type="number" className="input font-mono"
+                  value={formPago.monto}
+                  onChange={e => setFormPago(f => ({ ...f, monto: e.target.value }))} />
+                {Number(formPago.monto) !== Number(pagando.monto_previsto) && formPago.monto !== '' && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--warning-fg)' }}>
+                    Previsto: {formatMXN(pagando.monto_previsto)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="label">¿Qué día?</label>
+                <DatePicker
+                  value={formPago.fecha}
+                  onChange={v => setFormPago(f => ({ ...f, fecha: v }))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button className="btn-ghost" onClick={() => setPagando(null)}>Cancelar</button>
+              <button className="btn-primary"
+                disabled={!formPago.monto || Number(formPago.monto) <= 0}
+                onClick={confirmarPago}>
+                Confirmar pago
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

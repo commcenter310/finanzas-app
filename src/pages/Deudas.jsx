@@ -7,11 +7,13 @@ import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil 
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import { useToast } from '../components/ui/Toast'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
 
 export default function Deudas() {
   const { deudas, loading, error, refetch, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, actualizar, abonar, abonarCredito, eliminar } = useDeudas()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -62,14 +64,18 @@ export default function Deudas() {
     if (!monto || Number(monto) <= 0) return
     const deuda = deudas.find(d => d.id === deudaId)
     if (deuda && Number(monto) > Number(deuda.saldo_actual)) {
-      alert(`El pago ($${Number(monto).toLocaleString('es-MX')}) no puede ser mayor al saldo actual ($${Number(deuda.saldo_actual).toLocaleString('es-MX')})`)
+      toast(`El pago (${formatMXN(monto)}) es mayor al saldo (${formatMXN(deuda.saldo_actual)}). Ajusta el monto.`, 'error')
       return
     }
     // Si es tarjeta de crédito, actualiza saldo_utilizado en creditos
-    if (deuda?.tipo === 'credito') {
-      await abonarCredito(deuda.credito_id, monto)
+    const res = deuda?.tipo === 'credito'
+      ? await abonarCredito(deuda.credito_id, monto)
+      : await abonar(deudaId, monto)
+    // Defensa de respaldo: si el hook recortó el pago, avisar
+    if (res?.recortado) {
+      toast(`Se registró ${formatMXN(res.montoAplicado)} (el saldo era menor al pago capturado)`, 'info')
     } else {
-      await abonar(deudaId, monto)
+      toast('Pago registrado ✓', 'success')
     }
     setMontoAbono(m => ({ ...m, [deudaId]: '' }))
   }

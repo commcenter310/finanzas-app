@@ -55,23 +55,26 @@ export function useGastosFijos() {
     return { error }
   }
 
-  const togglePagado = async (gasto) => {
+  // opciones: { monto, fecha } — monto/fecha REALES del pago (si difieren de lo previsto)
+  const togglePagado = async (gasto, opciones = {}) => {
     const hoy = new Date().toISOString().split('T')[0]
     if (!gasto.pagado) {
+      const montoReal = opciones.monto != null && opciones.monto !== '' ? Number(opciones.monto) : Number(gasto.monto_previsto)
+      const fechaReal = opciones.fecha || hoy
       // Marcar como pagado → crear transacción en Control de Gastos
       const { data: tx } = await supabase.from('transacciones').insert({
         user_id: user.id,
         descripcion: gasto.concepto,
-        monto: Number(gasto.monto_previsto),
+        monto: montoReal,
         clasificacion: gasto.clasificacion,
         categoria_id: gasto.categoria_id ?? null,
-        fecha: hoy,
+        fecha: fechaReal,
         origen: 'gastos_fijos',
       }).select('id').single()
       await supabase.from('gastos_fijos').update({
         pagado: true,
-        monto_actual: gasto.monto_previsto,
-        fecha_pago: hoy,
+        monto_actual: montoReal,
+        fecha_pago: fechaReal,
         transaccion_id: tx?.id ?? null,
       }).eq('id', gasto.id)
     } else {
