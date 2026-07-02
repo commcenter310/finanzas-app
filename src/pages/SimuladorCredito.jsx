@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import Layout from '../components/layout/Layout'
+import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
+import FilterSelect from '../components/ui/FilterSelect'
 import { Calculator, TrendingDown, AlertTriangle } from 'lucide-react'
 
 // Simula la amortización de un crédito.
@@ -57,11 +59,23 @@ function duracionLabel(periodos, esQuincenal) {
 const COMPARATIVOS = [0, 500, 1000, 2000]
 
 export default function SimuladorCredito() {
+  const { deudas } = useDeudas()
   const [monto,      setMonto]      = useState('')
   const [tasa,       setTasa]       = useState('')
   const [pago,       setPago]       = useState('')
   const [frecuencia, setFrecuencia] = useState('mensual') // 'mensual' | 'quincenal'
   const [verTabla,   setVerTabla]   = useState(false)
+  const [deudaSel,   setDeudaSel]   = useState('')
+
+  // Pre-llenar con una deuda o tarjeta real (saldo, tasa y pago si los tiene)
+  const cargarDeuda = (id) => {
+    setDeudaSel(id)
+    const d = deudas.find(x => String(x.id) === String(id))
+    if (!d) return
+    setMonto(String(d.saldo_actual ?? ''))
+    setTasa(d.tasa_interes != null ? String(d.tasa_interes) : '')
+    setPago(d.pago_mensual != null ? String(d.pago_mensual) : '')
+  }
 
   const esQuincenal     = frecuencia === 'quincenal'
   const periodosPorAnio = esQuincenal ? 24 : 12
@@ -102,6 +116,25 @@ export default function SimuladorCredito() {
               <Calculator className="w-5 h-5 text-primary-700" />
               <h2 className="font-bold text-gray-900">Datos del Crédito</h2>
             </div>
+
+            {/* Cargar una deuda o tarjeta real */}
+            {deudas.length > 0 && (
+              <div>
+                <label className="label">Cargar una deuda mía <span className="text-fg-4 font-normal">(opcional)</span></label>
+                <FilterSelect
+                  value={deudaSel}
+                  onChange={cargarDeuda}
+                  options={deudas.map(d => ({
+                    value: d.id,
+                    label: `${d.tipo === 'credito' ? '💳 ' : ''}${d.nombre} — ${formatMXN(d.saldo_actual)}`,
+                  }))}
+                  placeholder="Elegir deuda o tarjeta..."
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Pre-llena saldo, tasa y pago con tus datos reales.
+                </p>
+              </div>
+            )}
 
             {/* Frecuencia de pago */}
             <div>
