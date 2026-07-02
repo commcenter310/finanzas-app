@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosVariables } from '../hooks/useGastosVariables'
 import { formatMXN } from '../utils/constantes'
@@ -94,10 +94,20 @@ function TarjetaCategoria({ cat, onActualizar }) {
 export default function GastosVariables() {
   const {
     loading, categorias, actualizarPresupuesto,
-    copiarDelMesAnterior, proyeccionTotal, diasTranscurridos, diasDelMes
+    copiarDelMesAnterior, autoCopiadosCount, proyeccionTotal, diasTranscurridos, diasDelMes
   } = useGastosVariables()
   const [filtro, setFiltro] = useState('todas')
   const [mensajeCopia, setMensajeCopia] = useState('')
+
+  // Aviso cuando los presupuestos se copiaron solos del mes anterior
+  const prevAutoCopRef = useRef(0)
+  useEffect(() => {
+    if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
+      prevAutoCopRef.current = autoCopiadosCount
+      setMensajeCopia(`✅ ${autoCopiadosCount} presupuestos copiados del mes anterior`)
+      setTimeout(() => setMensajeCopia(''), 4000)
+    }
+  }, [autoCopiadosCount])
 
   const catsConLimite = categorias.filter(c => c.limite > 0)
   const filtradas     = filtro === 'todas' ? categorias : categorias.filter(c => c.clasificacion === filtro)

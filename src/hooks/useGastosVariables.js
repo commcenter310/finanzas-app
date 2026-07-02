@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
@@ -6,6 +7,9 @@ import { useSupabaseQuery } from './useSupabaseQuery'
 export function useGastosVariables() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
+  const [autoCopiadosCount, setAutoCopiadosCount] = useState(0)
+  // Ref para no auto-copiar más de una vez por mes/año
+  const autoCopiadoKeyRef = useRef(null)
 
   const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
   const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
@@ -64,6 +68,20 @@ export function useGastosVariables() {
     return { copiados: anterior.length }
   }
 
+  // Auto-copiar presupuestos del mes anterior cuando el mes está vacío
+  // (mismo patrón que gastos fijos recurrentes; el upsert evita duplicados)
+  useEffect(() => {
+    const key = `${mes}-${anio}`
+    if (loadingPresu) return
+    if (presupuestos === null) return
+    if (presupuestos.length > 0) return              // ya tiene presupuestos
+    if (autoCopiadoKeyRef.current === key) return    // ya se intentó este mes
+    autoCopiadoKeyRef.current = key
+    copiarDelMesAnterior().then(({ copiados }) => {
+      if (copiados > 0) setAutoCopiadosCount(copiados)
+    })
+  }, [loadingPresu, presupuestos, mes, anio]) // eslint-disable-line
+
   const categoriasConDatos = categorias?.map(cat => {
     const presupuesto = presupuestos?.find(p => p.categoria_id === cat.id)
     const gastado = gastosPorCat?.[cat.id] ?? 0
@@ -83,6 +101,7 @@ export function useGastosVariables() {
     categorias: categoriasConDatos,
     actualizarPresupuesto,
     copiarDelMesAnterior,
+    autoCopiadosCount,
     proyeccionTotal,
     diasTranscurridos,
     diasDelMes,
