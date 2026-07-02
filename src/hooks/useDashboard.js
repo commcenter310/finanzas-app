@@ -113,6 +113,17 @@ export function useDashboard() {
     return data ?? []
   }, [uid], `nominas:${uid}`)
 
+  // Dinero ya apartado en Plan de Quincena este mes (informativo en Dashboard)
+  const { data: apartados } = useSupabaseQuery(async () => {
+    const { data } = await supabase
+      .from('apartados')
+      .select('monto')
+      .eq('user_id', user.id).eq('mes', mes).eq('anio', anio).eq('apartado', true)
+    return data ?? []
+  }, [uid, mes, anio], `dash:apartados:${uid}:${mes}:${anio}`)
+
+  const totalApartado = apartados?.reduce((s, a) => s + Number(a.monto), 0) ?? 0
+
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const txSinFijos    = transacciones?.filter(t => t.origen !== 'gastos_fijos') ?? []
   const { totalFijos, totalTx, totalGastos } = calcularTotalGastos(gastosFijos, transacciones)
@@ -178,6 +189,7 @@ export function useDashboard() {
     proyeccion,
     totalGastos,
     porAsignar,
+    totalApartado,
     necesidad,
     deseo,
     ahorro,

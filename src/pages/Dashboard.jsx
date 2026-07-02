@@ -71,6 +71,7 @@ export default function Dashboard() {
   const { mes } = useMes()
   const {
     loading, error, refetch, totalIngresos, ingresoEsperado, proyeccion, totalGastos, porAsignar,
+    totalApartado,
     necesidad, deseo, ahorro, gastosPorCategoria, transacciones, reglas,
     categoriasEnRiesgo, gastosHormiga,
     saldoAnterior, mesPrev, anioPrev, fijosPendientes,
@@ -174,6 +175,37 @@ export default function Dashboard() {
               </div>
             ))}
         </div>
+
+        {/* ── Dinero ya apartado en Plan de Quincena (informativo) ── */}
+        {!loading && totalApartado > 0 && porAsignar !== null && (
+          <div
+            className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
+            style={{ background: 'var(--primary-50)', borderLeft: '3px solid var(--primary)' }}
+          >
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-0.5" style={{ color: 'var(--primary-700)' }}>
+                🔒 Ya apartaste {formatMXN(totalApartado)} este mes
+              </p>
+              <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
+                Tu disponible real (Por Asignar menos lo apartado).{' '}
+                <Link to="/plan-quincena" className="font-semibold" style={{ color: 'var(--primary-600)' }}>
+                  Ver plan →
+                </Link>
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p
+                className="text-xl font-bold tabular"
+                style={{
+                  color: (porAsignar - totalApartado) >= 0 ? 'var(--primary-700)' : 'var(--negative-fg)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {formatMXN(porAsignar - totalApartado)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Saldo arrastrado del mes anterior (ya incluido en Por Asignar) ── */}
         {saldoAnterior !== null && Math.abs(saldoAnterior) > 0.5 && (
