@@ -18,7 +18,9 @@ export default function Layout({ titulo, children }) {
         />
       )}
 
-      <div className="flex-1 lg:ml-[248px] min-h-screen">
+      {/* min-w-0: sin esto, cualquier contenido más ancho que la pantalla estira
+          todo el contenedor y recorta el header en móvil (overflow horizontal) */}
+      <div className="flex-1 lg:ml-[248px] min-h-screen min-w-0 overflow-x-hidden">
         <Header titulo={titulo} onMenuClick={() => setIsSidebarOpen(v => !v)} />
         <main className="p-4 lg:p-7">
           {children}

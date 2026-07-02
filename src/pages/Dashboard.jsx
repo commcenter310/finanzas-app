@@ -166,7 +166,7 @@ export default function Dashboard() {
                 {sinDatos
                   ? <p className="text-sm font-semibold" style={{ color: 'var(--fg-3)' }}>Sin ingresos aún</p>
                   : <p
-                      className="text-[26px] font-bold tabular leading-none"
+                      className="text-xl sm:text-[26px] font-bold tabular leading-none break-all"
                       style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}
                     >
                       {formatMXN(value)}
@@ -264,7 +264,7 @@ export default function Dashboard() {
               const faltante = Math.max(0, ingresoEsperado - totalIngresos)
               return (
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1.5">
+                  <div className="flex flex-wrap justify-between gap-x-2 text-sm mb-1.5">
                     <span className="font-semibold" style={{ color: 'var(--fg-1)' }}>
                       Ingreso registrado
                     </span>
@@ -297,7 +297,7 @@ export default function Dashboard() {
             {/* Saldo proyectado a fin de mes */}
             {proyeccion.esMesActual && proyeccion.saldoProyectado !== null && (
               <div
-                className="flex items-center justify-between gap-4 px-4 py-3 rounded-[var(--r-md)]"
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 rounded-[var(--r-md)]"
                 style={{
                   background: proyeccion.saldoProyectado >= 0 ? 'var(--positive-bg)' : 'var(--negative-bg)',
                 }}
