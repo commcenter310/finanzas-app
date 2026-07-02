@@ -143,7 +143,14 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
 
   return (
     <tr className="hover:bg-gray-50 group">
-      <td className="px-4 py-3 font-medium text-gray-800">{ingreso.concepto}</td>
+      <td className="px-4 py-3">
+        <p className="font-medium text-gray-800">{ingreso.concepto}</p>
+        {ingreso.notas && (
+          <p className="text-xs mt-0.5 truncate max-w-[220px]" style={{ color: 'var(--fg-4)' }} title={ingreso.notas}>
+            📝 {ingreso.notas}
+          </p>
+        )}
+      </td>
       <td className="px-4 py-3 font-mono text-gray-500 text-sm hidden sm:table-cell">{formatMXN(ingreso.monto_presupuesto)}</td>
       <td className="px-4 py-3 font-mono font-bold text-positive">{formatMXN(ingreso.monto_actual)}</td>
       <td className="px-4 py-3 hidden sm:table-cell">

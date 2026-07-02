@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange
+  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange, Telescope
 } from 'lucide-react'
 
 // Navegación agrupada por uso: lo diario arriba, lo de consulta abajo
@@ -37,6 +37,7 @@ const NAV_GROUPS = [
     titulo: 'Análisis',
     items: [
       { to: '/tendencias', icon: LineChart, label: 'Tendencias' },
+      { to: '/proyeccion', icon: Telescope, label: 'Proyección' },
       { to: '/patrimonio', icon: Landmark,  label: 'Patrimonio' },
     ],
   },

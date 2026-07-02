@@ -22,6 +22,7 @@ const Perfil          = lazy(() => import('./pages/Perfil'))
 const WhatsappLog     = lazy(() => import('./pages/WhatsappLog'))
 const Patrimonio      = lazy(() => import('./pages/Patrimonio'))
 const SimuladorCredito = lazy(() => import('./pages/SimuladorCredito'))
+const Proyeccion      = lazy(() => import('./pages/Proyeccion'))
 
 function PageLoader() {
   return (
@@ -52,6 +53,7 @@ function ProtectedRoutes() {
           <Route path="/deudas"           element={<Deudas />}     />
           <Route path="/ahorros"          element={<Ahorros />}    />
           <Route path="/tendencias"       element={<Tendencias />} />
+          <Route path="/proyeccion"       element={<Proyeccion />} />
           <Route path="/patrimonio"       element={<Patrimonio />} />
           <Route path="/simulador"        element={<SimuladorCredito />} />
           <Route path="/whatsapp"         element={<WhatsappLog />} />
