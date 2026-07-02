@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { useAuth } from '../context/AuthContext'
+import { useMes } from '../context/MesContext'
 import { formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Search, X, MessageSquare, Pencil, Lock } from 'lucide-react'
+import { Plus, Trash2, Search, X, MessageSquare, Pencil, Lock, Download } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
@@ -23,6 +24,7 @@ const FORM_VACIO = {
 
 export default function ControlGastos() {
   const { profile } = useAuth()
+  const { mes, anio } = useMes()
   const { transacciones, categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
   const umbral = profile?.umbral_hormiga ?? 100
   const toast  = useToast()
@@ -98,6 +100,26 @@ export default function ControlGastos() {
 
   const hayFiltros = busqueda || filtroClasif || filtroCategoria || filtroOrigen || soloHormiga
 
+  // Exporta los movimientos visibles (respeta filtros) a un archivo .xlsx.
+  // Import dinámico: la librería solo se descarga al usar el botón.
+  const exportarExcel = async () => {
+    const XLSX = await import('xlsx')
+    const filas = filtradas.map(t => ({
+      Fecha:       t.fecha,
+      Descripción: t.descripcion,
+      Categoría:   t.categorias ? `${t.categorias.icono} ${t.categorias.nombre}` : '',
+      Tipo:        t.clasificacion,
+      Método:      t.metodos_pago?.nombre ?? '',
+      Monto:       Number(t.monto),
+    }))
+    const ws = XLSX.utils.json_to_sheet(filas)
+    ws['!cols'] = [{ wch: 11 }, { wch: 32 }, { wch: 20 }, { wch: 11 }, { wch: 14 }, { wch: 11 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Gastos')
+    XLSX.writeFile(wb, `gastos-${anio}-${String(mes).padStart(2, '0')}${hayFiltros ? '-filtrado' : ''}.xlsx`)
+    toast('Excel descargado ✓', 'success')
+  }
+
   if (error && !loading && transacciones.length === 0) {
     return (
       <Layout titulo="Control de Gastos">
@@ -171,6 +193,14 @@ export default function ControlGastos() {
             <button onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria(''); setFiltroOrigen(''); setSoloHormiga(false) }}
               className="btn-ghost flex items-center gap-1 text-sm">
               <X className="w-4 h-4" /> Limpiar
+            </button>
+          )}
+          {filtradas.length > 0 && (
+            <button onClick={exportarExcel}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--r-md)] text-sm font-medium border transition-all"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--fg-2)' }}
+              title="Descargar los movimientos visibles en Excel">
+              <Download className="w-4 h-4" /> Exportar
             </button>
           )}
           <button onClick={() => setMostrarForm(v => !v)}
