@@ -336,15 +336,15 @@ export default function Patrimonio() {
             <h2 className="font-bold text-gray-900 mb-4">Historial de Patrimonio</h2>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={datosHistorial}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#79839B' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#A6AEC1' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={v => formatMXN(v)} contentStyle={{ borderRadius: 12, border: '1px solid #E6E4F3', boxShadow: '0 6px 20px rgba(74,48,165,.10)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--fg-3)' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: 'var(--fg-4)' }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={v => formatMXN(v)} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }} />
                 <Legend />
-                <ReferenceLine y={0} stroke="#E6E4F3" strokeWidth={1} />
-                <Line type="monotone" dataKey="activos"    name="Activos"    stroke="#0FA978" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="deudas"     name="Deudas"     stroke="#EE4D63" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="patrimonio" name="Patrimonio" stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
+                <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
+                <Line type="monotone" dataKey="activos"    name="Activos"    stroke="var(--positive)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="deudas"     name="Deudas"     stroke="var(--negative)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="patrimonio" name="Patrimonio" stroke="var(--primary-600)" strokeWidth={2.5} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

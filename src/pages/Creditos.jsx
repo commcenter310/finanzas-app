@@ -17,7 +17,7 @@ function ResumenGeneral({ creditos }) {
   const pctGlobal      = totalLimite > 0 ? (totalUtilizado / totalLimite) * 100 : 0
   const disponible     = totalLimite - totalUtilizado
   const sobreLimite    = pctGlobal > 30
-  const colorGlobal    = pctGlobal > 80 ? '#EE4D63' : pctGlobal > 30 ? '#F2913E' : '#0FA978'
+  const colorGlobal    = pctGlobal > 80 ? 'var(--negative)' : pctGlobal > 30 ? 'var(--warning)' : 'var(--ahorro)'
 
   return (
     <div className="card p-5">
@@ -61,7 +61,7 @@ function ResumenGeneral({ creditos }) {
           .sort((a, b) => (Number(b.saldo_utilizado) / Number(b.limite_credito)) - (Number(a.saldo_utilizado) / Number(a.limite_credito)))
           .map(c => {
             const pct   = (Number(c.saldo_utilizado ?? 0) / Number(c.limite_credito)) * 100
-            const color = pct > 80 ? '#EE4D63' : pct > 30 ? '#F2913E' : '#0FA978'
+            const color = pct > 80 ? 'var(--negative)' : pct > 30 ? 'var(--warning)' : 'var(--ahorro)'
             return (
               <div key={c.id} className="flex items-center gap-3">
                 <span
@@ -147,7 +147,7 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
   const alertaCorte        = diasParaCorte <= 7
   const sobreLimite  = pctUso > 30
   const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
-  const colorBarra = pctUso > 80 ? '#EE4D63' : pctUso > 30 ? '#F2913E' : '#0FA978'
+  const colorBarra = pctUso > 80 ? 'var(--negative)' : pctUso > 30 ? 'var(--warning)' : 'var(--ahorro)'
 
   const fmtRango = (inicio, fin) =>
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`

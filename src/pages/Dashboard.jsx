@@ -7,18 +7,10 @@ import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt,
 import { Link } from 'react-router-dom'
 import ErrorState from '../components/ui/ErrorState'
 
-// Finni chart palette
+// Finni chart palette — usa la secuencia de tokens (se recolorea con el tema)
 const COLORES_CATEGORIA = [
-  '#6A45DD', // iris
-  '#2F6BEA', // zafiro
-  '#0FA978', // jade
-  '#F2913E', // mandarina
-  '#EE4D63', // rosa
-  '#12B5C4', // aqua
-  '#F472B6', // magenta
-  '#38BDF8', // cielo
-  '#8A5BF0', // violeta
-  '#0FA978', // jade alt
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-5)', 'var(--chart-6)', 'var(--chart-7)', 'var(--chart-8)',
 ]
 
 function SkeletonCard() {
@@ -84,9 +76,9 @@ export default function Dashboard() {
 
   // Finni classification fills
   const datos5030 = [
-    { name: 'Necesidad', actual: necesidad, meta: totalIngresos * reglas.regla_necesidad, fill: '#2F6BEA' },
-    { name: 'Deseo',     actual: deseo,     meta: totalIngresos * reglas.regla_deseo,     fill: '#F2913E' },
-    { name: 'Ahorro',    actual: ahorro,    meta: totalIngresos * reglas.regla_ahorro,    fill: '#0FA978' },
+    { name: 'Necesidad', actual: necesidad, meta: totalIngresos * reglas.regla_necesidad, fill: 'var(--necesidad)' },
+    { name: 'Deseo',     actual: deseo,     meta: totalIngresos * reglas.regla_deseo,     fill: 'var(--deseo)' },
+    { name: 'Ahorro',    actual: ahorro,    meta: totalIngresos * reglas.regla_ahorro,    fill: 'var(--ahorro)' },
   ]
 
   const tarjetas = STAT_CONFIG(totalIngresos, totalGastos, porAsignar, ahorro)
@@ -516,10 +508,10 @@ export default function Dashboard() {
                   formatter={(v) => formatMXN(v)}
                   contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}
                 />
-                <Bar dataKey="meta"   name="Meta"   fill="#EFEDF8" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="actual" name="Actual" fill="#6A45DD" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="meta"   name="Meta"   fill="var(--surface-3)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="actual" name="Actual" fill="var(--primary-600)" radius={[6, 6, 0, 0]}>
                   {datos5030.map((e, i) => (
-                    <Cell key={i} fill={e.actual > e.meta ? '#EE4D63' : e.fill} />
+                    <Cell key={i} fill={e.actual > e.meta ? 'var(--negative)' : e.fill} />
                   ))}
                 </Bar>
               </BarChart>

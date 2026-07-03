@@ -51,7 +51,7 @@ const NAV_GROUPS = [
 ]
 
 const GLASS_SIDEBAR = {
-  background: 'rgba(255,255,255,0.85)',
+  background: 'var(--surface-glass-strong)',
   backdropFilter: 'blur(20px) saturate(180%)',
   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
 }

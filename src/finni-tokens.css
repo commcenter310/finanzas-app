@@ -1,116 +1,290 @@
 /* ============================================================================
-   FINNI APOYO — Design Tokens
+   FINNI APOYO — Design Tokens (colors + type) · v2 "Tinta & Esmeralda"
+   Sistema de gestión de gastos y finanzas personales
+   ----------------------------------------------------------------------------
+   Minimal, Revolut-inspired direction: warm porcelain canvas, ink-neutral
+   primary (near-black buttons and active states), and a signature emerald
+   reserved for money-positive moments (ahorro, ingresos, brand). The 50/30/20
+   system (Necesidad / Deseo / Ahorro) survives as índigo / ámbar / esmeralda.
+
+   Two themes: light (default) and dark via [data-theme="dark"] on <html>.
+   The primary scale FLIPS in dark mode (ink buttons become white buttons),
+   so components built on the tokens re-skin automatically.
+
+   Fonts load from Google Fonts CDN. One family does everything: Plus Jakarta
+   Sans. Numbers use tabular figures for column alignment.
    ============================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap');
 
+html { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
 :root {
-  /* ---- Type ---------------------------------------------------------------- */
+  /* ---- Type families ---------------------------------------------------- */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'Plus Jakarta Sans', system-ui, sans-serif; /* numbers: same family + tabular figures */
 
-  /* ---- Canvas & surfaces --------------------------------------------------- */
-  --bg-app:        #EFEEFB;
-  --bg-app-2:      #E8E7F6;
-  --bg-subtle:     #F6F5FD;
-  --surface:       #FFFFFF;
-  --surface-2:     #F7F6FC;
-  --surface-3:     #EFEDF8;
-  --surface-glass: rgba(255, 255, 255, 0.72);
-  --surface-glass-strong: rgba(255, 255, 255, 0.85);
+  /* ============================ COLOR ==================================== */
 
-  /* ---- Text ---------------------------------------------------------------- */
-  --fg-1: #182032;
-  --fg-2: #46506A;
-  --fg-3: #79839B;
-  --fg-4: #A6AEC1;
+  /* ---- App canvas & surfaces (warm porcelain) --------------------------- */
+  --bg-app:        #F6F4F1;   /* page canvas — warm porcelain */
+  --bg-app-2:      #F1EFEA;   /* deeper canvas band / gradient stop */
+  --bg-subtle:     #FAF9F7;   /* subtle section fill */
+  --surface:       #FFFFFF;   /* card / sheet */
+  --surface-2:     #F5F4F1;   /* inset, filled input, table head */
+  --surface-3:     #EDEBE7;   /* hover row, chip rest */
+  --surface-glass: rgba(255, 255, 255, 0.75); /* nav/header/FAB — pair w/ blur */
+  --surface-glass-strong: rgba(255, 255, 255, 0.88);
+
+  /* ---- Text / foreground (warm ink) ------------------------------------- */
+  --fg-1: #1C1B19;   /* primary text, headings */
+  --fg-2: #4E4C47;   /* body, secondary */
+  --fg-3: #85827B;   /* tertiary, captions */
+  --fg-4: #B4B1A9;   /* placeholder, disabled, hint */
   --fg-on-primary: #FFFFFF;
+  --fg-on-accent:  #FFFFFF;
 
-  /* ---- Borders ------------------------------------------------------------- */
-  --border:        #E6E4F3;
-  --border-strong: #D2CFE6;
-  --divider:       #EFEDF7;
+  /* ---- Borders & dividers ----------------------------------------------- */
+  --border:        #E9E7E2;  /* hairline card/control border */
+  --border-strong: #D6D3CC;  /* emphasized / focus-rest */
+  --divider:       #F0EEEA;  /* row dividers (very soft) */
 
-  /* ---- Primary — Finni Iris ------------------------------------------------ */
-  --primary-50:  #F1EFFE;
-  --primary-100: #E6E1FD;
-  --primary-200: #D2C9FB;
-  --primary-300: #B5A4F6;
-  --primary-400: #977FF0;
-  --primary-500: #7E5DE9;
-  --primary-600: #6A45DD;
-  --primary-700: #5832C2;
-  --primary-800: #45269A;
-  --primary-900: #361E78;
-  --primary:     var(--primary-600);
+  /* ---- Primary — "Tinta" (warm ink neutral) ----------------------------- */
+  --primary-50:  #F4F3F0;
+  --primary-100: #EAE8E4;
+  --primary-200: #D8D5CF;
+  --primary-300: #B0ACA4;
+  --primary-400: #807C74;
+  --primary-500: #565349;
+  --primary-600: #23221F;   /* ← default interactive (buttons, links, active) */
+  --primary-700: #161513;   /* ← hover */
+  --primary-800: #0C0B0A;   /* ← press */
+  --primary-900: #060606;
 
-  /* ---- Classification system (50 / 30 / 20) -------------------------------- */
-  --necesidad:     #2F6BEA;
-  --necesidad-bg:  #E6EEFD;
-  --necesidad-fg:  #1A52C4;
-  --deseo:         #F2913E;
-  --deseo-bg:      #FDEEDF;
-  --deseo-fg:      #B25E15;
-  --ahorro:        #0FA978;
-  --ahorro-bg:     #DAF4EA;
-  --ahorro-fg:     #0A805C;
+  --primary:      var(--primary-600);
+  --primary-soft-bg:  var(--primary-100);  /* tinted button / active nav */
+  --primary-soft-fg:  var(--primary-700);
 
-  /* ---- Status -------------------------------------------------------------- */
-  --positive:      #0FA978;
-  --positive-bg:   #DAF4EA;
-  --positive-fg:   #0A805C;
-  --negative:      #EE4D63;
-  --negative-bg:   #FDE7EC;
-  --negative-fg:   #C8334B;
-  --warning:       #F2913E;
-  --warning-bg:    #FDEEDF;
-  --warning-fg:    #B25E15;
+  /* ---- Finance classification system (50 / 30 / 20) --------------------- */
+  /* Necesidad — Need (índigo) */
+  --necesidad:     #3E63DD;
+  --necesidad-bg:  #EAEFFC;
+  --necesidad-fg:  #3053C6;
+  /* Deseo — Want (ámbar) */
+  --deseo:         #E79147;
+  --deseo-bg:      #FBF0E3;
+  --deseo-fg:      #AC6118;
+  /* Ahorro — Save (esmeralda, the brand accent) */
+  --ahorro:        #10A26F;
+  --ahorro-bg:     #E3F4EC;
+  --ahorro-fg:     #0B7A53;
+
+  /* ---- Status / feedback ------------------------------------------------ */
+  --positive:      #10A26F;   /* ingresos, ganancia */
+  --positive-bg:   #E3F4EC;
+  --positive-fg:   #0B7A53;
+  --negative:      #E5484D;   /* gastos, deuda, sobre-presupuesto */
+  --negative-bg:   #FCEAEB;
+  --negative-fg:   #C63C41;
+  --warning:       #E79147;
+  --warning-bg:    #FBF0E3;
+  --warning-fg:    #AC6118;
   --info:          var(--primary-600);
   --info-bg:       var(--primary-50);
 
-  /* ---- Chart colors -------------------------------------------------------- */
-  --chart-1: #6A45DD;
-  --chart-2: #2F6BEA;
-  --chart-3: #0FA978;
-  --chart-4: #F2913E;
-  --chart-5: #EE4D63;
-  --chart-6: #12B5C4;
-  --chart-7: #F472B6;
-  --chart-8: #38BDF8;
+  /* ---- Extra accents (charts, decorative) ------------------------------- */
+  --accent-teal:   #0FB5BA;
+  --accent-violet: #8E7DE0;
+  --accent-pink:   #E093B2;
+  --accent-sky:    #55B7E8;
 
-  /* ---- Gradients ----------------------------------------------------------- */
-  --grad-primary: linear-gradient(135deg, #8A5BF0 0%, #6A45DD 52%, #5430C8 100%);
-  --grad-fresh:   linear-gradient(135deg, #6A45DD 0%, #2F6BEA 48%, #12B5C4 100%);
-  --grad-ahorro:  linear-gradient(135deg, #0FA978 0%, #12B5C4 100%);
-  --grad-sunset:  linear-gradient(135deg, #F2913E 0%, #EE4D63 100%);
-  --grad-canvas:  linear-gradient(180deg, #F1F0FC 0%, #E8E7F6 100%);
+  /* Chart sequence — emerald-led designed spread */
+  --chart-1: #10A26F;   /* esmeralda */
+  --chart-2: #3E63DD;   /* índigo */
+  --chart-3: #E79147;   /* ámbar */
+  --chart-4: #0FB5BA;   /* teal */
+  --chart-5: #E5484D;   /* rojo */
+  --chart-6: #8E7DE0;   /* violeta */
+  --chart-7: #E093B2;   /* rosa */
+  --chart-8: #8F8B83;   /* gris cálido */
 
-  /* ---- Radii --------------------------------------------------------------- */
+  /* ---- Signature gradients (hero balance card, FAB, splash) ------------- */
+  --grad-primary: linear-gradient(135deg, #35332E 0%, #1F1E1B 55%, #121110 100%); /* @kind color */
+  --grad-fresh:   linear-gradient(135deg, #10A26F 0%, #0FB5BA 100%); /* @kind color */
+  --grad-ahorro:  linear-gradient(135deg, #10A26F 0%, #2BC08D 100%); /* @kind color */
+  --grad-sunset:  linear-gradient(135deg, #E79147 0%, #E5484D 100%); /* @kind color */
+  --grad-canvas:  linear-gradient(180deg, #F8F6F3 0%, #F1EFEA 100%); /* @kind color */
+
+  /* ============================ RADII ==================================== */
   --r-xs:   8px;
   --r-sm:   12px;
-  --r-md:   16px;
-  --r-lg:   20px;
-  --r-xl:   28px;
+  --r-md:   16px;   /* controls, inputs, chips */
+  --r-lg:   20px;   /* cards */
+  --r-xl:   28px;   /* sheets, hero, modals */
   --r-2xl:  36px;
   --r-full: 999px;
 
-  /* ---- Shadows ------------------------------------------------------------- */
-  --shadow-xs: 0 1px 2px rgba(24, 32, 50, 0.05);
-  --shadow-sm: 0 1px 3px rgba(24, 32, 50, 0.06), 0 1px 2px rgba(24, 32, 50, 0.04);
-  --shadow-md: 0 6px 20px rgba(74, 48, 165, 0.10), 0 2px 6px rgba(24, 32, 50, 0.04);
-  --shadow-lg: 0 16px 44px rgba(74, 48, 165, 0.14), 0 6px 14px rgba(24, 32, 50, 0.05);
-  --shadow-xl: 0 28px 70px rgba(74, 48, 165, 0.18), 0 10px 24px rgba(24, 32, 50, 0.06);
-  --shadow-primary: 0 10px 26px rgba(106, 69, 221, 0.38);
-  --shadow-ahorro:  0 10px 26px rgba(15, 169, 120, 0.30);
-  --ring-focus: 0 0 0 4px rgba(106, 69, 221, 0.18);
+  /* ============================ SHADOWS (soft, neutral) ================== */
+  --shadow-xs: 0 1px 2px rgba(28, 27, 25, 0.05);
+  --shadow-sm: 0 1px 3px rgba(28, 27, 25, 0.06), 0 1px 2px rgba(28, 27, 25, 0.04);
+  --shadow-md: 0 6px 20px rgba(28, 27, 25, 0.07), 0 2px 6px rgba(28, 27, 25, 0.04);
+  --shadow-lg: 0 16px 44px rgba(28, 27, 25, 0.10), 0 6px 14px rgba(28, 27, 25, 0.05);
+  --shadow-xl: 0 28px 70px rgba(28, 27, 25, 0.14), 0 10px 24px rgba(28, 27, 25, 0.06);
+  --shadow-primary: 0 8px 22px rgba(28, 27, 25, 0.28);
+  --shadow-ahorro:  0 8px 22px rgba(16, 162, 111, 0.28);
+  --ring-focus: 0 0 0 4px rgba(28, 27, 25, 0.10);
 
-  /* ---- Glass --------------------------------------------------------------- */
-  --glass-blur: blur(20px) saturate(180%);
+  /* Glass material (nav bars, floating chrome) */
+  --glass-blur: blur(20px) saturate(180%); /* @kind other */
 
-  /* ---- Motion -------------------------------------------------------------- */
-  --ease-ios:  cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-fast:  150ms;
-  --dur-base:  240ms;
-  --dur-slow:  420ms;
+  /* ============================ SPACING (2px base) ===================== */
+  --space-1: 2px;   --space-2: 4px;   --space-3: 6px;   --space-4: 8px;
+  --space-6: 12px;  --space-8: 16px;  --space-12: 24px; --space-16: 32px;
+  --space-24: 48px; --space-32: 64px;
+
+  /* ============================ MOTION ================================== */
+  --ease-ios:    cubic-bezier(0.32, 0.72, 0, 1); /* @kind other */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --dur-fast:    150ms; /* @kind other */
+  --dur-base:    240ms; /* @kind other */
+  --dur-slow:    420ms; /* @kind other */
+
+  /* ============================ TYPE SCALE ============================== */
+  /* Each semantic role packs size / weight / line-height / tracking.        */
+  --display-lg: 700 40px/1.05 var(--font-sans);  --display-lg-ls: -0.022em;
+  --display:    700 32px/1.08 var(--font-sans);  --display-ls:    -0.02em;
+  --h1:         700 26px/1.15 var(--font-sans);  --h1-ls:         -0.018em;
+  --h2:         700 21px/1.2  var(--font-sans);  --h2-ls:         -0.014em;
+  --h3:         600 17px/1.3  var(--font-sans);  --h3-ls:         -0.01em;
+  --body-lg:    500 17px/1.5  var(--font-sans);  --body-lg-ls:    -0.005em;
+  --body:       450 15px/1.55 var(--font-sans);  --body-ls:        0;
+  --body-sm:    500 13px/1.5  var(--font-sans);  --body-sm-ls:     0;
+  --caption:    600 12px/1.4  var(--font-sans);  --caption-ls:     0.02em;
+  --overline:   700 11px/1.2  var(--font-sans);  --overline-ls:    0.06em; /* UPPERCASE labels */
+
+  /* Numeric (currency, dates, %) — Plus Jakarta Sans with tabular figures */
+  --num-xl: 700 28px/1.1 var(--font-mono);
+  --num-lg: 700 21px/1.1 var(--font-mono);
+  --num:    600 15px/1.2 var(--font-mono);
+  --num-sm: 500 12px/1.2 var(--font-mono);
 }
+
+/* ============================================================================
+   DARK THEME — [data-theme="dark"] on <html>.
+   The primary (Tinta) scale flips: ink buttons become white buttons.
+   ============================================================================ */
+[data-theme="dark"] {
+  /* Canvas & surfaces */
+  --bg-app:        #111113;
+  --bg-app-2:      #0C0C0E;
+  --bg-subtle:     #17171A;
+  --surface:       #1B1B1E;
+  --surface-2:     #232326;
+  --surface-3:     #2B2B2F;
+  --surface-glass: rgba(24, 24, 27, 0.72);
+  --surface-glass-strong: rgba(24, 24, 27, 0.88);
+
+  /* Text */
+  --fg-1: #F4F3F0;
+  --fg-2: #C4C2BD;
+  --fg-3: #8C8A85;
+  --fg-4: #5C5B57;
+  --fg-on-primary: #161514;
+
+  /* Borders */
+  --border:        #2A2A2E;
+  --border-strong: #3A3A3F;
+  --divider:       #232327;
+
+  /* Primary flips to white */
+  --primary-50:  #232326;
+  --primary-100: #2B2B2F;
+  --primary-200: #3A3A3F;
+  --primary-300: #5C5B60;
+  --primary-400: #8C8B90;
+  --primary-500: #B4B3B8;
+  --primary-600: #F4F3F0;
+  --primary-700: #FFFFFF;
+  --primary-800: #D9D7D2;
+  --primary-900: #C4C2BD;
+
+  /* Classification — brighter on dark */
+  --necesidad:     #7B96F2;
+  --necesidad-bg:  #202A4D;
+  --necesidad-fg:  #A7B9F9;
+  --deseo:         #EFA55F;
+  --deseo-bg:      #3D2B15;
+  --deseo-fg:      #F3BC85;
+  --ahorro:        #34C08F;
+  --ahorro-bg:     #123527;
+  --ahorro-fg:     #5FD8AC;
+
+  /* Status */
+  --positive:      #34C08F;
+  --positive-bg:   #123527;
+  --positive-fg:   #5FD8AC;
+  --negative:      #F1575C;
+  --negative-bg:   #412023;
+  --negative-fg:   #FF9296;
+  --warning:       #EFA55F;
+  --warning-bg:    #3D2B15;
+  --warning-fg:    #F3BC85;
+
+  /* Accents & charts — brighter */
+  --accent-teal:   #2BC5CA;
+  --accent-violet: #A08FF0;
+  --accent-pink:   #ECA5C4;
+  --accent-sky:    #6FC4F0;
+  --chart-1: #34C08F;
+  --chart-2: #7B96F2;
+  --chart-3: #EFA55F;
+  --chart-4: #2BC5CA;
+  --chart-5: #F1575C;
+  --chart-6: #A08FF0;
+  --chart-7: #ECA5C4;
+  --chart-8: #8C8A85;
+
+  /* Gradients */
+  --grad-primary: linear-gradient(135deg, #3A3833 0%, #23221E 55%, #161514 100%); /* @kind color */
+  --grad-canvas:  linear-gradient(180deg, #131315 0%, #0D0D0F 100%); /* @kind color */
+
+  /* Shadows — deeper on dark */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.40), 0 2px 6px rgba(0, 0, 0, 0.30);
+  --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.48), 0 6px 14px rgba(0, 0, 0, 0.32);
+  --shadow-xl: 0 28px 70px rgba(0, 0, 0, 0.55), 0 10px 24px rgba(0, 0, 0, 0.35);
+  --shadow-primary: 0 8px 22px rgba(0, 0, 0, 0.45);
+  --shadow-ahorro:  0 8px 22px rgba(52, 192, 143, 0.22);
+  --ring-focus: 0 0 0 4px rgba(244, 243, 240, 0.14);
+}
+
+/* ============================================================================
+   SEMANTIC HELPERS — opt-in classes mirroring the tokens above.
+   ============================================================================ */
+.font-sans { font-family: var(--font-sans); }
+.font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.t-display-lg { font: var(--display-lg); letter-spacing: var(--display-lg-ls); color: var(--fg-1); }
+.t-display    { font: var(--display);    letter-spacing: var(--display-ls);    color: var(--fg-1); }
+.t-h1         { font: var(--h1);  letter-spacing: var(--h1-ls);  color: var(--fg-1); }
+.t-h2         { font: var(--h2);  letter-spacing: var(--h2-ls);  color: var(--fg-1); }
+.t-h3         { font: var(--h3);  letter-spacing: var(--h3-ls);  color: var(--fg-1); }
+.t-body-lg    { font: var(--body-lg); letter-spacing: var(--body-lg-ls); color: var(--fg-2); }
+.t-body       { font: var(--body);    color: var(--fg-2); }
+.t-body-sm    { font: var(--body-sm); color: var(--fg-3); }
+.t-caption    { font: var(--caption); color: var(--fg-3); }
+.t-overline   { font: var(--overline); letter-spacing: var(--overline-ls); text-transform: uppercase; color: var(--fg-3); }
+.t-num-xl     { font: var(--num-xl); color: var(--fg-1); }
+.t-num-lg     { font: var(--num-lg); color: var(--fg-1); }
+.t-num        { font: var(--num);    color: var(--fg-2); }
+
+/* Classification badges (pill) */
+.badge { display: inline-flex; align-items: center; gap: 4px; border-radius: var(--r-full);
+         font: var(--caption); padding: 3px 10px; line-height: 1; }
+.badge-necesidad { background: var(--necesidad-bg); color: var(--necesidad-fg); }
+.badge-deseo     { background: var(--deseo-bg);     color: var(--deseo-fg); }
+.badge-ahorro    { background: var(--ahorro-bg);    color: var(--ahorro-fg); }
+.badge-positive  { background: var(--positive-bg);  color: var(--positive-fg); }
+.badge-negative  { background: var(--negative-bg);  color: var(--negative-fg); }

@@ -98,7 +98,7 @@ export default function Tendencias() {
     ?.filter(c => creditoTendencia.datos?.some(d => d[c.nombre] !== undefined))
     .map(c => c.nombre) ?? []
 
-  const COLORES_TARJETA = ['#6A45DD','#F2913E','#0FA978','#EE4D63','#8A5BF0','#12B5C4']
+  const COLORES_TARJETA = ['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)']
 
   const mesConMasGastos = tendencias?.reduce((max, t) => t.gastos > (max?.gastos ?? 0) ? t : max, null)
   const promGastos = tendencias?.length ? tendencias.reduce((s, t) => s + t.gastos, 0) / tendencias.length : 0
@@ -138,13 +138,13 @@ export default function Tendencias() {
             : (
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={tendencias ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={v => formatMXN(v)} />
                   <Legend />
-                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="#0FA978" strokeWidth={2.5} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="var(--positive)" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="var(--negative)" strokeWidth={2.5} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -158,14 +158,14 @@ export default function Tendencias() {
             : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={tendencias ?? []} barSize={28}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={v => formatMXN(v)} />
                   <Legend />
-                  <Bar dataKey="necesidad" name="Necesidad" stackId="a" fill="#2F6BEA" radius={[0,0,0,0]} />
-                  <Bar dataKey="deseo"     name="Deseo"     stackId="a" fill="#F2913E" radius={[0,0,0,0]} />
-                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="#0FA978" radius={[4,4,0,0]} />
+                  <Bar dataKey="necesidad" name="Necesidad" stackId="a" fill="var(--necesidad)" radius={[0,0,0,0]} />
+                  <Bar dataKey="deseo"     name="Deseo"     stackId="a" fill="var(--deseo)" radius={[0,0,0,0]} />
+                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="var(--ahorro)" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -190,14 +190,14 @@ export default function Tendencias() {
               : (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={creditoTendencia.datos}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EFEDF7" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
                     <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                     <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 'auto']} />
                     <Tooltip formatter={(v, name) => [`${v}%`, name === 'pctTotal' ? 'Utilización total' : name]} />
                     <Legend formatter={name => name === 'pctTotal' ? 'Total' : name} />
-                    <ReferenceLine y={30} stroke="#F2913E" strokeDasharray="5 5"
-                      label={{ value: '30% recomendado', position: 'insideTopRight', fontSize: 11, fill: '#F2913E' }} />
-                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="#6A45DD" strokeWidth={2.5} dot={{ r: 4 }} />
+                    <ReferenceLine y={30} stroke="var(--warning)" strokeDasharray="5 5"
+                      label={{ value: '30% recomendado', position: 'insideTopRight', fontSize: 11, fill: 'var(--warning)' }} />
+                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="var(--primary-600)" strokeWidth={2.5} dot={{ r: 4 }} />
                     {nombresTarjetas.map((nombre, i) => (
                       <Line key={nombre} type="monotone" dataKey={nombre} stroke={COLORES_TARJETA[i % COLORES_TARJETA.length]}
                         strokeWidth={1.5} dot={{ r: 3 }} strokeDasharray="4 2" />

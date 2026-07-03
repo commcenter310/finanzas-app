@@ -8,8 +8,12 @@ import {
   ResponsiveContainer, Cell
 } from 'recharts'
 
-const clasifColors = { necesidad: 'bg-blue-50 border-blue-100', deseo: 'bg-amber-50 border-amber-100', ahorro: 'bg-emerald-50 border-emerald-100' }
-const barColors    = { necesidad: '#2F6BEA', deseo: '#F2913E', ahorro: '#0FA978' }
+const clasifColors = {
+  necesidad: 'bg-[var(--necesidad-bg)] border-[var(--necesidad)]/25',
+  deseo:     'bg-[var(--deseo-bg)] border-[var(--deseo)]/25',
+  ahorro:    'bg-[var(--ahorro-bg)] border-[var(--ahorro)]/25',
+}
+const barColors = { necesidad: 'var(--necesidad)', deseo: 'var(--deseo)', ahorro: 'var(--ahorro)' }
 
 function TarjetaCategoria({ cat, onActualizar }) {
   const [editandoLimite, setEditandoLimite] = useState(false)
@@ -71,7 +75,7 @@ function TarjetaCategoria({ cat, onActualizar }) {
         <div className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${cat.pct}%`,
-            backgroundColor: cat.sobre ? 'var(--negative)' : (barColors[cat.clasificacion] ?? '#6A45DD')
+            backgroundColor: cat.sobre ? 'var(--negative)' : (barColors[cat.clasificacion] ?? 'var(--primary-600)')
           }} />
       </div>
 
@@ -162,9 +166,9 @@ export default function GastosVariables() {
             </p>
             <div className="grid grid-cols-3 gap-3 border-t border-gray-50 pt-3">
               {[
-                { key: 'necesidad', label: 'Necesidad', color: '#2F6BEA' },
-                { key: 'deseo',     label: 'Deseo',     color: '#F2913E' },
-                { key: 'ahorro',    label: 'Ahorro',    color: '#0FA978' },
+                { key: 'necesidad', label: 'Necesidad', color: 'var(--necesidad)' },
+                { key: 'deseo',     label: 'Deseo',     color: 'var(--deseo)' },
+                { key: 'ahorro',    label: 'Ahorro',    color: 'var(--ahorro)' },
               ].map(({ key, label, color }) => {
                 const g = catsConLimite.filter(c => c.clasificacion === key).reduce((s,c) => s + c.gastado, 0)
                 const l = catsConLimite.filter(c => c.clasificacion === key).reduce((s,c) => s + c.limite, 0)
@@ -260,10 +264,10 @@ export default function GastosVariables() {
                 <XAxis type="number" tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v, name) => [formatMXN(v), name === 'limite' ? 'Límite' : 'Gastado']} />
-                <Bar dataKey="limite"  name="limite"  fill="#EFEDF8" radius={[0,4,4,0]} />
+                <Bar dataKey="limite"  name="limite"  fill="var(--surface-3)" radius={[0,4,4,0]} />
                 <Bar dataKey="gastado" name="gastado" radius={[0,4,4,0]}>
                   {datosGrafico.map((entry, i) => (
-                    <Cell key={i} fill={entry.sobre ? '#EE4D63' : (barColors[entry.clasificacion] ?? '#6A45DD')} />
+                    <Cell key={i} fill={entry.sobre ? 'var(--negative)' : (barColors[entry.clasificacion] ?? 'var(--primary-600)')} />
                   ))}
                 </Bar>
               </BarChart>

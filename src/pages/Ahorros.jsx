@@ -10,7 +10,7 @@ import ErrorState   from '../components/ui/ErrorState'
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
 
-const barColors = { necesidad: '#2F6BEA', deseo: '#F2913E', ahorro: '#0FA978' }
+const barColors = { necesidad: 'var(--necesidad)', deseo: 'var(--deseo)', ahorro: 'var(--ahorro)' }
 
 const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: new Date().toISOString().split('T')[0] }
 
@@ -91,7 +91,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
 
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, backgroundColor: completado ? '#0FA978' : (barColors[ahorro.clasificacion] ?? '#6A45DD') }} />
+          style={{ width: `${pct}%`, backgroundColor: completado ? 'var(--ahorro)' : (barColors[ahorro.clasificacion] ?? 'var(--primary-600)') }} />
       </div>
       <p className="text-xs text-right text-gray-400 mt-1 font-mono">{pct.toFixed(0)}%</p>
 

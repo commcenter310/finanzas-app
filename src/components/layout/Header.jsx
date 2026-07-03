@@ -3,7 +3,7 @@ import { useMes } from '../../context/MesContext'
 import { MESES } from '../../utils/constantes'
 
 const GLASS_HEADER = {
-  background: 'rgba(255,255,255,0.72)',
+  background: 'var(--surface-glass)',
   backdropFilter: 'blur(20px) saturate(180%)',
   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
 }
