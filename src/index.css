@@ -129,6 +129,16 @@
     border-color: var(--primary-500);
     box-shadow: var(--ring-focus);
   }
+  /* Móvil: inputs a 16px — si son más chicos, iOS hace zoom automático al enfocarlos */
+  @media (max-width: 1023px) {
+    .input { font-size: 16px; }
+  }
+
+  /* App-like: sin zoom por doble-tap ni highlight azul al tocar (iOS/Android) */
+  html {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 
   /* ---- Field label ---- */
   .label {

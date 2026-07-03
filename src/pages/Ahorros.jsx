@@ -157,18 +157,18 @@ export default function Ahorros() {
     <Layout titulo="Ahorros">
       <div className="space-y-5">
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Meta Total</p>
-            <p className="text-xl font-bold font-mono text-gray-600">{formatMXN(totales.meta)}</p>
+            <p className="text-lg lg:text-xl font-bold font-mono text-gray-600 break-all">{formatMXN(totales.meta)}</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total Ahorrado</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(totales.actual)}</p>
+            <p className="text-lg lg:text-xl font-bold font-mono break-all" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(totales.actual)}</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Progreso General</p>
-            <p className="text-xl font-bold font-mono text-primary-700">{pctTotal.toFixed(0)}%</p>
+            <p className="text-lg lg:text-xl font-bold font-mono text-primary-700">{pctTotal.toFixed(0)}%</p>
           </div>
         </div>
 
@@ -181,8 +181,8 @@ export default function Ahorros() {
         {mostrarForm && (
           <div className="card p-5 border-2" style={{ borderColor: 'var(--ahorro-bg)' }}>
             <h3 className="font-bold text-gray-900 mb-3">Nueva Meta de Ahorro</h3>
-            <div className="grid grid-cols-4 gap-3 mb-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              <div className="sm:col-span-2">
                 <label className="label">Concepto</label>
                 <input className="input" placeholder="Ej: Fondo emergencia, Viaje..."
                   value={form.concepto} onChange={e => setF('concepto', e.target.value)} />
@@ -214,10 +214,10 @@ export default function Ahorros() {
         )}
 
         {loading
-          ? <div className="grid grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-36 animate-pulse bg-gray-50" />)}</div>
+          ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-36 animate-pulse bg-gray-50" />)}</div>
           : ahorros.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">Sin metas de ahorro este mes. ¡Crea la primera!</div>
-            : <div className="grid grid-cols-3 gap-4 items-start">
+            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                 {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} />)}
               </div>}
 

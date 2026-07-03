@@ -32,18 +32,18 @@ export default function ProyeccionView() {
   return (
     <div className="space-y-4">
       {/* Resumen del horizonte */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="card p-4">
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Ingreso 12 meses</p>
-          <p className="text-lg font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(totalIngreso)}</p>
+          <p className="text-lg font-bold font-mono break-all" style={{ color: 'var(--positive-fg)' }}>{formatMXN(totalIngreso)}</p>
         </div>
         <div className="card p-4">
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Compromisos 12 meses</p>
-          <p className="text-lg font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalCompromisos)}</p>
+          <p className="text-lg font-bold font-mono break-all" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalCompromisos)}</p>
         </div>
         <div className="card p-4" style={{ borderWidth: 2, borderColor: totalLibre >= 0 ? 'var(--ahorro-bg)' : 'var(--negative-bg)' }}>
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Libre proyectado</p>
-          <p className="text-lg font-bold font-mono" style={{ color: totalLibre >= 0 ? 'var(--ahorro-fg)' : 'var(--negative-fg)' }}>{formatMXN(totalLibre)}</p>
+          <p className="text-lg font-bold font-mono break-all" style={{ color: totalLibre >= 0 ? 'var(--ahorro-fg)' : 'var(--negative-fg)' }}>{formatMXN(totalLibre)}</p>
         </div>
       </div>
 

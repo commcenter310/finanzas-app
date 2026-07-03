@@ -109,15 +109,15 @@ export default function Tendencias() {
       <div className="space-y-6">
 
         {/* Resumen */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Promedio Ingresos</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(promIngresos)}</p>
+            <p className="text-lg lg:text-xl font-bold font-mono break-all" style={{ color: 'var(--positive-fg)' }}>{formatMXN(promIngresos)}</p>
             <p className="text-xs text-gray-400 mt-0.5">últimos 6 meses</p>
           </div>
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Promedio Gastos</p>
-            <p className="text-xl font-bold font-mono text-primary-700">{formatMXN(promGastos)}</p>
+            <p className="text-lg lg:text-xl font-bold font-mono text-primary-700 break-all">{formatMXN(promGastos)}</p>
             <p className="text-xs text-gray-400 mt-0.5">últimos 6 meses</p>
           </div>
           <div className="card p-4">

@@ -191,14 +191,14 @@ export default function GastosVariables() {
 
         {/* Resumen + Copiar */}
         <div className="flex flex-col sm:flex-row items-start gap-3">
-          <div className="grid grid-cols-3 gap-3 flex-1 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1 w-full sm:w-auto">
             <div className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total Gastado</p>
-              <p className="text-xl font-bold font-mono text-primary-700">{formatMXN(totalGastado)}</p>
+              <p className="text-lg lg:text-xl font-bold font-mono text-primary-700 break-all">{formatMXN(totalGastado)}</p>
             </div>
             <div className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Presupuesto Total</p>
-              <p className="text-xl font-bold font-mono text-gray-600">{formatMXN(totalLimite)}</p>
+              <p className="text-lg lg:text-xl font-bold font-mono text-gray-600 break-all">{formatMXN(totalLimite)}</p>
             </div>
             <div className="card p-4">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Categorías Excedidas</p>
