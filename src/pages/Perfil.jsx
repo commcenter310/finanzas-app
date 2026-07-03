@@ -8,6 +8,7 @@ import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
+import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
 
 const TIPO_METODO_OPTS = [
   { value: 'debito',   label: 'Débito',   dotColor: 'var(--fg-3)'    },
@@ -24,9 +25,10 @@ const CLASIF_OPTS = [
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
 
-  // Datos básicos
+  // Datos básicos — el teléfono se edita como 10 dígitos; se guarda en formato
+  // WhatsApp México (521 + 10 dígitos) sin que el usuario vea el "1"
   const [nombre,         setNombre]         = useState(profile?.nombre          ?? '')
-  const [telefono,       setTelefono]       = useState(profile?.telefono        ?? '')
+  const [telefono10,     setTelefono10]     = useState(telefonoA10(profile?.telefono))
   const [umbralHormiga,  setUmbralHormiga]  = useState(profile?.umbral_hormiga  ?? 100)
   const [savingBasico, setSavingBasico] = useState(false)
   const [msgBasico, setMsgBasico] = useState('')
@@ -34,13 +36,22 @@ export default function Perfil() {
   // Sembrar el form cuando carga/cambia el profile (sync de dato externo → estado)
   useEffect(() => {
     setNombre(profile?.nombre ?? '')
-    setTelefono(profile?.telefono ?? '')
+    setTelefono10(telefonoA10(profile?.telefono))
     setUmbralHormiga(profile?.umbral_hormiga ?? 100)
   }, [profile])
 
   const guardarBasico = async () => {
+    if (telefono10.length > 0 && telefono10.length < 10) {
+      setMsgBasico('⚠️ El celular debe tener 10 dígitos')
+      setTimeout(() => setMsgBasico(''), 3000)
+      return
+    }
     setSavingBasico(true)
-    await supabase.from('profiles').update({ nombre, telefono, umbral_hormiga: Number(umbralHormiga) }).eq('id', user.id)
+    await supabase.from('profiles').update({
+      nombre,
+      telefono: telefonoAWhatsApp(telefono10),   // null si está vacío
+      umbral_hormiga: Number(umbralHormiga),
+    }).eq('id', user.id)
     await refreshProfile()
     setSavingBasico(false)
     setMsgBasico('Guardado ✅')
@@ -183,8 +194,14 @@ export default function Perfil() {
               </div>
               <div>
                 <label className="label">WhatsApp</label>
-                <input className="input font-mono text-sm" placeholder="+52 55 1234 5678"
-                  value={telefono} onChange={e => setTelefono(e.target.value)} />
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2.5 py-[10px] rounded-[var(--r-md)] font-mono text-sm font-semibold border flex-shrink-0"
+                    style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--fg-2)' }}>
+                    +52
+                  </span>
+                  <input className="input font-mono text-sm" placeholder="6675078043" inputMode="numeric"
+                    value={telefono10} onChange={e => setTelefono10(soloDiezDigitos(e.target.value))} />
+                </div>
               </div>
             </div>
             <div className="mb-4">

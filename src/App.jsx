@@ -23,6 +23,7 @@ const WhatsappLog     = lazy(() => import('./pages/WhatsappLog'))
 const Patrimonio      = lazy(() => import('./pages/Patrimonio'))
 const SimuladorCredito = lazy(() => import('./pages/SimuladorCredito'))
 const Proyeccion      = lazy(() => import('./pages/Proyeccion'))
+const Bienvenida      = lazy(() => import('./pages/Bienvenida'))
 
 function PageLoader() {
   return (
@@ -33,11 +34,22 @@ function PageLoader() {
 }
 
 function ProtectedRoutes() {
-  const { user, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
   if (loading) return <PageLoader />
 
   if (!user) return <Navigate to="/auth" />
+
+  // Usuario nuevo → wizard de bienvenida (pantalla completa, sin sidebar).
+  // Comparación estricta con false: si la columna onboarding_completado aún
+  // no existe en la BD (undefined), la app se comporta como siempre.
+  if (profile?.onboarding_completado === false) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Bienvenida />
+      </Suspense>
+    )
+  }
 
   return (
     <MesProvider>

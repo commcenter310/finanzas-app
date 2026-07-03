@@ -400,3 +400,8 @@ ALTER TABLE public.metodos_pago ADD COLUMN IF NOT EXISTS credito_id INTEGER REFE
 ALTER TABLE public.transacciones DROP CONSTRAINT IF EXISTS transacciones_origen_check;
 ALTER TABLE public.transacciones ADD CONSTRAINT transacciones_origen_check
   CHECK (origen IN ('web','whatsapp','gastos_fijos','deuda','ahorro'));
+
+-- Onboarding: los usuarios nuevos ven un wizard de bienvenida la primera vez.
+-- Los usuarios existentes (ya tienen nombre configurado) no lo ven.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completado BOOLEAN DEFAULT false;
+UPDATE public.profiles SET onboarding_completado = true WHERE nombre IS NOT NULL;
