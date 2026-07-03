@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { clearQueryCache } from '../hooks/useSupabaseQuery'
 
 const AuthContext = createContext(null)
 
@@ -31,7 +32,10 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => {
+    clearQueryCache()
+    return supabase.auth.signOut()
+  }
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile: () => fetchProfile(user?.id) }}>

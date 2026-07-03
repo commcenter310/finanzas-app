@@ -11,6 +11,10 @@ import { useState, useEffect, useCallback } from 'react'
 // propia entrada y al cambiar de mes no se mezclen datos.
 const cache = new Map()
 
+// Vaciar el cache al cerrar sesión: los datos financieros del usuario anterior
+// no deben quedar en memoria si otra persona inicia sesión en la misma pestaña.
+export const clearQueryCache = () => cache.clear()
+
 export function useSupabaseQuery(queryFn, deps = [], cacheKey = null) {
   const tieneCache = cacheKey != null && cache.has(cacheKey)
   const [data, setData] = useState(tieneCache ? cache.get(cacheKey) : null)

@@ -290,12 +290,15 @@ ALTER TABLE public.pagos_credito ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own" ON public.pagos_credito
   FOR ALL USING (auth.uid() = user_id);
 
--- RPC atómica para ajustar saldo_utilizado sin race conditions
+-- RPC atómica para ajustar saldo_utilizado sin race conditions.
+-- SECURITY DEFINER brinca el RLS, así que el WHERE debe validar que el
+-- crédito pertenezca a quien llama (sin esto, cualquier usuario autenticado
+-- podría alterar saldos ajenos pasando otro id).
 CREATE OR REPLACE FUNCTION update_saldo_credito(p_credito_id INTEGER, p_delta NUMERIC)
 RETURNS VOID LANGUAGE SQL SECURITY DEFINER AS $$
   UPDATE creditos
   SET saldo_utilizado = GREATEST(0, saldo_utilizado + p_delta)
-  WHERE id = p_credito_id;
+  WHERE id = p_credito_id AND user_id = auth.uid();
 $$;
 
 -- ============================================

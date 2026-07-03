@@ -225,6 +225,14 @@ export async function processMessage(telefono, texto) {
     return
   }
 
+  // 6.5 Validar monto — la salida del LLM no es confiable (negativos, NaN, absurdos)
+  const montoNum = Number(result.monto)
+  if (!Number.isFinite(montoNum) || montoNum <= 0 || montoNum > 10_000_000) {
+    await sendMessage(telefono, `❌ No pude leer un monto válido en tu mensaje.\n\nEjemplo: *89 starbucks* o *ingresé 5000 nómina*`)
+    await logMessage(telefono, texto, null, null, false, `Monto inválido: ${result.monto}`)
+    return
+  }
+
   // 7. Ingreso
   if (result.tipo === 'ingreso') {
     const hoy = new Date()
@@ -241,7 +249,7 @@ export async function processMessage(telefono, texto) {
     const { error } = await supabaseAdmin.from('ingresos').insert({
       user_id: profile.id,
       concepto: result.descripcion || 'Ingreso WhatsApp',
-      monto_actual: Number(result.monto),
+      monto_actual: montoNum,
       monto_presupuesto: 0,
       fecha_recepcion: fechaRecepcion,
       mes: mesAplica,
@@ -289,7 +297,7 @@ export async function processMessage(telefono, texto) {
       cat_id: cat?.id ?? null,
       clasificacion: result.clasificacion ?? cat?.clasificacion ?? 'deseo',
       descripcion: result.descripcion || texto,
-      monto: Number(result.monto),
+      monto: montoNum,
       fecha: hoy,
       mensaje_original: texto,
     })
@@ -311,7 +319,7 @@ export async function processMessage(telefono, texto) {
   const { data: tx, error } = await supabaseAdmin.from('transacciones').insert({
     user_id: profile.id,
     descripcion: result.descripcion || texto,
-    monto: Number(result.monto),
+    monto: montoNum,
     categoria_id: cat?.id ?? null,
     clasificacion: result.clasificacion ?? cat?.clasificacion ?? 'deseo',
     metodo_pago_id: met.id,

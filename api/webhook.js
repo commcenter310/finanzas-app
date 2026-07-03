@@ -1,6 +1,30 @@
+import crypto from 'node:crypto'
 import { processMessage } from './lib/whatsapp.js'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
+// App Secret de Meta (Configuración de la app → Básica → Clave secreta).
+// Firma cada payload del webhook; sin verificarla, cualquiera que conozca la
+// URL puede suplantar mensajes de WhatsApp de cualquier número.
+const APP_SECRET = process.env.WHATSAPP_APP_SECRET
+
+// bodyParser desactivado: la firma HMAC se calcula sobre el body CRUDO byte a
+// byte — si Vercel lo parsea y re-serializa, la verificación se vuelve inviable.
+export const config = { api: { bodyParser: false } }
+
+async function readRawBody(req) {
+  const chunks = []
+  for await (const chunk of req) chunks.push(chunk)
+  return Buffer.concat(chunks)
+}
+
+function verifySignature(rawBody, signatureHeader) {
+  if (!signatureHeader?.startsWith('sha256=')) return false
+  const expected = crypto.createHmac('sha256', APP_SECRET).update(rawBody).digest()
+  let received
+  try { received = Buffer.from(signatureHeader.slice(7), 'hex') } catch { return false }
+  if (expected.length !== received.length) return false
+  return crypto.timingSafeEqual(expected, received)
+}
 
 export default async function handler(req, res) {
   // GET — Verificación de Meta (solo la primera vez que configuras el webhook)
@@ -18,8 +42,23 @@ export default async function handler(req, res) {
 
   // POST — Mensaje entrante de WhatsApp
   if (req.method === 'POST') {
+    const rawBody = await readRawBody(req)
+
+    // Verificación de firma. Si WHATSAPP_APP_SECRET aún no está configurado en
+    // Vercel, se procesa con una advertencia para no tumbar el bot — pero debe
+    // configurarse cuanto antes.
+    if (APP_SECRET) {
+      if (!verifySignature(rawBody, req.headers['x-hub-signature-256'])) {
+        console.warn('🚫 Firma inválida — payload rechazado')
+        return res.status(401).json({ error: 'Invalid signature' })
+      }
+    } else {
+      console.warn('⚠️ WHATSAPP_APP_SECRET no configurado — webhook SIN verificación de firma')
+    }
+
     try {
-      const entry   = req.body?.entry?.[0]
+      const body    = JSON.parse(rawBody.toString('utf8'))
+      const entry   = body?.entry?.[0]
       const change  = entry?.changes?.[0]
       const message = change?.value?.messages?.[0]
 
