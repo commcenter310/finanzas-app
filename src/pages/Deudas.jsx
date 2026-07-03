@@ -114,7 +114,7 @@ export default function Deudas() {
             {[['deudas','Mis Deudas'],['calculadora','Calculadora']].map(([k,l]) => (
               <button key={k} onClick={() => setTab(k)}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all
-                  ${tab === k ? 'bg-primary-700 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                  ${tab === k ? 'bg-primary-700 text-fg-on-primary' : 'bg-surface border border-gray-200 text-gray-600'}`}>
                 {l}
               </button>
             ))}

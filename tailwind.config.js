@@ -29,12 +29,35 @@ export default {
         'fg-2': 'var(--fg-2)',
         'fg-3': 'var(--fg-3)',
         'fg-4': 'var(--fg-4)',
+        'fg-on-primary': 'var(--fg-on-primary)',
         // Status
         positive: 'var(--positive)',
         negative: 'var(--negative)',
         warning:  'var(--warning)',
         // Border
         border:   'var(--border)',
+        // Paletas Tailwind remapeadas a variables (ver "PUENTE" en finni-tokens.css)
+        // → las clases gray/red/emerald/amber/blue existentes flipean con el tema
+        gray: {
+          50:  'var(--tw-gray-50)',  100: 'var(--tw-gray-100)', 200: 'var(--tw-gray-200)',
+          300: 'var(--tw-gray-300)', 400: 'var(--tw-gray-400)', 500: 'var(--tw-gray-500)',
+          600: 'var(--tw-gray-600)', 700: 'var(--tw-gray-700)', 800: 'var(--tw-gray-800)',
+          900: 'var(--tw-gray-900)',
+        },
+        red: {
+          50:  'var(--tw-red-50)',  100: 'var(--tw-red-100)', 200: 'var(--tw-red-200)',
+          400: 'var(--tw-red-400)', 500: 'var(--tw-red-500)', 600: 'var(--tw-red-600)',
+        },
+        emerald: {
+          50:  'var(--tw-emerald-50)',  100: 'var(--tw-emerald-100)',
+          500: 'var(--tw-emerald-500)', 600: 'var(--tw-emerald-600)',
+        },
+        amber: {
+          50: 'var(--tw-amber-50)', 400: 'var(--tw-amber-400)', 500: 'var(--tw-amber-500)',
+        },
+        blue: {
+          50: 'var(--tw-blue-50)', 500: 'var(--tw-blue-500)',
+        },
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],

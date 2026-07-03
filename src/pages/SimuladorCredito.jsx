@@ -312,7 +312,7 @@ export default function SimuladorCredito() {
             {verTabla && (
               <div className="overflow-x-auto max-h-72 overflow-y-auto">
                 <table className="w-full text-sm min-w-[380px]">
-                  <thead className="sticky top-0 bg-white">
+                  <thead className="sticky top-0 bg-surface">
                     <tr className="border-b border-gray-100">
                       {['#','Pago','Interés','Amortización','Saldo'].map(h => (
                         <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>

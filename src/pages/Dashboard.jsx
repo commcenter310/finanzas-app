@@ -120,7 +120,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {pasosOnboarding.map((p, i) => (
                 <Link key={p.to} to={p.to}
-                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] bg-white transition-all hover:shadow-md">
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] bg-surface transition-all hover:shadow-md">
                   <span className="text-2xl flex-shrink-0">{p.emoji}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold" style={{ color: 'var(--fg-1)' }}>

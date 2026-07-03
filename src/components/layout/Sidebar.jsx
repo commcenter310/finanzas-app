@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange, Telescope
+  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange, Telescope,
+  Moon, Sun
 } from 'lucide-react'
 
 // Navegación agrupada por uso: lo diario arriba, lo de consulta abajo
@@ -58,6 +60,7 @@ const GLASS_SIDEBAR = {
 
 export default function Sidebar({ open, onClose }) {
   const { signOut } = useAuth()
+  const { esOscuro, toggleTema } = useTheme()
 
   return (
     <aside
@@ -149,8 +152,20 @@ export default function Sidebar({ open, onClose }) {
         ))}
       </nav>
 
-      {/* Logout */}
+      {/* Tema + Logout */}
       <div className="px-3 pb-4 pt-2 border-t border-[var(--divider)]">
+        <button
+          onClick={toggleTema}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm font-medium w-full transition-all"
+          style={{ color: 'var(--fg-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+        >
+          {esOscuro
+            ? <Sun className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
+            : <Moon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />}
+          {esOscuro ? 'Tema claro' : 'Tema oscuro'}
+        </button>
         <button
           onClick={signOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm font-medium w-full transition-all"
