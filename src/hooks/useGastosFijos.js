@@ -33,6 +33,20 @@ export function useGastosFijos() {
     return data ?? []
   }, [user?.id])
 
+  const { data: metodos } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('metodos_pago')
+      .select('id, nombre, tipo, credito_id')
+      .eq('user_id', user.id).eq('activo', true)
+    return data ?? []
+  }, [user?.id], `metodos:${user?.id}`)
+
+  // Ajuste atómico del saldo de la tarjeta cuando el gasto fijo se paga con TDC
+  const ajustarSaldoCredito = (metodoPagoId, delta) => {
+    const creditoId = metodos?.find(m => m.id === Number(metodoPagoId))?.credito_id
+    if (!creditoId) return Promise.resolve()
+    return supabase.rpc('update_saldo_credito', { p_credito_id: creditoId, p_delta: delta })
+  }
+
   const totales = {
     previsto: gastos?.reduce((s, g) => s + Number(g.monto_previsto), 0) ?? 0,
     actual:   gastos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0,
@@ -62,7 +76,8 @@ export function useGastosFijos() {
       const montoReal = opciones.monto != null && opciones.monto !== '' ? Number(opciones.monto) : Number(gasto.monto_previsto)
       const fechaReal = opciones.fecha || hoy
       // Marcar como pagado → crear transacción en Control de Gastos
-      const { data: tx } = await supabase.from('transacciones').insert({
+      // (con el método del gasto fijo: si es tarjeta, alimenta su ciclo de corte)
+      const txPayload = {
         user_id: user.id,
         descripcion: gasto.concepto,
         monto: montoReal,
@@ -70,7 +85,12 @@ export function useGastosFijos() {
         categoria_id: gasto.categoria_id ?? null,
         fecha: fechaReal,
         origen: 'gastos_fijos',
-      }).select('id').single()
+      }
+      if (gasto.metodo_pago_id) txPayload.metodo_pago_id = gasto.metodo_pago_id
+      const [{ data: tx }] = await Promise.all([
+        supabase.from('transacciones').insert(txPayload).select('id').single(),
+        ajustarSaldoCredito(gasto.metodo_pago_id, montoReal),
+      ])
       await supabase.from('gastos_fijos').update({
         pagado: true,
         monto_actual: montoReal,
@@ -78,10 +98,13 @@ export function useGastosFijos() {
         transaccion_id: tx?.id ?? null,
       }).eq('id', gasto.id)
     } else {
-      // Desmarcar → borrar la transacción vinculada
-      if (gasto.transaccion_id) {
-        await supabase.from('transacciones').delete().eq('id', gasto.transaccion_id)
-      }
+      // Desmarcar → borrar la transacción vinculada y revertir el saldo de la TDC
+      await Promise.all([
+        gasto.transaccion_id
+          ? supabase.from('transacciones').delete().eq('id', gasto.transaccion_id)
+          : Promise.resolve(),
+        ajustarSaldoCredito(gasto.metodo_pago_id, -Number(gasto.monto_actual || 0)),
+      ])
       await supabase.from('gastos_fijos').update({
         pagado: false,
         monto_actual: 0,
@@ -103,7 +126,7 @@ export function useGastosFijos() {
 
     const { data: recurrentes } = await supabase
       .from('gastos_fijos')
-      .select('concepto, categoria_id, monto_previsto, clasificacion, es_recurrente, dia_cobro')
+      .select('concepto, categoria_id, monto_previsto, clasificacion, es_recurrente, dia_cobro, metodo_pago_id')
       .eq('user_id', user.id).eq('mes', mesAnterior).eq('anio', anioAnterior).eq('es_recurrente', true)
 
     if (!recurrentes?.length) return { copiados: 0 }
@@ -127,5 +150,5 @@ export function useGastosFijos() {
     })
   }, [loading, gastos, mes, anio]) // eslint-disable-line
 
-  return { gastos: gastos ?? [], categorias: categorias ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
+  return { gastos: gastos ?? [], categorias: categorias ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
 }

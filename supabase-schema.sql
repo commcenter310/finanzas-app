@@ -391,6 +391,9 @@ CREATE POLICY "own" ON public.patrimonio_snapshots FOR ALL USING (auth.uid() = u
 -- gastos_fijos: día de cobro + vínculo con la transacción auto-generada al pagar
 ALTER TABLE public.gastos_fijos ADD COLUMN IF NOT EXISTS dia_cobro INTEGER CHECK (dia_cobro BETWEEN 1 AND 31);
 ALTER TABLE public.gastos_fijos ADD COLUMN IF NOT EXISTS transaccion_id INTEGER REFERENCES public.transacciones(id) ON DELETE SET NULL;
+-- gastos_fijos.metodo_pago_id: con qué se paga; si es tarjeta, al marcarlo pagado
+-- la transacción lleva el método (alimenta ciclo de corte) y ajusta el saldo TDC
+ALTER TABLE public.gastos_fijos ADD COLUMN IF NOT EXISTS metodo_pago_id INTEGER REFERENCES public.metodos_pago(id) ON DELETE SET NULL;
 
 -- metodos_pago: vínculo con crédito (registrar gasto con tarjeta actualiza su saldo)
 ALTER TABLE public.metodos_pago ADD COLUMN IF NOT EXISTS credito_id INTEGER REFERENCES public.creditos(id) ON DELETE SET NULL;

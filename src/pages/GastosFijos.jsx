@@ -15,10 +15,10 @@ const CLASIF_OPTS = [
   { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
 ]
 
-const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '' }
+const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '', metodo_pago_id: '' }
 
 export default function GastosFijos() {
-  const { gastos, categorias, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
+  const { gastos, categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
   const hoyDia = new Date().getDate()
@@ -75,6 +75,7 @@ export default function GastosFijos() {
       es_recurrente: g.es_recurrente,
       dia_cobro:     g.dia_cobro ?? '',
       categoria_id:  g.categoria_id ?? '',
+      metodo_pago_id: g.metodo_pago_id ?? '',
     })
     setMostrarForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -89,6 +90,10 @@ export default function GastosFijos() {
   const handleGuardar = async () => {
     if (!form.concepto || !form.monto_previsto) return
     const datos = { ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
+    // Método de pago: solo mandar la columna cuando es relevante
+    delete datos.metodo_pago_id
+    if (form.metodo_pago_id) datos.metodo_pago_id = Number(form.metodo_pago_id)
+    else if (editandoId) datos.metodo_pago_id = null // permitir quitarlo al editar
     if (editandoId) {
       await actualizar(editandoId, datos)
       toast('Gasto fijo actualizado ✓', 'success')
@@ -173,7 +178,7 @@ export default function GastosFijos() {
         {mostrarForm && (
           <div className="card p-5 border-2 border-primary-100">
             <h3 className="font-bold text-gray-900 mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
               <div className="col-span-2 lg:col-span-1">
                 <label className="label">Concepto</label>
                 <input className="input" placeholder="Ej: Netflix, Renta, Luz..."
@@ -207,6 +212,15 @@ export default function GastosFijos() {
                   options={CLASIF_OPTS}
                   placeholder="Tipo"
                   showClear={false}
+                />
+              </div>
+              <div>
+                <label className="label">Se paga con</label>
+                <FilterSelect
+                  value={form.metodo_pago_id}
+                  onChange={v => setF('metodo_pago_id', v)}
+                  options={metodos.map(m => ({ value: m.id, label: m.credito_id ? `💳 ${m.nombre}` : m.nombre }))}
+                  placeholder="Sin método"
                 />
               </div>
             </div>
@@ -266,6 +280,15 @@ export default function GastosFijos() {
                         {g.categorias && (
                           <span className="text-xs text-gray-400">{g.categorias.icono} {g.categorias.nombre}</span>
                         )}
+                        {(() => {
+                          const met = metodos.find(m => m.id === g.metodo_pago_id)
+                          return met && (
+                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                              style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}>
+                              {met.credito_id ? '💳' : ''} {met.nombre}
+                            </span>
+                          )
+                        })()}
                         {g.dia_cobro && (
                           <span className="flex items-center gap-1 text-xs font-mono text-gray-400">
                             <CalendarClock className="w-3 h-3" />
@@ -348,6 +371,15 @@ export default function GastosFijos() {
             </h3>
             <p className="text-sm mb-4" style={{ color: 'var(--fg-3)' }}>
               Confirma cuánto pagaste y qué día (pre-llenado con lo previsto).
+              {(() => {
+                const met = metodos.find(m => m.id === pagando.metodo_pago_id)
+                return met && (
+                  <span className="block mt-1">
+                    Se registrará con: <span className="font-semibold" style={{ color: 'var(--fg-2)' }}>{met.credito_id ? '💳 ' : ''}{met.nombre}</span>
+                    {met.credito_id ? ' (suma al saldo y al corte de la tarjeta)' : ''}
+                  </span>
+                )
+              })()}
             </p>
             <div className="space-y-3 mb-5">
               <div>
