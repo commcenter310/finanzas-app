@@ -17,7 +17,7 @@ export function useTransacciones() {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
-        id, descripcion, monto, clasificacion, fecha, origen, created_at,
+        id, descripcion, monto, clasificacion, fecha, origen, msi_meses, created_at,
         categorias(id, nombre, icono, clasificacion),
         metodos_pago(id, nombre, credito_id)
       `)

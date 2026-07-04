@@ -80,6 +80,77 @@ export const diasHastaDiaDelMes = (diaObjetivo, desde = new Date()) => {
   return (diasEsteMes - hoy) + Math.min(diaObjetivo, diasProxMes)
 }
 
+// ── Ciclo de corte de tarjetas de crédito ────────────────────────────────────
+
+// Fecha real del corte en un mes dado (día 31 en junio → 30, convención bancaria)
+const fechaCorteEnMes = (anio, mesIdx0, diaCorte) => {
+  const dias = new Date(anio, mesIdx0 + 1, 0).getDate()
+  return new Date(anio, mesIdx0, Math.min(diaCorte, dias))
+}
+
+// Los tres cortes relevantes: el previo, el último ocurrido y el próximo
+export const cortesRecientes = (diaCorte, hoy = new Date()) => {
+  let corte = fechaCorteEnMes(hoy.getFullYear(), hoy.getMonth(), diaCorte)
+  if (corte > hoy) corte = fechaCorteEnMes(hoy.getFullYear(), hoy.getMonth() - 1, diaCorte)
+  const cortePrevio  = fechaCorteEnMes(corte.getFullYear(), corte.getMonth() - 1, diaCorte)
+  const proximoCorte = fechaCorteEnMes(corte.getFullYear(), corte.getMonth() + 1, diaCorte)
+  return { cortePrevio, ultimoCorte: corte, proximoCorte }
+}
+
+// Estado del ciclo de una tarjeta a partir de sus compras.
+// Modelo "totalero" (pagas completo cada mes, sin intereses ni saldo arrastrado):
+// - Compra normal: se factura en el periodo (cortePrevio, corte] donde cae su fecha.
+// - Compra a MSI (msi_meses = N): se factura monto/N en N cortes consecutivos,
+//   empezando en el primer corte >= fecha de compra.
+// Devuelve:
+//   pagoProximo        → lo facturado al último corte (lo que pagas el día de pago)
+//   gastoPeriodoActual → lo que llevas acumulado para el PRÓXIMO corte
+//   msiPendiente       → suma de mensualidades MSI que faltan por facturar
+//   msiActivos         → cuántas compras MSI siguen vivas
+export const calcularEstadoTarjeta = ({ transaccionesTarjeta = [], diaCorte, hoy = new Date() }) => {
+  if (!diaCorte) return null
+  const { cortePrevio, ultimoCorte, proximoCorte } = cortesRecientes(diaCorte, hoy)
+  // Mediodía para esquivar desfases de zona horaria al parsear 'YYYY-MM-DD'
+  const aFecha = (s) => new Date(`${s}T12:00:00`)
+  // Comparaciones con granularidad de DÍA (la hora no importa en cortes)
+  const ymd = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+  const mesesEntre = (a, b) => (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
+
+  let pagoProximo = 0, gastoPeriodoActual = 0, msiPendiente = 0, msiActivos = 0
+
+  for (const t of transaccionesTarjeta) {
+    const f = aFecha(t.fecha)
+    const monto = Number(t.monto)
+    const n = t.msi_meses && Number(t.msi_meses) > 1 ? Number(t.msi_meses) : null
+
+    if (!n) {
+      if (ymd(f) > ymd(cortePrevio) && ymd(f) <= ymd(ultimoCorte)) pagoProximo += monto
+      else if (ymd(f) > ymd(ultimoCorte) && ymd(f) <= ymd(proximoCorte)) gastoPeriodoActual += monto
+      continue
+    }
+
+    // MSI: primer corte que la factura
+    const mensualidad = monto / n
+    let primerCorte = fechaCorteEnMes(f.getFullYear(), f.getMonth(), diaCorte)
+    if (ymd(primerCorte) < ymd(f)) primerCorte = fechaCorteEnMes(f.getFullYear(), f.getMonth() + 1, diaCorte)
+
+    // ¿El último corte facturó una mensualidad? (índice 1..N)
+    const idxUltimo = mesesEntre(primerCorte, ultimoCorte) + 1
+    if (primerCorte <= ultimoCorte && idxUltimo >= 1 && idxUltimo <= n) pagoProximo += mensualidad
+
+    // ¿El próximo corte facturará una?
+    const idxProximo = mesesEntre(primerCorte, proximoCorte) + 1
+    if (primerCorte <= proximoCorte && idxProximo >= 1 && idxProximo <= n) gastoPeriodoActual += mensualidad
+
+    // Mensualidades que faltan después del último corte
+    const facturadas = primerCorte <= ultimoCorte ? Math.min(Math.max(idxUltimo, 0), n) : 0
+    const restantes = n - facturadas
+    if (restantes > 0) { msiPendiente += restantes * mensualidad; msiActivos += 1 }
+  }
+
+  return { pagoProximo, gastoPeriodoActual, msiPendiente, msiActivos, ultimoCorte, proximoCorte }
+}
+
 // Proyección de fin de mes: extrapola el gasto variable al ritmo actual.
 // Los gastos fijos ya se conocen completos; solo se proyecta lo variable.
 export const calcularProyeccion = ({

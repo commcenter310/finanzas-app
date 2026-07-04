@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Layout from '../components/layout/Layout'
 import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
-import { diasHastaDiaDelMes } from '../utils/calculos'
+import { diasHastaDiaDelMes, calcularEstadoTarjeta } from '../utils/calculos'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import ErrorState from '../components/ui/ErrorState'
@@ -137,7 +137,9 @@ function getAlerta(credito) {
   }
 }
 
-function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
+const fmtFechaCorta = (d) => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+
+function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
   const { diasParaCorte, diasParaPago, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
   const pctUso = credito.limite_credito > 0
     ? (credito.saldo_utilizado / credito.limite_credito) * 100 : 0
@@ -248,6 +250,34 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
         </div>
       </div>
 
+      {/* Ciclo de corte: qué pagar el día de pago vs qué llevas para el siguiente */}
+      {ciclo && metodoVinculado && (
+        <div className="rounded-lg p-3 mb-3" style={{ background: 'var(--primary-50)', border: '1px solid var(--primary-100)' }}>
+          <div className="flex flex-wrap justify-between items-center gap-x-3 text-sm">
+            <span className="font-semibold" style={{ color: 'var(--fg-1)' }}>🧾 Pagar el día {credito.fecha_pago}</span>
+            <span className="font-mono font-bold" style={{ color: 'var(--fg-1)' }}>{formatMXN(ciclo.pagoProximo)}</span>
+          </div>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
+            Facturado al corte del {fmtFechaCorta(ciclo.ultimoCorte)} · pago para no generar intereses
+          </p>
+          <div className="flex flex-wrap justify-between items-center gap-x-3 text-xs mt-2 pt-2 border-t" style={{ borderColor: 'var(--primary-100)' }}>
+            <span style={{ color: 'var(--fg-3)' }}>🛒 Este periodo (va al corte del {fmtFechaCorta(ciclo.proximoCorte)})</span>
+            <span className="font-mono font-semibold" style={{ color: 'var(--fg-2)' }}>{formatMXN(ciclo.gastoPeriodoActual)}</span>
+          </div>
+          {ciclo.msiActivos > 0 && (
+            <div className="flex flex-wrap justify-between items-center gap-x-3 text-xs mt-1">
+              <span style={{ color: 'var(--fg-3)' }}>📅 MSI por facturar ({ciclo.msiActivos} compra{ciclo.msiActivos !== 1 ? 's' : ''})</span>
+              <span className="font-mono font-semibold" style={{ color: 'var(--fg-2)' }}>{formatMXN(ciclo.msiPendiente)}</span>
+            </div>
+          )}
+        </div>
+      )}
+      {ciclo && !metodoVinculado && (
+        <p className="text-xs mb-3 px-1" style={{ color: 'var(--fg-4)' }}>
+          💡 Vincula un método de pago a esta tarjeta para calcular cuánto pagar en cada corte.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg px-3 py-2" style={{ background: 'var(--ahorro-bg)', border: '1px solid var(--ahorro-bg)' }}>
           <p className="font-semibold mb-0.5" style={{ color: 'var(--ahorro-fg)' }}>Óptimo</p>
@@ -265,7 +295,14 @@ function TarjetaCredito({ credito, metodos, onEditar, onEliminar }) {
 const FORM_VACIO = { nombre:'', fecha_corte:'', fecha_pago:'', limite_credito:'', saldo_utilizado:'', metodo_vinculado_id:'' }
 
 export default function Creditos() {
-  const { creditos, metodos, loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo } = useCreditos()
+  const { creditos, metodos, comprasTarjeta, loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo } = useCreditos()
+
+  // Compras agrupadas por tarjeta (para el ciclo de corte)
+  const comprasPorCredito = {}
+  for (const t of comprasTarjeta) {
+    const cid = t.metodos_pago?.credito_id
+    if (cid) (comprasPorCredito[cid] ??= []).push(t)
+  }
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -404,7 +441,11 @@ export default function Creditos() {
           : creditos.length === 0
             ? <div className="card p-16 text-center text-gray-300 text-sm">No tienes tarjetas de crédito registradas</div>
             : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {creditos.map(c => <TarjetaCredito key={c.id} credito={c} metodos={metodos} onEditar={handleEditar} onEliminar={(id) => setConfirmDelete(id)} />)}
+                {creditos.map(c => (
+                  <TarjetaCredito key={c.id} credito={c} metodos={metodos}
+                    ciclo={calcularEstadoTarjeta({ transaccionesTarjeta: comprasPorCredito[c.id] ?? [], diaCorte: c.fecha_corte })}
+                    onEditar={handleEditar} onEliminar={(id) => setConfirmDelete(id)} />
+                ))}
               </div>}
 
       </div>

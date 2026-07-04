@@ -3,6 +3,7 @@ import {
   sumarTransaccionesSinFijos, calcularTotalGastos, calcularSaldoAnterior,
   calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
   calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
+  cortesRecientes, calcularEstadoTarjeta,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -148,6 +149,111 @@ describe('diasHastaDiaDelMes', () => {
   })
   it('null → null (sin fecha configurada, no NaN)', () => {
     expect(diasHastaDiaDelMes(null)).toBeNull()
+  })
+})
+
+describe('cortesRecientes', () => {
+  it('hoy después del corte del mes → último corte es este mes', () => {
+    // corte día 15, hoy 20 jun 2026
+    const { cortePrevio, ultimoCorte, proximoCorte } = cortesRecientes(15, new Date(2026, 5, 20))
+    expect(ultimoCorte.getDate()).toBe(15)
+    expect(ultimoCorte.getMonth()).toBe(5)  // junio
+    expect(cortePrevio.getMonth()).toBe(4)  // mayo
+    expect(proximoCorte.getMonth()).toBe(6) // julio
+  })
+  it('hoy antes del corte del mes → último corte fue el mes pasado', () => {
+    const { ultimoCorte, proximoCorte } = cortesRecientes(15, new Date(2026, 5, 10))
+    expect(ultimoCorte.getMonth()).toBe(4)  // mayo
+    expect(proximoCorte.getMonth()).toBe(5) // junio
+  })
+  it('corte día 31 en meses cortos → clampa al último día (feb 28)', () => {
+    const { ultimoCorte } = cortesRecientes(31, new Date(2026, 2, 5)) // 5 mar 2026
+    expect(ultimoCorte.getMonth()).toBe(1)   // febrero
+    expect(ultimoCorte.getDate()).toBe(28)   // feb 2026 tiene 28
+  })
+})
+
+describe('calcularEstadoTarjeta', () => {
+  // Escenario base: corte día 15, hoy 20 jun 2026
+  // → cortePrevio 15 may · ultimoCorte 15 jun · proximoCorte 15 jul
+  const hoy = new Date(2026, 5, 20)
+
+  it('compra normal del periodo cerrado → va al pago próximo', () => {
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 1000, fecha: '2026-06-01' }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(1000)
+    expect(r.gastoPeriodoActual).toBe(0)
+  })
+
+  it('compra después del último corte → va al periodo actual, no al pago', () => {
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 800, fecha: '2026-06-18' }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(0)
+    expect(r.gastoPeriodoActual).toBe(800)
+  })
+
+  it('la compra DEL día del corte entra al periodo que cierra', () => {
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 500, fecha: '2026-06-15' }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(500)
+  })
+
+  it('MSI: solo la mensualidad va al pago, el resto queda pendiente', () => {
+    // 6000 a 6 MSI comprado el 1 jun → 1ª mensualidad facturada al corte del 15 jun
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 6000, fecha: '2026-06-01', msi_meses: 6 }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(1000)          // 6000/6
+    expect(r.gastoPeriodoActual).toBe(1000)   // 2ª mensualidad al corte de julio
+    expect(r.msiPendiente).toBe(5000)         // faltan 5 mensualidades
+    expect(r.msiActivos).toBe(1)
+  })
+
+  it('MSI comprado en el periodo abierto → primera mensualidad hasta el próximo corte', () => {
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 3000, fecha: '2026-06-18', msi_meses: 3 }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(0)
+    expect(r.gastoPeriodoActual).toBe(1000)
+    expect(r.msiPendiente).toBe(3000)         // aún no se factura ninguna
+  })
+
+  it('MSI ya terminado no suma nada', () => {
+    // 3 MSI comprado en enero → facturado en cortes de ene/feb/mar; en junio ya no vive
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [{ monto: 3000, fecha: '2026-01-02', msi_meses: 3 }],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(0)
+    expect(r.gastoPeriodoActual).toBe(0)
+    expect(r.msiPendiente).toBe(0)
+    expect(r.msiActivos).toBe(0)
+  })
+
+  it('mezcla: normal + MSI se suman al pago del corte', () => {
+    const r = calcularEstadoTarjeta({
+      transaccionesTarjeta: [
+        { monto: 1200, fecha: '2026-06-05' },                 // normal, periodo cerrado
+        { monto: 6000, fecha: '2026-05-20', msi_meses: 6 },   // MSI: 1ª mensualidad al corte del 15 jun
+        { monto: 400,  fecha: '2026-06-17' },                 // normal, periodo abierto
+      ],
+      diaCorte: 15, hoy,
+    })
+    expect(r.pagoProximo).toBe(1200 + 1000)
+    expect(r.gastoPeriodoActual).toBe(400 + 1000)
+    expect(r.msiPendiente).toBe(5000) // facturada 1 de 6 al último corte
+  })
+
+  it('sin día de corte configurado → null', () => {
+    expect(calcularEstadoTarjeta({ transaccionesTarjeta: [], diaCorte: null })).toBeNull()
   })
 })
 

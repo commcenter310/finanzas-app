@@ -401,6 +401,12 @@ ALTER TABLE public.transacciones DROP CONSTRAINT IF EXISTS transacciones_origen_
 ALTER TABLE public.transacciones ADD CONSTRAINT transacciones_origen_check
   CHECK (origen IN ('web','whatsapp','gastos_fijos','deuda','ahorro'));
 
+-- transacciones.msi_meses: compras a meses sin intereses con tarjeta de crédito.
+-- NULL = contado. N = el monto se factura en N mensualidades de monto/N,
+-- empezando en el primer corte posterior a la compra (ver calcularEstadoTarjeta).
+ALTER TABLE public.transacciones
+  ADD COLUMN IF NOT EXISTS msi_meses INTEGER CHECK (msi_meses BETWEEN 2 AND 60);
+
 -- Onboarding: los usuarios nuevos ven un wizard de bienvenida la primera vez.
 -- Los usuarios existentes (ya tienen nombre configurado) no lo ven.
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completado BOOLEAN DEFAULT false;

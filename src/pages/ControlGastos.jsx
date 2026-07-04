@@ -19,8 +19,10 @@ const CLASIF_OPTS = [
 
 const FORM_VACIO = {
   descripcion: '', monto: '', categoria_id: '', clasificacion: 'deseo',
-  metodo_pago_id: '', fecha: new Date().toISOString().split('T')[0]
+  metodo_pago_id: '', msi_meses: '', fecha: new Date().toISOString().split('T')[0]
 }
+
+const MSI_OPTS = [3, 6, 9, 12, 18, 24].map(n => ({ value: n, label: `${n} meses sin intereses` }))
 
 export default function ControlGastos() {
   const { profile } = useAuth()
@@ -43,6 +45,7 @@ export default function ControlGastos() {
       categoria_id:   t.categorias?.id   ?? '',
       clasificacion:  t.clasificacion,
       metodo_pago_id: t.metodos_pago?.id ?? '',
+      msi_meses:      t.msi_meses ?? '',
       fecha:          t.fecha,
     })
     setEditandoId(t.id)
@@ -70,14 +73,23 @@ export default function ControlGastos() {
     if (cat) setF('clasificacion', cat.clasificacion)
   }
 
+  // El método seleccionado, para saber si es tarjeta de crédito (habilita MSI)
+  const metodoSeleccionado = metodos.find(m => m.id === Number(form.metodo_pago_id))
+  const esTarjetaCredito = !!metodoSeleccionado?.credito_id
+
   const handleGuardar = async () => {
     if (!form.descripcion || !form.monto) return
+    const resto = { ...form }
+    delete resto.msi_meses
     const datos = {
-      ...form,
+      ...resto,
       monto:          Number(form.monto),
       categoria_id:   form.categoria_id   ? Number(form.categoria_id)   : null,
       metodo_pago_id: form.metodo_pago_id ? Number(form.metodo_pago_id) : null,
     }
+    // MSI solo aplica a tarjetas; se manda la columna solo cuando es relevante
+    if (esTarjetaCredito && form.msi_meses) datos.msi_meses = Number(form.msi_meses)
+    else if (transaccionOriginal?.msi_meses) datos.msi_meses = null // editó y lo quitó
     const { error } = editandoId
       ? await actualizar(editandoId, datos, transaccionOriginal)
       : await agregar(datos)
@@ -252,6 +264,22 @@ export default function ControlGastos() {
                   placeholder="No especificado"
                 />
               </div>
+              {esTarjetaCredito && (
+                <div>
+                  <label className="label">¿A meses?</label>
+                  <FilterSelect
+                    value={form.msi_meses}
+                    onChange={v => setF('msi_meses', v)}
+                    options={MSI_OPTS}
+                    placeholder="Contado"
+                  />
+                  {form.msi_meses && Number(form.monto) > 0 && (
+                    <p className="text-xs mt-1" style={{ color: 'var(--primary-600)' }}>
+                      {formatMXN(Number(form.monto) / Number(form.msi_meses))}/mes
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
@@ -322,6 +350,13 @@ export default function ControlGastos() {
                                 {origenLabel}
                               </span>
                             )}
+                            {t.msi_meses && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                style={{ background: 'var(--necesidad-bg)', color: 'var(--necesidad-fg)' }}
+                                title={`${formatMXN(Number(t.monto) / t.msi_meses)}/mes`}>
+                                {t.msi_meses} MSI
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
@@ -380,6 +415,12 @@ export default function ControlGastos() {
                             {origenLabel && (
                               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 whitespace-nowrap">
                                 {origenLabel}
+                              </span>
+                            )}
+                            {t.msi_meses && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                style={{ background: 'var(--necesidad-bg)', color: 'var(--necesidad-fg)' }}>
+                                {t.msi_meses} MSI
                               </span>
                             )}
                           </div>

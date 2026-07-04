@@ -23,6 +23,19 @@ export function useCreditos() {
     return data ?? []
   }, [uid], `metodos:${uid}`)
 
+  // Compras hechas con tarjetas (métodos vinculados a un crédito) — últimos 26
+  // meses para cubrir planes MSI largos. Alimenta el ciclo de corte por tarjeta.
+  const { data: comprasTarjeta } = useSupabaseQuery(async () => {
+    const desde = new Date()
+    desde.setMonth(desde.getMonth() - 26)
+    const { data } = await supabase.from('transacciones')
+      .select('monto, fecha, msi_meses, metodos_pago!inner(credito_id)')
+      .eq('user_id', user.id)
+      .not('metodos_pago.credito_id', 'is', null)
+      .gte('fecha', desde.toISOString().split('T')[0])
+    return data ?? []
+  }, [uid], `creditos:compras:${uid}`)
+
   const agregar = async (datos) => {
     setSaving(true)
     const { data, error } = await supabase.from('creditos')
@@ -55,5 +68,5 @@ export function useCreditos() {
     refetchMetodos()
   }
 
-  return { creditos: creditos ?? [], metodos: metodos ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
+  return { creditos: creditos ?? [], metodos: metodos ?? [], comprasTarjeta: comprasTarjeta ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
 }
