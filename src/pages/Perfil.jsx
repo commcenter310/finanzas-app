@@ -9,6 +9,7 @@ import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
+import { CLASIF_OPTS } from '../utils/constantes'
 
 const TIPO_METODO_OPTS = [
   { value: 'debito',   label: 'Débito',   dotColor: 'var(--fg-3)'    },
@@ -16,12 +17,6 @@ const TIPO_METODO_OPTS = [
   { value: 'efectivo', label: 'Efectivo', dotColor: 'var(--ahorro)'  },
   { value: 'digital',  label: 'Digital',  dotColor: 'var(--deseo)'   },
 ]
-const CLASIF_OPTS = [
-  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
-  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
-  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
-]
-
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
 

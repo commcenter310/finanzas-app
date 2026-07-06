@@ -1,19 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
-import { formatMXN } from '../utils/constantes'
+import { CLASIF_OPTS, formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
-
-const CLASIF_OPTS = [
-  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
-  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
-  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
-]
 
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '', metodo_pago_id: '' }
 

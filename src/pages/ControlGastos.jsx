@@ -3,19 +3,13 @@ import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { formatMXN } from '../utils/constantes'
+import { CLASIF_OPTS, formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Search, X, MessageSquare, Pencil, Lock, Download } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
-
-const CLASIF_OPTS = [
-  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
-  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
-  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
-]
 
 const FORM_VACIO = {
   descripcion: '', monto: '', categoria_id: '', clasificacion: 'deseo',

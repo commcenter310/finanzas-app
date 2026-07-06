@@ -3,10 +3,10 @@ export const MESES = [
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
 ]
 
-export const CLASIFICACIONES = [
-  { value: 'necesidad', label: 'Necesidad', color: 'necesidad', emoji: '🔵' },
-  { value: 'deseo',     label: 'Deseo',     color: 'deseo',     emoji: '🟡' },
-  { value: 'ahorro',    label: 'Ahorro',    color: 'ahorro',    emoji: '🟢' },
+export const CLASIF_OPTS = [
+  { value: 'necesidad', label: 'Necesidad', dotColor: 'var(--necesidad)' },
+  { value: 'deseo',     label: 'Deseo',     dotColor: 'var(--deseo)'     },
+  { value: 'ahorro',    label: 'Ahorro',    dotColor: 'var(--ahorro)'    },
 ]
 
 // Las categorías y métodos de pago por defecto de un usuario nuevo se siembran
@@ -16,10 +16,6 @@ export const CLASIFICACIONES = [
 export const formatMXN = (n) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n ?? 0)
 
-export const getMesAnioActual = () => {
-  const d = new Date()
-  return { mes: d.getMonth() + 1, anio: d.getFullYear() }
-}
 
 // ── Quincenas ──────────────────────────────────────────────────────────────
 // Q1 = días 1–15 · Q2 = días 16–último día del mes
