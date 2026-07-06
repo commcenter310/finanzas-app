@@ -3,14 +3,15 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useTransacciones() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
 
-  const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
-  const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const inicioMes = inicioMesISO(mes, anio)
+  const finMes = finMesISO(mes, anio)
   const uid = user?.id
 
   const { data: transacciones, loading, error, refetch } = useSupabaseQuery(async () => {

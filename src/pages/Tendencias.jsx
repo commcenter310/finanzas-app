@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { supabase } from '../lib/supabase'
 import { MESES, formatMXN } from '../utils/constantes'
+import { finMesISO, inicioMesISO } from '../utils/fecha'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid, ReferenceLine
@@ -18,8 +19,8 @@ export default function Tendencias() {
       fecha.setMonth(fecha.getMonth() - i)
       const m = fecha.getMonth() + 1
       const a = fecha.getFullYear()
-      const inicio = `${a}-${String(m).padStart(2,'0')}-01`
-      const fin    = new Date(a, m, 0).toISOString().split('T')[0]
+      const inicio = inicioMesISO(m, a)
+      const fin    = finMesISO(m, a)
 
       const [{ data: ing }, { data: tx }, { data: fijos }] = await Promise.all([
         supabase.from('ingresos').select('monto_actual').eq('user_id', user.id).eq('mes', m).eq('anio', a),
@@ -63,8 +64,8 @@ export default function Tendencias() {
       fecha.setMonth(fecha.getMonth() - i)
       const m = fecha.getMonth() + 1
       const a = fecha.getFullYear()
-      const inicio = `${a}-${String(m).padStart(2,'0')}-01`
-      const fin    = new Date(a, m, 0).toISOString().split('T')[0]
+      const inicio = inicioMesISO(m, a)
+      const fin    = finMesISO(m, a)
 
       const { data: tx } = await supabase.from('transacciones')
         .select('monto, metodo_pago_id').eq('user_id', user.id)

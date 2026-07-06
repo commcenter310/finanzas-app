@@ -295,10 +295,21 @@ CREATE POLICY "own" ON public.pagos_credito
 -- crédito pertenezca a quien llama (sin esto, cualquier usuario autenticado
 -- podría alterar saldos ajenos pasando otro id).
 CREATE OR REPLACE FUNCTION update_saldo_credito(p_credito_id INTEGER, p_delta NUMERIC)
-RETURNS VOID LANGUAGE SQL SECURITY DEFINER AS $$
-  UPDATE creditos
-  SET saldo_utilizado = GREATEST(0, saldo_utilizado + p_delta)
+RETURNS VOID LANGUAGE SQL SECURITY DEFINER SET search_path = public AS $$
+  UPDATE public.creditos
+  SET saldo_utilizado = GREATEST(0, COALESCE(saldo_utilizado, 0) + COALESCE(p_delta, 0))
   WHERE id = p_credito_id AND user_id = auth.uid();
+$$;
+
+-- Variante para funciones serverless con service_role (WhatsApp).
+-- Exige el user_id esperado para no ajustar una tarjeta de otro usuario por error.
+CREATE OR REPLACE FUNCTION update_saldo_credito_admin(p_user_id UUID, p_credito_id INTEGER, p_delta NUMERIC)
+RETURNS VOID LANGUAGE SQL SECURITY DEFINER SET search_path = public AS $$
+  UPDATE public.creditos
+  SET saldo_utilizado = GREATEST(0, COALESCE(saldo_utilizado, 0) + COALESCE(p_delta, 0))
+  WHERE id = p_credito_id
+    AND user_id = p_user_id
+    AND auth.role() = 'service_role';
 $$;
 
 -- ============================================

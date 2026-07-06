@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
+import { fechaLocalISO } from '../utils/fecha'
 
 export function useDeudas() {
   const { user } = useAuth()
@@ -63,7 +64,7 @@ export function useDeudas() {
   }
 
   const abonar = async (deuda_id, monto, notas = '') => {
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     const deuda = deudas?.find(d => d.id === deuda_id)
     // Sobrepago: registrar solo hasta el saldo real, no más
     const saldo = Number(deuda?.saldo_actual ?? 0)
@@ -96,7 +97,7 @@ export function useDeudas() {
     const saldo = Number(credito.saldo_utilizado)
     const montoAplicado = Math.min(Number(monto), saldo)
     const nuevoSaldo = Math.max(0, saldo - montoAplicado)
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     const catId = await ensureCategoria(user.id, { nombre: 'Deudas', icono: '💳', clasificacion: 'necesidad' })
     await Promise.all([
       supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId),

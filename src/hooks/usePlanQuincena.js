@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 import { rangoQuincena, quincenaActual, calcNomina } from '../utils/constantes'
+import { fechaLocalISO } from '../utils/fecha'
 
 export function usePlanQuincena() {
   const { user } = useAuth()
@@ -154,7 +155,7 @@ export function usePlanQuincena() {
       user_id: user.id, concepto: item.concepto, monto,
       tipo: item.tipo, origen_id: item.origen_id ?? null,
       mes, anio, quincena: quincenaDeDia(item.dia_cobro),
-      apartado: true, fecha_apartado: new Date().toISOString().split('T')[0],
+      apartado: true, fecha_apartado: fechaLocalISO(),
     })
     setSaving(false)
     if (!error) refetch()
@@ -183,7 +184,7 @@ export function usePlanQuincena() {
       user_id: user.id, concepto, monto: Number(monto),
       tipo: tipo ?? 'otro', origen_id: origen_id ?? null,
       mes, anio, quincena: quincenaManual,
-      apartado: true, fecha_apartado: new Date().toISOString().split('T')[0],
+      apartado: true, fecha_apartado: fechaLocalISO(),
     })
     setSaving(false)
     if (!error) refetch()
@@ -194,7 +195,7 @@ export function usePlanQuincena() {
     const pendientes = compromisos.filter(c => !c.apartadoRow)
     if (pendientes.length === 0) return
     setSaving(true)
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     const filas = pendientes.map(c => ({
       user_id: user.id, concepto: c.concepto, monto: Number(c.montoSugerido),
       tipo: c.tipo, origen_id: c.origen_id ?? null,

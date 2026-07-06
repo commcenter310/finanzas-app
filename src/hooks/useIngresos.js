@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useIngresos() {
   const { user } = useAuth()
@@ -12,8 +13,8 @@ export function useIngresos() {
   // Página Ingresos: filtra por fecha_recepcion (cuándo llegó el dinero)
   // → siempre puedes encontrar un ingreso en el mes en que lo recibiste
   // → el "mes de aplicación" (mes/anio) lo maneja el Dashboard por separado
-  const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`
-  const finMes    = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const inicioMes = inicioMesISO(mes, anio)
+  const finMes    = finMesISO(mes, anio)
   const uid = user?.id
 
   const { data: ingresos, loading, error, refetch } = useSupabaseQuery(async () => {
@@ -35,7 +36,7 @@ export function useIngresos() {
 
   const agregar = async (datos) => {
     setSaving(true)
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     const fecha = datos.fecha_recepcion || hoy
     // Derivar mes/anio de la fecha solo como fallback; respetar lo que venga del form
     const [anioFecha, mesFecha] = fecha.split('-').map(Number)

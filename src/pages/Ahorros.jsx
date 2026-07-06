@@ -6,13 +6,14 @@ import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import { fechaLocalISO } from '../utils/fecha'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
 
 const barColors = { necesidad: 'var(--necesidad)', deseo: 'var(--deseo)', ahorro: 'var(--ahorro)' }
 
-const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: new Date().toISOString().split('T')[0] }
+const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: fechaLocalISO() }
 
 function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar, saving }) {
   const [editando, setEditando] = useState(false)

@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext'
 import {
   LayoutDashboard, TrendingUp, Receipt, BarChart3,
   List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Landmark, Calculator, X, CalendarRange, Telescope,
+  Settings, MessageSquare, LogOut, Wallet, Calculator, X, CalendarRange, Telescope,
   Moon, Sun
 } from 'lucide-react'
 
@@ -40,7 +40,6 @@ const NAV_GROUPS = [
     items: [
       { to: '/tendencias', icon: LineChart, label: 'Tendencias' },
       { to: '/proyeccion', icon: Telescope, label: 'Proyección' },
-      { to: '/patrimonio', icon: Landmark,  label: 'Patrimonio' },
     ],
   },
   {

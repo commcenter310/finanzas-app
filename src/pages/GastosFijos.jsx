@@ -8,6 +8,7 @@ import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
+import { fechaLocalISO } from '../utils/fecha'
 
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '', metodo_pago_id: '' }
 
@@ -36,7 +37,7 @@ export default function GastosFijos() {
 
   const abrirDialogoPago = (g) => {
     // Fecha sugerida: el día de cobro del gasto en su mes, o hoy si no tiene
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     let fechaSugerida = hoy
     if (g.dia_cobro && g.mes && g.anio) {
       const diasDelMes = new Date(g.anio, g.mes, 0).getDate()

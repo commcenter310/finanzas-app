@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useGastosVariables() {
   const { user } = useAuth()
@@ -11,8 +12,8 @@ export function useGastosVariables() {
   // Ref para no auto-copiar más de una vez por mes/año
   const autoCopiadoKeyRef = useRef(null)
 
-  const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
-  const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const inicioMes = inicioMesISO(mes, anio)
+  const finMes = finMesISO(mes, anio)
 
   const { data: categorias, loading: loadingCats } = useSupabaseQuery(async () => {
     const { data, error } = await supabase

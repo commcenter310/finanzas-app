@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { fechaLocalISO } from '../utils/fecha'
 
 export function useCreditos() {
   const { user } = useAuth()
@@ -32,7 +33,7 @@ export function useCreditos() {
       .select('monto, fecha, msi_meses, metodos_pago!inner(credito_id)')
       .eq('user_id', user.id)
       .not('metodos_pago.credito_id', 'is', null)
-      .gte('fecha', desde.toISOString().split('T')[0])
+      .gte('fecha', fechaLocalISO(desde))
     return data ?? []
   }, [uid], `creditos:compras:${uid}`)
 

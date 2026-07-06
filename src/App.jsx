@@ -7,7 +7,7 @@ import { ToastProvider } from './components/ui/Toast'
 import Auth from './pages/Auth'
 
 // Páginas cargadas bajo demanda → divide el bundle.
-// Las páginas con Recharts (Dashboard, Tendencias, Patrimonio, Presupuesto)
+// Las páginas con Recharts (Dashboard, Tendencias, Presupuesto)
 // ya no pesan en la carga inicial de las demás.
 const Dashboard       = lazy(() => import('./pages/Dashboard'))
 const Ingresos        = lazy(() => import('./pages/Ingresos'))
@@ -21,7 +21,6 @@ const PlanQuincena    = lazy(() => import('./pages/PlanQuincena'))
 const Tendencias      = lazy(() => import('./pages/Tendencias'))
 const Perfil          = lazy(() => import('./pages/Perfil'))
 const WhatsappLog     = lazy(() => import('./pages/WhatsappLog'))
-const Patrimonio      = lazy(() => import('./pages/Patrimonio'))
 const SimuladorCredito = lazy(() => import('./pages/SimuladorCredito'))
 const Proyeccion      = lazy(() => import('./pages/Proyeccion'))
 const Bienvenida      = lazy(() => import('./pages/Bienvenida'))
@@ -67,7 +66,6 @@ function ProtectedRoutes() {
           <Route path="/ahorros"          element={<Ahorros />}    />
           <Route path="/tendencias"       element={<Tendencias />} />
           <Route path="/proyeccion"       element={<Proyeccion />} />
-          <Route path="/patrimonio"       element={<Patrimonio />} />
           <Route path="/simulador"        element={<SimuladorCredito />} />
           <Route path="/whatsapp"         element={<WhatsappLog />} />
           <Route path="/perfil"           element={<Perfil />}     />

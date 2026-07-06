@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { fechaLocalISO } from '../utils/fecha'
 
 export function useGastosFijos() {
   const { user } = useAuth()
@@ -71,7 +72,7 @@ export function useGastosFijos() {
 
   // opciones: { monto, fecha } — monto/fecha REALES del pago (si difieren de lo previsto)
   const togglePagado = async (gasto, opciones = {}) => {
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoy = fechaLocalISO()
     if (!gasto.pagado) {
       const montoReal = opciones.monto != null && opciones.monto !== '' ? Number(opciones.monto) : Number(gasto.monto_previsto)
       const fechaReal = opciones.fecha || hoy

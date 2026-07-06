@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { finMesISO, inicioMesISO } from '../utils/fecha'
 import {
   calcularTotalGastos, calcularSaldoAnterior, calcularSaldoArrastrado,
   calcularPorAsignar, calcularGastosHormiga, calcularIngresoEsperado, calcularProyeccion,
@@ -11,14 +12,14 @@ export function useDashboard() {
   const { user, profile } = useAuth()
   const { mes, anio } = useMes()
 
-  const inicioMes = `${anio}-${String(mes).padStart(2,'0')}-01`
-  const finMes = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const inicioMes = inicioMesISO(mes, anio)
+  const finMes = finMesISO(mes, anio)
 
   // Mes anterior (para calcular saldo arrastrado)
   const mesPrev  = mes === 1 ? 12 : mes - 1
   const anioPrev = mes === 1 ? anio - 1 : anio
-  const inicioMesPrev = `${anioPrev}-${String(mesPrev).padStart(2,'0')}-01`
-  const finMesPrev    = new Date(anioPrev, mesPrev, 0).toISOString().split('T')[0]
+  const inicioMesPrev = inicioMesISO(mesPrev, anioPrev)
+  const finMesPrev    = finMesISO(mesPrev, anioPrev)
 
   const uid = user?.id
   const { data: ingresos, loading: loadingIngresos, error: errIngresos, refetch: refetchIngresos } = useSupabaseQuery(async () => {

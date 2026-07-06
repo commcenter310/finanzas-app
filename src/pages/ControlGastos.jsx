@@ -10,10 +10,11 @@ import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
+import { fechaLocalISO } from '../utils/fecha'
 
 const FORM_VACIO = {
   descripcion: '', monto: '', categoria_id: '', clasificacion: 'deseo',
-  metodo_pago_id: '', msi_meses: '', fecha: new Date().toISOString().split('T')[0]
+  metodo_pago_id: '', msi_meses: '', fecha: fechaLocalISO()
 }
 
 const MSI_OPTS = [3, 6, 9, 12, 18, 24].map(n => ({ value: n, label: `${n} meses sin intereses` }))

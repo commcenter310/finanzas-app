@@ -8,6 +8,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
+import { fechaLocalISO } from '../utils/fecha'
 
 // ── Selector de mes al que aplica el ingreso ─────────────────────────────────
 // Muestra 3 opciones: mes anterior / mes actual / mes siguiente
@@ -187,7 +188,7 @@ export default function Ingresos() {
   const { mes, anio } = useMes()
   const { ingresos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useIngresos()
   const [mostrarForm, setMostrarForm] = useState(false)
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = fechaLocalISO()
   const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
   const [confirmDelete, setConfirmDelete] = useState(null)
 

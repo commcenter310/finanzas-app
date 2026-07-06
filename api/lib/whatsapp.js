@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin.js'
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
+const APP_TIME_ZONE = process.env.APP_TIME_ZONE || 'America/Chihuahua'
 
 // ── Enviar mensaje ────────────────────────────────────────────────────────────
 export async function sendMessage(to, text) {
@@ -30,16 +31,66 @@ async function clearEstado(telefono) {
   await supabaseAdmin.from('whatsapp_estado').delete().eq('telefono', telefono)
 }
 
+function rpcNoExiste(error) {
+  const msg = error?.message ?? ''
+  return error?.code === '42883' ||
+    /function .* does not exist/i.test(msg) ||
+    /could not find the function/i.test(msg)
+}
+
+async function ajustarSaldoCredito(userId, creditoId, delta) {
+  if (!creditoId || !Number.isFinite(Number(delta)) || Number(delta) === 0) return { error: null }
+
+  const { error } = await supabaseAdmin.rpc('update_saldo_credito_admin', {
+    p_user_id: userId,
+    p_credito_id: creditoId,
+    p_delta: Number(delta),
+  })
+  if (!error) return { error: null }
+  if (!rpcNoExiste(error)) return { error }
+
+  // Fallback para despliegues donde la migracion SQL aun no se aplico.
+  // No es tan fuerte como la RPC atomica, pero evita dejar de registrar gastos.
+  const { data: credito, error: errRead } = await supabaseAdmin
+    .from('creditos')
+    .select('saldo_utilizado')
+    .eq('id', creditoId)
+    .eq('user_id', userId)
+    .single()
+  if (errRead) return { error: errRead }
+
+  const nuevoSaldo = Math.max(0, Number(credito?.saldo_utilizado ?? 0) + Number(delta))
+  const { error: errUpdate } = await supabaseAdmin
+    .from('creditos')
+    .update({ saldo_utilizado: nuevoSaldo })
+    .eq('id', creditoId)
+    .eq('user_id', userId)
+  return { error: errUpdate ?? null }
+}
+
 // ── Normalizar texto ──────────────────────────────────────────────────────────
 const norm = s => s?.toLowerCase().trim() ?? ''
 
 // ── Formatear moneda ──────────────────────────────────────────────────────────
 const fmx = n => `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
 
+function fechaLocalISO(fecha = new Date()) {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: APP_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(fecha).map(p => [p.type, p.value])
+  )
+  return `${partes.year}-${partes.month}-${partes.day}`
+}
+
 // ── Calcular fecha con días de retroceso ──────────────────────────────────────
 function calcularFecha(diasAtras = 0) {
-  const d = new Date()
-  d.setDate(d.getDate() - diasAtras)
+  const [anio, mes, dia] = fechaLocalISO().split('-').map(Number)
+  const d = new Date(Date.UTC(anio, mes - 1, dia))
+  d.setUTCDate(d.getUTCDate() - Number(diasAtras || 0))
   return d.toISOString().split('T')[0]
 }
 
@@ -62,7 +113,7 @@ export async function processMessage(telefono, texto) {
   // 2. Cargar categorías y métodos del usuario
   const [{ data: categorias }, { data: metodos }] = await Promise.all([
     supabaseAdmin.from('categorias').select('id, nombre, clasificacion').eq('user_id', profile.id).eq('activa', true),
-    supabaseAdmin.from('metodos_pago').select('id, nombre').eq('user_id', profile.id).eq('activo', true),
+    supabaseAdmin.from('metodos_pago').select('id, nombre, credito_id').eq('user_id', profile.id).eq('activo', true),
   ])
   const catNames = categorias?.map(c => c.nombre).join(', ') ?? ''
   const metNames = metodos?.map(m => m.nombre).join(', ') ?? ''
@@ -74,7 +125,7 @@ export async function processMessage(telefono, texto) {
   if (estadoPendiente?.estado === 'esperando_confirmacion_deshacer') {
     const respTexto = norm(texto)
     if (['sí', 'si', 'yes', 'confirmar', 'confirma'].includes(respTexto)) {
-      const { tx_id, descripcion, monto, fecha } = estadoPendiente.datos
+      const { tx_id, descripcion, monto, fecha, credito_id } = estadoPendiente.datos
       await clearEstado(telefono)
       const { error } = await supabaseAdmin.from('transacciones').delete().eq('id', tx_id)
       if (error) {
@@ -82,9 +133,15 @@ export async function processMessage(telefono, texto) {
         await logMessage(telefono, texto, null, null, false, error.message)
         return
       }
-      const respuesta = `🗑️ *Gasto eliminado*\n📝 ${descripcion} — ${fmx(monto)}\n📅 ${fecha}`
+      const { error: errSaldo } = await ajustarSaldoCredito(profile.id, credito_id, -Number(monto))
+      const respuesta = [
+        `🗑️ *Gasto eliminado*`,
+        `📝 ${descripcion} — ${fmx(monto)}`,
+        `📅 ${fecha}`,
+        errSaldo ? `⚠️ No pude revertir el saldo de la tarjeta: ${errSaldo.message}` : null,
+      ].filter(Boolean).join('\n')
       await sendMessage(telefono, respuesta)
-      await logMessage(telefono, texto, respuesta, null, true, null)
+      await logMessage(telefono, texto, respuesta, null, !errSaldo, errSaldo?.message ?? null)
       return
     }
     if (['no', 'cancelar', 'cancel', 'omitir'].includes(respTexto)) {
@@ -146,6 +203,8 @@ export async function processMessage(telefono, texto) {
       return
     }
 
+    const { error: errSaldo } = await ajustarSaldoCredito(profile.id, met.credito_id, datos.monto)
+
     const cat = categorias?.find(c => c.id === datos.cat_id)
     const clasifEmoji = { necesidad: '🔵', deseo: '🟡', ahorro: '🟢' }
     const alerta = await checkPresupuesto(profile.id, datos.cat_id, datos.fecha)
@@ -158,10 +217,11 @@ export async function processMessage(telefono, texto) {
       `💳 ${met.nombre}`,
       `📅 ${datos.fecha}`,
       alerta,
+      errSaldo ? `⚠️ Gasto guardado, pero no pude actualizar el saldo de la tarjeta: ${errSaldo.message}` : null,
     ].filter(Boolean).join('\n')
 
     await sendMessage(telefono, respuesta)
-    await logMessage(telefono, texto, respuesta, tx.id, true, null)
+    await logMessage(telefono, texto, respuesta, tx.id, !errSaldo, errSaldo?.message ?? null)
     return
   }
 
@@ -235,11 +295,8 @@ export async function processMessage(telefono, texto) {
 
   // 7. Ingreso
   if (result.tipo === 'ingreso') {
-    const hoy = new Date()
-    const fechaRecepcion = hoy.toISOString().split('T')[0]
-    const dia     = hoy.getDate()
-    const mesRec  = hoy.getMonth() + 1
-    const anioRec = hoy.getFullYear()
+    const fechaRecepcion = fechaLocalISO()
+    const [anioRec, mesRec, dia] = fechaRecepcion.split('-').map(Number)
     // Mismo criterio que la web: si el dinero llega a fin de mes (día ≥ 25),
     // se aplica al mes siguiente (la nómina del 30 cubre la quincena del mes que entra)
     const aplicaSiguiente = dia >= 25
@@ -334,6 +391,8 @@ export async function processMessage(telefono, texto) {
     return
   }
 
+  const { error: errSaldo } = await ajustarSaldoCredito(profile.id, met.credito_id, montoNum)
+
   // 12. Respuesta + alerta de presupuesto
   const clasifEmoji = { necesidad: '🔵', deseo: '🟡', ahorro: '🟢' }
   const alerta = await checkPresupuesto(profile.id, cat?.id, hoy)
@@ -346,10 +405,11 @@ export async function processMessage(telefono, texto) {
     `💳 ${met.nombre}`,
     `📅 ${hoy}`,
     alerta,
+    errSaldo ? `⚠️ Gasto guardado, pero no pude actualizar el saldo de la tarjeta: ${errSaldo.message}` : null,
   ].filter(Boolean).join('\n')
 
   await sendMessage(telefono, respuesta)
-  await logMessage(telefono, texto, respuesta, tx.id, true, null)
+  await logMessage(telefono, texto, respuesta, tx.id, !errSaldo, errSaldo?.message ?? null)
 }
 
 // ── Alerta de presupuesto ─────────────────────────────────────────────────────
@@ -359,7 +419,7 @@ async function checkPresupuesto(userId, catId, fecha) {
   const mesAct  = parseInt(mesStr)
   const anioAct = parseInt(anioStr)
   const inicio  = `${anioAct}-${String(mesAct).padStart(2, '0')}-01`
-  const fin     = new Date(anioAct, mesAct, 0).toISOString().split('T')[0]
+  const fin     = `${anioAct}-${String(mesAct).padStart(2, '0')}-${String(new Date(anioAct, mesAct, 0).getDate()).padStart(2, '0')}`
 
   const [{ data: presu }, { data: txs }] = await Promise.all([
     supabaseAdmin.from('presupuestos').select('monto_limite')
@@ -401,11 +461,9 @@ async function buildUltimos(userId) {
 // ── Consultar presupuesto por categoría ──────────────────────────────────────
 async function buildPresupuesto(userId, catNombre, categorias) {
   const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-  const ahora = new Date()
-  const mes   = ahora.getMonth() + 1
-  const anio  = ahora.getFullYear()
+  const [anio, mes] = fechaLocalISO().split('-').map(Number)
   const inicio = `${anio}-${String(mes).padStart(2, '0')}-01`
-  const fin    = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const fin    = `${anio}-${String(mes).padStart(2, '0')}-${String(new Date(anio, mes, 0).getDate()).padStart(2, '0')}`
 
   // Matching flexible de categoría
   const cat = catNombre
@@ -452,7 +510,7 @@ async function buildPresupuesto(userId, catNombre, categorias) {
 async function buildDeshacer(userId, telefono) {
   const { data: tx } = await supabaseAdmin
     .from('transacciones')
-    .select('id, descripcion, monto, fecha')
+    .select('id, descripcion, monto, fecha, metodos_pago(credito_id)')
     .eq('user_id', userId)
     .eq('origen', 'whatsapp')
     .order('created_at', { ascending: false })
@@ -467,6 +525,7 @@ async function buildDeshacer(userId, telefono) {
     descripcion: tx.descripcion,
     monto:       tx.monto,
     fecha:       tx.fecha,
+    credito_id:  tx.metodos_pago?.credito_id ?? null,
   })
 
   return [
@@ -480,11 +539,9 @@ async function buildDeshacer(userId, telefono) {
 
 // ── Resumen del mes ───────────────────────────────────────────────────────────
 async function buildResumen(profile) {
-  const hoy  = new Date()
-  const mes  = hoy.getMonth() + 1
-  const anio = hoy.getFullYear()
+  const [anio, mes] = fechaLocalISO().split('-').map(Number)
   const inicio = `${anio}-${String(mes).padStart(2, '0')}-01`
-  const fin    = new Date(anio, mes, 0).toISOString().split('T')[0]
+  const fin    = `${anio}-${String(mes).padStart(2, '0')}-${String(new Date(anio, mes, 0).getDate()).padStart(2, '0')}`
   const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
   const [{ data: ingresos }, { data: txs }] = await Promise.all([
@@ -537,14 +594,13 @@ async function buildCreditos(userId) {
 
   if (!creditos?.length) return 'No tienes créditos registrados.'
 
-  const ahora = new Date()
-  const hoy   = ahora.getDate()
+  const [anioHoy, mesHoy, hoy] = fechaLocalISO().split('-').map(Number)
   // Días reales hasta un día del mes (meses de 28-31 días; día inexistente → último del mes)
   const diasHasta = (diaObj) => {
     if (diaObj == null) return null
-    const diasEsteMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate()
+    const diasEsteMes = new Date(anioHoy, mesHoy, 0).getDate()
     if (diaObj >= hoy) return Math.min(diaObj, diasEsteMes) - hoy
-    const diasProxMes = new Date(ahora.getFullYear(), ahora.getMonth() + 2, 0).getDate()
+    const diasProxMes = new Date(anioHoy, mesHoy + 1, 0).getDate()
     return (diasEsteMes - hoy) + Math.min(diaObj, diasProxMes)
   }
 
