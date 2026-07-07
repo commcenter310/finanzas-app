@@ -3,9 +3,10 @@ import { useMes } from '../../context/MesContext'
 import { MESES } from '../../utils/constantes'
 
 const GLASS_HEADER = {
-  background: 'var(--surface-glass)',
+  background: 'linear-gradient(180deg, var(--surface-glass-strong), var(--surface-glass))',
   backdropFilter: 'blur(20px) saturate(180%)',
   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  boxShadow: '0 1px 0 rgba(21, 32, 28, 0.04)',
 }
 
 export default function Header({ titulo, onMenuClick }) {
@@ -21,7 +22,7 @@ export default function Header({ titulo, onMenuClick }) {
   return (
     <header
       style={GLASS_HEADER}
-      className="h-[60px] flex items-center justify-between px-4 lg:px-7 sticky top-0 z-10 border-b border-[var(--border)]"
+      className="h-[64px] flex items-center justify-between px-4 lg:px-7 sticky top-0 z-10 border-b border-[var(--border)]"
     >
       {/* Left: hamburger (mobile) + title */}
       <div className="flex items-center gap-2 min-w-0">
@@ -37,7 +38,7 @@ export default function Header({ titulo, onMenuClick }) {
         </button>
         <h1
           className="font-bold truncate text-base lg:text-[21px]"
-          style={{ color: 'var(--fg-1)', letterSpacing: '-0.014em' }}
+          style={{ color: 'var(--fg-1)', letterSpacing: 0 }}
         >
           {titulo}
         </h1>
@@ -45,14 +46,14 @@ export default function Header({ titulo, onMenuClick }) {
 
       {/* Month switcher */}
       <div
-        className="flex items-center gap-0.5 p-1 rounded-[var(--r-md)] border border-[var(--border)] flex-shrink-0"
-        style={{ background: 'var(--surface-2)' }}
+        className="flex items-center gap-1 p-1 rounded-[var(--r-lg)] border border-[var(--border)] flex-shrink-0"
+        style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-xs)' }}
       >
         <button
           onClick={irMesAnterior}
-          className="w-[30px] h-[30px] flex items-center justify-center rounded-[11px] transition-all"
+          className="w-[30px] h-[30px] flex items-center justify-center rounded-[var(--r-sm)] transition-all"
           style={{ color: 'var(--fg-3)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--fg-1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
           onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)'; e.currentTarget.style.boxShadow = '' }}
           aria-label="Mes anterior"
         >
@@ -69,9 +70,9 @@ export default function Header({ titulo, onMenuClick }) {
 
         <button
           onClick={irMesSiguiente}
-          className="w-[30px] h-[30px] flex items-center justify-center rounded-[11px] transition-all"
+          className="w-[30px] h-[30px] flex items-center justify-center rounded-[var(--r-sm)] transition-all"
           style={{ color: 'var(--fg-3)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--fg-1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
           onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)'; e.currentTarget.style.boxShadow = '' }}
           aria-label="Mes siguiente"
         >

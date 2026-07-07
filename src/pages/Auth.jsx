@@ -43,11 +43,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card w-full max-w-sm p-8">
         {/* Logo / Título */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-[13px] flex items-center justify-center mx-auto mb-3"
+          <div className="w-12 h-12 rounded-[var(--r-md)] flex items-center justify-center mx-auto mb-3"
             style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}>
             <span className="text-white text-2xl font-bold">F</span>
           </div>

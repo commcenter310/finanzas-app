@@ -5,8 +5,18 @@ import { formatMXN } from '../utils/constantes'
 import { Pencil, Check, AlertTriangle, Copy } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell
+  ResponsiveContainer, Cell, CartesianGrid, Legend
 } from 'recharts'
+import {
+  ChartLegend,
+  ChartTooltip,
+} from '../components/ui/Chart'
+import {
+  chartAxisProps,
+  chartAxisTick,
+  chartGridProps,
+  formatCompactCurrency,
+} from '../utils/chart'
 
 const clasifColors = {
   necesidad: 'bg-[var(--necesidad-bg)] border-[var(--necesidad)]/25',
@@ -258,14 +268,17 @@ export default function GastosVariables() {
         {!loading && datosGrafico.length > 0 && (
           <div className="card p-5">
             <h2 className="font-bold text-gray-900 mb-4">Presupuestado vs Real por Categoría</h2>
-            <ResponsiveContainer width="100%" height={Math.max(180, datosGrafico.length * 34)}>
-              <BarChart data={datosGrafico} layout="vertical" barSize={9} barGap={2}
-                margin={{ left: 8, right: 24, top: 0, bottom: 0 }}>
-                <XAxis type="number" tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v, name) => [formatMXN(v), name === 'limite' ? 'Límite' : 'Gastado']} />
-                <Bar dataKey="limite"  name="limite"  fill="var(--surface-3)" radius={[0,4,4,0]} />
-                <Bar dataKey="gastado" name="gastado" radius={[0,4,4,0]}>
+            <ResponsiveContainer width="100%" height={Math.max(240, datosGrafico.length * 38)}>
+              <BarChart data={datosGrafico} layout="vertical" barSize={10} barGap={3}
+                margin={{ left: 10, right: 22, top: 8, bottom: 0 }}>
+                <CartesianGrid {...chartGridProps} horizontal={false} vertical />
+                <XAxis type="number" {...chartAxisProps} tickFormatter={formatCompactCurrency} />
+                <YAxis type="category" dataKey="name" width={146} axisLine={false} tickLine={false}
+                  tick={{ ...chartAxisTick, fontSize: 11 }} />
+                <Tooltip content={<ChartTooltip nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
+                <Legend content={<ChartLegend nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
+                <Bar dataKey="limite"  name="limite"  fill="var(--surface-3)" radius={[0,6,6,0]} />
+                <Bar dataKey="gastado" name="gastado" radius={[0,6,6,0]}>
                   {datosGrafico.map((entry, i) => (
                     <Cell key={i} fill={entry.sobre ? 'var(--negative)' : (barColors[entry.clasificacion] ?? 'var(--primary-600)')} />
                   ))}

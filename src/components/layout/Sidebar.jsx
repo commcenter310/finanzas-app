@@ -52,9 +52,16 @@ const NAV_GROUPS = [
 ]
 
 const GLASS_SIDEBAR = {
-  background: 'var(--surface-glass-strong)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  background: 'linear-gradient(180deg, #0E1714 0%, #14231D 54%, #0A100E 100%)',
+  borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+  boxShadow: '18px 0 48px rgba(10, 16, 14, 0.18)',
+  '--sidebar-fg-1': '#F4FBF7',
+  '--sidebar-fg-2': 'rgba(244, 251, 247, 0.76)',
+  '--sidebar-fg-3': 'rgba(244, 251, 247, 0.52)',
+  '--sidebar-line': 'rgba(255, 255, 255, 0.08)',
+  '--sidebar-hover-bg': 'rgba(255, 255, 255, 0.08)',
+  '--sidebar-active-bg': 'rgba(22, 168, 120, 0.18)',
+  '--sidebar-active-fg': '#A7F3D0',
 }
 
 export default function Sidebar({ open, onClose }) {
@@ -67,27 +74,26 @@ export default function Sidebar({ open, onClose }) {
       className={`
         w-[248px] h-screen flex flex-col
         fixed left-0 top-0 z-30
-        border-r border-[var(--border)]
         transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
         ${open ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:z-10
       `}
     >
       {/* Brand */}
-      <div className="flex items-center gap-3 px-4 pt-5 pb-5 border-b border-[var(--divider)]">
+      <div className="flex items-center gap-3 px-4 pt-5 pb-5 border-b" style={{ borderColor: 'var(--sidebar-line)' }}>
         {/* Brand mark — gradient squircle */}
         <div
-          className="w-10 h-10 rounded-[13px] flex items-center justify-center flex-shrink-0"
-          style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}
+          className="w-10 h-10 rounded-[var(--r-md)] flex items-center justify-center flex-shrink-0"
+          style={{ background: 'var(--grad-fresh)', boxShadow: '0 14px 30px rgba(22, 168, 120, 0.28)' }}
         >
           <Wallet className="w-5 h-5 text-white" strokeWidth={2} />
         </div>
 
         <div className="min-w-0">
-          <p className="font-bold leading-none text-sm truncate" style={{ color: 'var(--fg-1)' }}>
+          <p className="font-bold leading-none text-sm truncate" style={{ color: 'var(--sidebar-fg-1)' }}>
             Finni Apoyo
           </p>
-          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums' }}>
+          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--sidebar-fg-3)', fontVariantNumeric: 'tabular-nums' }}>
             Control Personal
           </p>
         </div>
@@ -96,9 +102,9 @@ export default function Sidebar({ open, onClose }) {
         <button
           onClick={onClose}
           className="lg:hidden ml-auto p-1.5 rounded-[var(--r-sm)] flex items-center justify-center"
-          style={{ color: 'var(--fg-3)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+          style={{ color: 'var(--sidebar-fg-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sidebar-hover-bg)'; e.currentTarget.style.color = 'var(--sidebar-fg-1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sidebar-fg-3)' }}
         >
           <X className="w-4 h-4" />
         </button>
@@ -109,8 +115,8 @@ export default function Sidebar({ open, onClose }) {
         {NAV_GROUPS.map(({ titulo, items }) => (
           <div key={titulo} className="mb-3 last:mb-0">
             <p
-              className="px-3 mb-1 text-[10px] font-bold uppercase tracking-[0.08em]"
-              style={{ color: 'var(--fg-4)' }}
+              className="px-3 mb-1 text-[10px] font-bold uppercase tracking-normal"
+              style={{ color: 'var(--sidebar-fg-3)', letterSpacing: 0 }}
             >
               {titulo}
             </p>
@@ -126,19 +132,19 @@ export default function Sidebar({ open, onClose }) {
                      ${isActive ? 'font-bold' : 'font-medium'}`
                   }
                   style={({ isActive }) => isActive
-                    ? { background: 'var(--primary-50)', color: 'var(--primary-700)' }
-                    : { color: 'var(--fg-2)' }
+                    ? { background: 'var(--sidebar-active-bg)', color: 'var(--sidebar-active-fg)' }
+                    : { color: 'var(--sidebar-fg-2)' }
                   }
                   onMouseEnter={e => {
                     if (!e.currentTarget.classList.contains('font-bold')) {
-                      e.currentTarget.style.background = 'var(--surface-3)'
-                      e.currentTarget.style.color = 'var(--fg-1)'
+                      e.currentTarget.style.background = 'var(--sidebar-hover-bg)'
+                      e.currentTarget.style.color = 'var(--sidebar-fg-1)'
                     }
                   }}
                   onMouseLeave={e => {
                     if (!e.currentTarget.classList.contains('font-bold')) {
                       e.currentTarget.style.background = ''
-                      e.currentTarget.style.color = 'var(--fg-2)'
+                      e.currentTarget.style.color = 'var(--sidebar-fg-2)'
                     }
                   }}
                 >
@@ -152,13 +158,13 @@ export default function Sidebar({ open, onClose }) {
       </nav>
 
       {/* Tema + Logout */}
-      <div className="px-3 pb-4 pt-2 border-t border-[var(--divider)]">
+      <div className="px-3 pb-4 pt-2 border-t" style={{ borderColor: 'var(--sidebar-line)' }}>
         <button
           onClick={toggleTema}
           className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm font-medium w-full transition-all"
-          style={{ color: 'var(--fg-3)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--fg-1)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+          style={{ color: 'var(--sidebar-fg-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sidebar-hover-bg)'; e.currentTarget.style.color = 'var(--sidebar-fg-1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sidebar-fg-3)' }}
         >
           {esOscuro
             ? <Sun className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
@@ -168,9 +174,9 @@ export default function Sidebar({ open, onClose }) {
         <button
           onClick={signOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)] text-sm font-medium w-full transition-all"
-          style={{ color: 'var(--fg-3)' }}
+          style={{ color: 'var(--sidebar-fg-3)' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-3)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sidebar-fg-3)' }}
         >
           <LogOut className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
           Cerrar Sesión

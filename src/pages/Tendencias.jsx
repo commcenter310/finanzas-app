@@ -8,6 +8,15 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid, ReferenceLine
 } from 'recharts'
+import {
+  ChartLegend,
+  ChartTooltip,
+} from '../components/ui/Chart'
+import {
+  chartAxisProps,
+  chartGridProps,
+  formatCompactCurrency,
+} from '../utils/chart'
 
 export default function Tendencias() {
   const { user } = useAuth()
@@ -137,15 +146,17 @@ export default function Tendencias() {
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={tendencias ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={v => formatMXN(v)} />
-                  <Legend />
-                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="var(--positive)" strokeWidth={2.5} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="var(--negative)" strokeWidth={2.5} dot={{ r: 4 }} />
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={tendencias ?? []} margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="mes" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} width={52} tickFormatter={formatCompactCurrency} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend content={<ChartLegend />} />
+                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="var(--positive)" strokeWidth={3}
+                    dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="var(--negative)" strokeWidth={3}
+                    dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -157,16 +168,16 @@ export default function Tendencias() {
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={tendencias ?? []} barSize={28}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={v => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={v => formatMXN(v)} />
-                  <Legend />
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={tendencias ?? []} barSize={30} barCategoryGap="30%" margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="mes" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} width={52} tickFormatter={formatCompactCurrency} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend content={<ChartLegend />} />
                   <Bar dataKey="necesidad" name="Necesidad" stackId="a" fill="var(--necesidad)" radius={[0,0,0,0]} />
                   <Bar dataKey="deseo"     name="Deseo"     stackId="a" fill="var(--deseo)" radius={[0,0,0,0]} />
-                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="var(--ahorro)" radius={[4,4,0,0]} />
+                  <Bar dataKey="ahorro"    name="Ahorro"    stackId="a" fill="var(--ahorro)" radius={[6,6,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -189,19 +200,25 @@ export default function Tendencias() {
             {loadingCredito
               ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
               : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={creditoTendencia.datos}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 'auto']} />
-                    <Tooltip formatter={(v, name) => [`${v}%`, name === 'pctTotal' ? 'Utilización total' : name]} />
-                    <Legend formatter={name => name === 'pctTotal' ? 'Total' : name} />
-                    <ReferenceLine y={30} stroke="var(--warning)" strokeDasharray="5 5"
-                      label={{ value: '30% recomendado', position: 'insideTopRight', fontSize: 11, fill: 'var(--warning)' }} />
-                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="var(--primary-600)" strokeWidth={2.5} dot={{ r: 4 }} />
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={creditoTendencia.datos} margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
+                    <CartesianGrid {...chartGridProps} />
+                    <XAxis dataKey="mes" {...chartAxisProps} />
+                    <YAxis {...chartAxisProps} width={42} tickFormatter={v => `${v}%`} domain={[0, dataMax => Math.max(35, Math.ceil(dataMax / 10) * 10)]} />
+                    <Tooltip
+                      content={<ChartTooltip
+                        nameMap={{ pctTotal: 'Total' }}
+                        valueFormatter={v => `${Number(v).toFixed(1)}%`}
+                      />}
+                    />
+                    <Legend content={<ChartLegend nameMap={{ pctTotal: 'Total' }} />} />
+                    <ReferenceLine y={30} stroke="var(--warning)" strokeDasharray="6 6" strokeWidth={2}
+                      label={{ value: '30%', position: 'insideTopRight', fontSize: 11, fontWeight: 700, fill: 'var(--warning)' }} />
+                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="var(--primary-600)" strokeWidth={3}
+                      dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
                     {nombresTarjetas.map((nombre, i) => (
                       <Line key={nombre} type="monotone" dataKey={nombre} stroke={COLORES_TARJETA[i % COLORES_TARJETA.length]}
-                        strokeWidth={1.5} dot={{ r: 3 }} strokeDasharray="4 2" />
+                        strokeWidth={1.8} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} strokeDasharray="5 4" />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>

@@ -35,7 +35,7 @@ function MesPicker({ mesVal, anioVal, onChange, mesBase, anioBase }) {
             className="flex-1 py-2 transition-colors leading-tight"
             style={{
               background: active ? 'var(--primary)' : 'var(--surface-2)',
-              color:      active ? '#fff'            : 'var(--fg-3)',
+              color:      active ? 'var(--fg-on-primary)' : 'var(--fg-3)',
             }}
             onClick={() => onChange(op.mes, op.anio)}
           >

@@ -95,15 +95,15 @@ export default function Deudas() {
         {/* Tarjetas */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           <div className="card p-4" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--negative-fg)' }}>Total Deuda</p>
+            <p className="text-[11px] font-bold uppercase tracking-normal mb-2" style={{ color: 'var(--negative-fg)', letterSpacing: 0 }}>Total Deuda</p>
             <p className="text-2xl font-bold tabular" style={{ color: 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>{formatMXN(totalDeuda)}</p>
           </div>
           <div className="card p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--fg-3)' }}>Pago Mensual</p>
+            <p className="text-[11px] font-bold uppercase tracking-normal mb-2" style={{ color: 'var(--fg-3)', letterSpacing: 0 }}>Pago Mensual</p>
             <p className="text-2xl font-bold tabular" style={{ color: 'var(--primary-700)', fontVariantNumeric: 'tabular-nums' }}>{formatMXN(totalPagoMensual)}</p>
           </div>
           <div className="card p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--fg-3)' }}>Número de Deudas</p>
+            <p className="text-[11px] font-bold uppercase tracking-normal mb-2" style={{ color: 'var(--fg-3)', letterSpacing: 0 }}>Número de Deudas</p>
             <p className="text-2xl font-bold tabular" style={{ color: 'var(--fg-1)', fontVariantNumeric: 'tabular-nums' }}>{deudas.length}</p>
           </div>
         </div>

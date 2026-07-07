@@ -93,7 +93,7 @@ export default function PlanQuincena() {
             <button key={k} onClick={() => setVista(k)}
               className="px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
               style={vista === k
-                ? { background: 'var(--primary-700)', color: '#fff' }
+                ? { background: 'var(--primary-700)', color: 'var(--fg-on-primary)' }
                 : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-2)' }}>
               {label}
             </button>
@@ -117,7 +117,7 @@ export default function PlanQuincena() {
                   className="px-4 py-2 text-sm font-semibold transition-colors leading-tight text-center"
                   style={{
                     background: active ? 'var(--primary-700)' : 'var(--surface-2)',
-                    color: active ? '#fff' : 'var(--fg-3)',
+                    color: active ? 'var(--fg-on-primary)' : 'var(--fg-3)',
                   }}>
                   <div>{label}</div>
                   <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>{sub()}</div>

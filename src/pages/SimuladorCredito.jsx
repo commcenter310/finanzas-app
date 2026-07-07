@@ -151,7 +151,7 @@ export default function SimuladorCredito() {
                       className="flex-1 py-2 text-sm font-semibold transition-colors"
                       style={{
                         background: active ? 'var(--primary)' : 'var(--surface-2)',
-                        color:      active ? '#fff' : 'var(--fg-3)',
+                        color:      active ? 'var(--fg-on-primary)' : 'var(--fg-3)',
                       }}>
                       {op.t}
                     </button>

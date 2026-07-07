@@ -148,7 +148,7 @@ export default function ControlGastos() {
             { label: '🟢 Ahorro',    value: totales.ahorro,    valueColor: 'var(--ahorro-fg)'    },
           ].map(({ label, value, valueColor }) => (
             <div key={label} className="card p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--fg-3)' }}>{label}</p>
+              <p className="text-[11px] font-bold uppercase tracking-normal mb-2" style={{ color: 'var(--fg-3)', letterSpacing: 0 }}>{label}</p>
               <p className="text-xl font-bold tabular" style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}>{formatMXN(value)}</p>
             </div>
           ))}

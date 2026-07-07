@@ -207,7 +207,7 @@ function DayBtn({ n, cur, selected, today, onClick }) {
         aspectRatio: '1',
         fontWeight: selected || today ? 700 : 400,
         color: selected
-          ? '#fff'
+          ? 'var(--fg-on-primary)'
           : !cur   ? 'var(--fg-4)'
           : today  ? 'var(--primary)'
           :          'var(--fg-1)',

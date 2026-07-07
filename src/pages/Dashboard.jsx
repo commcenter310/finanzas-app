@@ -2,10 +2,20 @@ import Layout from '../components/layout/Layout'
 import { useDashboard } from '../hooks/useDashboard'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ErrorState from '../components/ui/ErrorState'
+import {
+  ChartEmptyState,
+  ChartLegend,
+  ChartTooltip,
+} from '../components/ui/Chart'
+import {
+  chartAxisProps,
+  chartGridProps,
+  formatCompactCurrency,
+} from '../utils/chart'
 
 // Finni chart palette — usa la secuencia de tokens (se recolorea con el tema)
 const COLORES_CATEGORIA = [
@@ -73,6 +83,7 @@ export default function Dashboard() {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 8)
+  const totalDona = datosDona.reduce((sum, item) => sum + Number(item.value), 0)
 
   // Finni classification fills
   const datos5030 = [
@@ -140,17 +151,17 @@ export default function Dashboard() {
           {loading
             ? Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
             : tarjetas.map(({ label, value, icon: Icon, valueColor, iconBg, iconColor, sinDatos }) => (
-              <div key={label} className="card p-5">
+              <div key={label} className="card metric-card p-5 pb-8" style={{ '--metric-accent': iconColor }}>
                 <div className="flex items-center justify-between mb-3">
                   <p
-                    className="text-[11px] font-bold uppercase tracking-[0.06em]"
-                    style={{ color: 'var(--fg-3)' }}
+                    className="text-[11px] font-bold uppercase tracking-normal"
+                    style={{ color: 'var(--fg-3)', letterSpacing: 0 }}
                   >
                     {label}
                   </p>
                   <div
-                    className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0"
-                    style={{ background: iconBg }}
+                    className="w-9 h-9 rounded-[var(--r-md)] flex items-center justify-center flex-shrink-0"
+                    style={{ background: iconBg, boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.52)' }}
                   >
                     <Icon className="w-[17px] h-[17px]" style={{ color: iconColor }} strokeWidth={2} />
                   </div>
@@ -175,7 +186,7 @@ export default function Dashboard() {
             style={{ background: 'var(--primary-50)', borderLeft: '3px solid var(--primary)' }}
           >
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.06em] mb-0.5" style={{ color: 'var(--primary-700)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-normal mb-0.5" style={{ color: 'var(--primary-700)', letterSpacing: 0 }}>
                 🔒 Ya apartaste {formatMXN(totalApartado)} este mes
               </p>
               <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
@@ -210,8 +221,8 @@ export default function Dashboard() {
           >
             <div className="min-w-0">
               <p
-                className="text-[11px] font-bold uppercase tracking-[0.06em] mb-0.5"
-                style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)' }}
+                className="text-[11px] font-bold uppercase tracking-normal mb-0.5"
+                style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)', letterSpacing: 0 }}
               >
                 {saldoAnterior >= 0 ? '✓ Saldo de' : '⚠ Déficit de'} {MESES[mesPrev - 1]} {anioPrev}
               </p>
@@ -239,7 +250,7 @@ export default function Dashboard() {
         {!loading && ((ingresoEsperado != null && ingresoEsperado > 0) || (proyeccion.esMesActual && proyeccion.saldoProyectado !== null)) && (
           <div className="card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
                 Proyección de {MESES[mes - 1]}
               </h2>
               <Link to="/plan-quincena"
@@ -368,7 +379,7 @@ export default function Dashboard() {
         {/* ── Regla 50/30/20 ── */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
               Regla 50/30/20
             </h2>
             <span className="text-xs" style={{ color: 'var(--fg-3)' }}>
@@ -413,7 +424,7 @@ export default function Dashboard() {
         {!loading && categoriasEnRiesgo.length > 0 && (
           <div className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
                 Presupuesto — Categorías en Riesgo
               </h2>
               <Link
@@ -465,49 +476,64 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Donut categorías */}
           <div className="card p-5">
-            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
               Gastos por Categoría
             </h2>
             {datosDona.length === 0
               ? (
-                <div className="flex items-center justify-center h-40 text-sm" style={{ color: 'var(--fg-4)' }}>
-                  Sin gastos este mes
-                </div>
+                <ChartEmptyState>Sin gastos este mes</ChartEmptyState>
               )
               : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={datosDona}
-                      cx="50%" cy="50%"
-                      innerRadius={55} outerRadius={85}
-                      dataKey="value" nameKey="name"
-                      paddingAngle={3}
-                    >
-                      {datosDona.map((_, i) => (
-                        <Cell key={i} fill={COLORES_CATEGORIA[i % COLORES_CATEGORIA.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(v) => formatMXN(v)} />
-                    <Legend iconType="circle" iconSize={8} />
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  <ResponsiveContainer width="100%" height={228}>
+                    <PieChart margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
+                      <Pie
+                        data={datosDona}
+                        cx="50%" cy="50%"
+                        innerRadius={58} outerRadius={88}
+                        dataKey="value" nameKey="name"
+                        paddingAngle={3}
+                        cornerRadius={5}
+                        stroke="var(--surface)"
+                        strokeWidth={3}
+                      >
+                        {datosDona.map((_, i) => (
+                          <Cell key={i} fill={COLORES_CATEGORIA[i % COLORES_CATEGORIA.length]} />
+                        ))}
+                      </Pie>
+                      <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle"
+                        style={{ fill: 'var(--fg-3)', fontSize: 11, fontWeight: 700 }}>
+                        Total
+                      </text>
+                      <text x="50%" y="57%" textAnchor="middle" dominantBaseline="middle"
+                        style={{ fill: 'var(--fg-1)', fontSize: 16, fontWeight: 800 }}>
+                        {formatCompactCurrency(totalDona)}
+                      </text>
+                      <Tooltip content={<ChartTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <ChartLegend
+                    payload={datosDona.map((item, i) => ({
+                      value: item.name,
+                      color: COLORES_CATEGORIA[i % COLORES_CATEGORIA.length],
+                    }))}
+                  />
+                </>
               )}
           </div>
 
           {/* Barras presupuesto vs actual */}
           <div className="card p-5">
-            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
               Presupuesto vs Actual
             </h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={datos5030} barSize={24}>
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--fg-3)' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: 'var(--fg-4)' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  formatter={(v) => formatMXN(v)}
-                  contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}
-                />
+            <ResponsiveContainer width="100%" height={248}>
+              <BarChart data={datos5030} barSize={20} barGap={7} barCategoryGap="26%" margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="name" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} width={52} tickFormatter={formatCompactCurrency} />
+                <Tooltip content={<ChartTooltip nameMap={{ meta: 'Meta', actual: 'Actual' }} />} />
+                <Legend content={<ChartLegend nameMap={{ meta: 'Meta', actual: 'Actual' }} />} />
                 <Bar dataKey="meta"   name="Meta"   fill="var(--surface-3)" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="actual" name="Actual" fill="var(--primary-600)" radius={[6, 6, 0, 0]}>
                   {datos5030.map((e, i) => (
@@ -551,7 +577,7 @@ export default function Dashboard() {
         {/* ── Últimos Movimientos ── */}
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--divider)]">
-            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: '-0.01em' }}>
+            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
               Últimos Movimientos
             </h2>
             <Link
