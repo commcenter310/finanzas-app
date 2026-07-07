@@ -72,15 +72,15 @@ function SetupGuide({ items }) {
               onClick={item.onClick}
               className="group flex min-h-[92px] items-start gap-3 rounded-[var(--r-lg)] border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
               style={{
-                borderColor: item.done ? 'var(--positive-bg)' : 'var(--border)',
-                background: item.done ? 'var(--positive-bg)' : 'var(--surface)',
+                borderColor: item.done ? 'var(--primary-200)' : 'var(--border)',
+                background: item.done ? 'var(--primary-50)' : 'var(--surface)',
               }}
             >
               <span
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--r-md)]"
                 style={{
-                  background: item.done ? 'var(--surface)' : 'var(--primary-50)',
-                  color: item.done ? 'var(--positive-fg)' : 'var(--primary-700)',
+                  background: item.done ? 'var(--primary-100)' : 'var(--primary-50)',
+                  color: 'var(--primary-700)',
                 }}
               >
                 {item.done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}

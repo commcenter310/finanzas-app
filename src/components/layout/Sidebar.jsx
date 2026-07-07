@@ -57,7 +57,7 @@ const GLASS_SIDEBAR = {
   '--sidebar-fg-3': 'rgba(244, 251, 247, 0.52)',
   '--sidebar-line': 'rgba(255, 255, 255, 0.08)',
   '--sidebar-hover-bg': 'rgba(255, 255, 255, 0.08)',
-  '--sidebar-active-fg': '#A7F3D0',
+  '--sidebar-active-fg': '#C7D7FF',
 }
 
 export default function Sidebar({ open, onClose }) {
