@@ -46,7 +46,7 @@ export function useDashboard() {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
-        id, descripcion, monto, clasificacion, fecha, origen, created_at,
+        id, descripcion, monto, clasificacion, fecha, origen, msi_meses, created_at,
         categorias(nombre, icono),
         metodos_pago(nombre)
       `)
@@ -127,7 +127,7 @@ export function useDashboard() {
 
   const totalIngresos = ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0
   const txSinFijos    = transacciones?.filter(t => t.origen !== 'gastos_fijos') ?? []
-  const { totalFijos, totalTx, totalGastos } = calcularTotalGastos(gastosFijos, transacciones)
+  const { totalFijos, totalGastos } = calcularTotalGastos(gastosFijos, transacciones)
 
   const saldoAnterior   = calcularSaldoAnterior(ingresosPrev, gastosFijosPrev, transaccionesPrev)
   const saldoArrastrado = calcularSaldoArrastrado(saldoAnterior)
@@ -159,9 +159,10 @@ export function useDashboard() {
   // Ingreso esperado del mes según nóminas (null = sin nóminas configuradas)
   const ingresoEsperado = calcularIngresoEsperado(nominas, mes)
 
-  // Proyección de fin de mes (extrapola gasto variable al ritmo actual)
+  // Proyección de fin de mes: MSI pesan su mensualidad y el ritmo diario se
+  // suaviza excluyendo el gasto más grande (ver calcularProyeccion)
   const proyeccion = calcularProyeccion({
-    totalTx, totalFijos, totalIngresos, ingresoEsperado, saldoArrastrado, mes, anio,
+    transaccionesVariables: txSinFijos, totalFijos, totalIngresos, ingresoEsperado, saldoArrastrado, mes, anio,
   })
 
 

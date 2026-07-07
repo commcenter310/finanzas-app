@@ -151,17 +151,35 @@ export const calcularEstadoTarjeta = ({ transaccionesTarjeta = [], diaCorte, hoy
   return { pagoProximo, gastoPeriodoActual, msiPendiente, msiActivos, ultimoCorte, proximoCorte }
 }
 
-// Proyección de fin de mes: extrapola el gasto variable al ritmo actual.
-// Los gastos fijos ya se conocen completos; solo se proyecta lo variable.
+// Proyección de fin de mes. Los gastos fijos se toman completos (ya se conocen);
+// lo variable se proyecta con dos correcciones anti-drama:
+// 1. MSI: una compra a N meses pesa solo su mensualidad (monto/N), no el total —
+//    en efectivo eso es lo que realmente sale este mes.
+// 2. Suavizado: lo YA gastado queda fijo (no se re-extrapola) y el ritmo diario
+//    para los días restantes se calcula SIN el gasto más grande del mes — así
+//    una compra única fuerte no se multiplica como si fuera a repetirse a diario.
 export const calcularProyeccion = ({
-  totalTx, totalFijos, totalIngresos, ingresoEsperado, saldoArrastrado, mes, anio, hoy = new Date(),
+  transaccionesVariables = [], totalFijos, totalIngresos, ingresoEsperado, saldoArrastrado, mes, anio, hoy = new Date(),
 }) => {
   const esMesActual = mes === (hoy.getMonth() + 1) && anio === hoy.getFullYear()
   const diasMes = new Date(anio, mes, 0).getDate()
   const diaActual = esMesActual ? hoy.getDate() : diasMes
-  const gastoVariableProyectado = esMesActual && diaActual > 0
-    ? (totalTx / diaActual) * diasMes
-    : totalTx
+
+  // Peso "en efectivo" de cada gasto: MSI cuenta solo la mensualidad
+  const pesoEfectivo = (t) =>
+    t.msi_meses && Number(t.msi_meses) > 1 ? Number(t.monto) / Number(t.msi_meses) : Number(t.monto)
+  const montos = transaccionesVariables.map(pesoEfectivo)
+  const gastadoVariable = montos.reduce((s, m) => s + m, 0)
+
+  // Ritmo diario recortado: se excluye el gasto más grande (outlier/one-off)
+  const mayorGasto = montos.length ? Math.max(...montos) : 0
+  const ritmoDiario = esMesActual && diaActual > 0
+    ? Math.max(0, gastadoVariable - mayorGasto) / diaActual
+    : 0
+  const gastoVariableProyectado = esMesActual
+    ? gastadoVariable + ritmoDiario * (diasMes - diaActual)
+    : gastadoVariable
+
   const gastoProyectado = totalFijos + gastoVariableProyectado
   const baseIngreso = ingresoEsperado != null && ingresoEsperado > totalIngresos
     ? ingresoEsperado

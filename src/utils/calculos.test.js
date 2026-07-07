@@ -258,42 +258,69 @@ describe('calcularEstadoTarjeta', () => {
 })
 
 describe('calcularProyeccion', () => {
+  // helper: n transacciones de monto m
+  const txs = (n, monto) => Array(n).fill(0).map(() => ({ monto }))
+
   it('en mes pasado no proyecta, usa el gasto real', () => {
     // hoy fijo en julio; proyectamos junio (mes pasado)
     const hoy = new Date(2026, 6, 10) // 10 jul 2026
     const r = calcularProyeccion({
-      totalTx: 3000, totalFijos: 2000, totalIngresos: 10000,
+      transaccionesVariables: [{ monto: 1000 }, { monto: 2000 }],
+      totalFijos: 2000, totalIngresos: 10000,
       ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
     })
     expect(r.esMesActual).toBe(false)
-    expect(r.gastoProyectado).toBe(5000) // 2000 fijos + 3000 tx reales (sin extrapolar)
-    expect(r.saldoProyectado).toBe(5000) // 10000 - 5000
+    expect(r.gastoProyectado).toBe(5000) // 2000 fijos + 3000 reales (sin extrapolar)
+    expect(r.saldoProyectado).toBe(5000)
   })
-  it('en mes actual extrapola el gasto variable al ritmo del día', () => {
-    const hoy = new Date(2026, 5, 15) // 15 jun, mes de 30 días
+
+  it('mes actual: lo gastado queda fijo y el resto se proyecta al ritmo diario', () => {
+    const hoy = new Date(2026, 5, 10) // 10 jun, mes de 30 días
     const r = calcularProyeccion({
-      totalTx: 1500, totalFijos: 2000, totalIngresos: 20000,
+      transaccionesVariables: txs(10, 100), // $1,000 en 10 días, gastos parejos
+      totalFijos: 0, totalIngresos: 20000,
       ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
     })
-    expect(r.esMesActual).toBe(true)
-    expect(r.diaActual).toBe(15)
-    expect(r.diasMes).toBe(30)
-    // gasto variable proyectado = 1500 / 15 * 30 = 3000; + 2000 fijos = 5000
-    expect(r.gastoProyectado).toBe(5000)
-    expect(r.saldoProyectado).toBe(15000) // 20000 - 5000
+    // ritmo recortado = (1000 − 100 mayor) / 10 = 90/día → 1000 + 90×20 = 2800
+    expect(r.gastoProyectado).toBe(2800)
   })
+
+  it('suavizado: un gasto único grande NO se extrapola como ritmo', () => {
+    const hoy = new Date(2026, 5, 10) // día 10 de 30
+    const r = calcularProyeccion({
+      transaccionesVariables: [{ monto: 5000 }], // una sola compra fuerte
+      totalFijos: 0, totalIngresos: 20000,
+      ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    // Fórmula vieja habría dicho 5000/10×30 = 15,000. Ahora: one-off → 5,000
+    expect(r.gastoProyectado).toBe(5000)
+    expect(r.saldoProyectado).toBe(15000)
+  })
+
+  it('MSI: la compra a meses pesa solo su mensualidad en la proyección', () => {
+    const hoy = new Date(2026, 5, 10)
+    const r = calcularProyeccion({
+      transaccionesVariables: [{ monto: 6000, msi_meses: 6 }], // $1,000 de mensualidad
+      totalFijos: 0, totalIngresos: 20000,
+      ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
+    })
+    // pesa 1000 (no 6000) y como es único no marca ritmo → proyectado 1000
+    expect(r.gastoProyectado).toBe(1000)
+  })
+
   it('usa ingresoEsperado si es mayor que lo registrado', () => {
     const hoy = new Date(2026, 5, 30)
     const r = calcularProyeccion({
-      totalTx: 0, totalFijos: 0, totalIngresos: 10000,
+      transaccionesVariables: [], totalFijos: 0, totalIngresos: 10000,
       ingresoEsperado: 20000, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
     })
     expect(r.saldoProyectado).toBe(20000) // usa esperado (20000), no registrado (10000)
   })
+
   it('saldoProyectado null si no hay base de ingreso', () => {
     const hoy = new Date(2026, 5, 15)
     const r = calcularProyeccion({
-      totalTx: 100, totalFijos: 0, totalIngresos: 0,
+      transaccionesVariables: [{ monto: 100 }], totalFijos: 0, totalIngresos: 0,
       ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
     })
     expect(r.saldoProyectado).toBeNull()
