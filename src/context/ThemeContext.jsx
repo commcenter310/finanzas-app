@@ -12,7 +12,7 @@ const aplicarTema = (tema) => {
   localStorage.setItem('finni-theme', tema)
   // Color de la barra del sistema (Android/PWA)
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.content = tema === 'dark' ? '#111113' : '#F6F4F1'
+  if (meta) meta.content = tema === 'dark' ? '#0D1110' : '#EEF3F1'
 }
 
 export function ThemeProvider({ children }) {
