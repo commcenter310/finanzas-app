@@ -18,6 +18,19 @@ function ResumenGeneral({ creditos }) {
   const disponible     = totalLimite - totalUtilizado
   const sobreLimite    = pctGlobal > 30
   const colorGlobal    = pctGlobal > 80 ? 'var(--negative)' : pctGlobal > 30 ? 'var(--warning)' : 'var(--ahorro)'
+  const ordenadasPorUso = conLimite
+    .slice()
+    .sort((a, b) => (Number(b.saldo_utilizado ?? 0) / Number(b.limite_credito)) - (Number(a.saldo_utilizado ?? 0) / Number(a.limite_credito)))
+  const mayorUso = ordenadasPorUso[0]
+  const pagoMayorUso30 = mayorUso
+    ? Math.max(0, Number(mayorUso.saldo_utilizado ?? 0) - (Number(mayorUso.limite_credito) * 0.3))
+    : 0
+  const pagoTotal30 = conLimite.reduce((s, c) =>
+    s + Math.max(0, Number(c.saldo_utilizado ?? 0) - (Number(c.limite_credito) * 0.3)), 0)
+  const proximoPago = conLimite
+    .slice()
+    .sort((a, b) => (diasHastaDiaDelMes(a.fecha_pago) ?? 99) - (diasHastaDiaDelMes(b.fecha_pago) ?? 99))[0]
+  const diasProximoPago = proximoPago ? diasHastaDiaDelMes(proximoPago.fecha_pago) : null
 
   return (
     <div className="card p-5">
@@ -52,6 +65,32 @@ function ResumenGeneral({ creditos }) {
         <span className="text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>
           Disponible: {formatMXN(disponible)}
         </span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+        <div className="rounded-[var(--r-lg)] p-3 lg:col-span-2"
+          style={{ background: sobreLimite ? 'var(--warning-bg)' : 'var(--ahorro-bg)', border: `1px solid ${sobreLimite ? 'var(--warning-bg)' : 'var(--ahorro-bg)'}` }}>
+          <p className="text-xs font-bold mb-1" style={{ color: sobreLimite ? 'var(--warning-fg)' : 'var(--ahorro-fg)' }}>
+            Acción recomendada
+          </p>
+          <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>
+            {pagoTotal30 > 0
+              ? `Paga ${formatMXN(pagoMayorUso30)} en ${mayorUso.nombre} para acercarla al 30%.`
+              : 'Todas tus tarjetas están dentro del 30% recomendado.'}
+          </p>
+          {pagoTotal30 > 0 && (
+            <p className="text-xs mt-1" style={{ color: 'var(--fg-3)' }}>
+              Para dejar todas al 30% o menos: {formatMXN(pagoTotal30)}.
+            </p>
+          )}
+        </div>
+        <div className="rounded-[var(--r-lg)] p-3" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+          <p className="text-xs font-bold mb-1" style={{ color: 'var(--fg-3)' }}>Siguiente pago</p>
+          <p className="text-sm font-bold truncate" style={{ color: 'var(--fg-1)' }}>{proximoPago?.nombre ?? 'Sin fechas'}</p>
+          <p className="text-xs" style={{ color: 'var(--fg-3)' }}>
+            {diasProximoPago != null ? `En ${diasProximoPago} día${diasProximoPago !== 1 ? 's' : ''}` : 'Captura fecha de pago'}
+          </p>
+        </div>
       </div>
 
       {/* Mini barras por tarjeta */}
@@ -150,6 +189,10 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
   const sobreLimite  = pctUso > 30
   const metodoVinculado = metodos?.find(m => m.credito_id === credito.id)
   const colorBarra = pctUso > 80 ? 'var(--negative)' : pctUso > 30 ? 'var(--warning)' : 'var(--ahorro)'
+  const limite = Number(credito.limite_credito ?? 0)
+  const saldo = Number(credito.saldo_utilizado ?? 0)
+  const disponible = Math.max(0, limite - saldo)
+  const pagoPara30 = limite > 0 ? Math.max(0, saldo - (limite * 0.3)) : 0
 
   const fmtRango = (inicio, fin) =>
     inicio <= fin ? `días ${inicio} al ${fin}` : `días ${inicio} al ${fin} (mes sig.)`
@@ -219,6 +262,18 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
               ? <span className="text-xs font-semibold" style={{ color: 'var(--warning-fg)' }}>⚠️ Supera el 30% recomendado</span>
               : <span className="text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>✓ Dentro del límite recomendado</span>
             }
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="rounded-[var(--r-sm)] px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+              <p className="text-xs" style={{ color: 'var(--fg-3)' }}>Disponible</p>
+              <p className="text-sm font-bold tabular" style={{ color: 'var(--fg-1)', fontVariantNumeric: 'tabular-nums' }}>{formatMXN(disponible)}</p>
+            </div>
+            <div className="rounded-[var(--r-sm)] px-3 py-2" style={{ background: pagoPara30 > 0 ? 'var(--warning-bg)' : 'var(--ahorro-bg)' }}>
+              <p className="text-xs" style={{ color: pagoPara30 > 0 ? 'var(--warning-fg)' : 'var(--ahorro-fg)' }}>Para 30%</p>
+              <p className="text-sm font-bold tabular" style={{ color: pagoPara30 > 0 ? 'var(--warning-fg)' : 'var(--ahorro-fg)', fontVariantNumeric: 'tabular-nums' }}>
+                {pagoPara30 > 0 ? formatMXN(pagoPara30) : 'OK'}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -346,6 +401,8 @@ export default function Creditos() {
   }
 
   const totalSaldo = creditos.reduce((s, c) => s + Number(c.saldo_utilizado ?? 0), 0)
+  const pagoPara30Total = creditos.reduce((s, c) =>
+    s + Math.max(0, Number(c.saldo_utilizado ?? 0) - (Number(c.limite_credito ?? 0) * 0.3)), 0)
 
   if (error && !loading && creditos.length === 0) {
     return (
@@ -359,7 +416,7 @@ export default function Creditos() {
     <Layout titulo="Créditos">
       <div className="space-y-5">
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Tarjetas Activas</p>
             <p className="text-xl font-bold font-mono text-primary-700">{creditos.length}</p>
@@ -372,6 +429,12 @@ export default function Creditos() {
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Pagos Próximos</p>
             <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>
               {creditos.filter(c => getAlerta(c).diasParaPago <= 5).length} alertas
+            </p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Para Volver al 30%</p>
+            <p className="text-xl font-bold font-mono" style={{ color: pagoPara30Total > 0 ? 'var(--warning-fg)' : 'var(--ahorro-fg)' }}>
+              {pagoPara30Total > 0 ? formatMXN(pagoPara30Total) : 'OK'}
             </p>
           </div>
         </div>

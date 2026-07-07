@@ -3,13 +3,70 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
-import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil, Target, CalendarClock, TimerReset } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
+
+const numero = (v) => Number(v ?? 0)
+
+const formatearMeses = (meses) => {
+  if (!meses) return 'Sin estimación'
+  if (meses < 12) return `${meses} mes${meses !== 1 ? 'es' : ''}`
+  const anios = Math.floor(meses / 12)
+  const resto = meses % 12
+  return `${anios} año${anios !== 1 ? 's' : ''}${resto ? ` ${resto}m` : ''}`
+}
+
+const mesesParaLiquidar = (deuda) => {
+  const pago = numero(deuda.pago_mensual)
+  const saldo = numero(deuda.saldo_actual)
+  return pago > 0 && saldo > 0 ? Math.ceil(saldo / pago) : null
+}
+
+const diasHastaISO = (fecha) => {
+  if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const objetivo = new Date(`${fecha}T00:00:00`)
+  return Math.ceil((objetivo - hoy) / 86400000)
+}
+
+const textoVencimiento = (deuda) => {
+  if (deuda.tipo === 'credito') return deuda.fecha_proximo_pago
+  const dias = diasHastaISO(deuda.fecha_proximo_pago)
+  if (dias === null) return deuda.fecha_proximo_pago
+  if (dias < 0) return `Vencida hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+  if (dias === 0) return 'Vence hoy'
+  return `Vence en ${dias} día${dias !== 1 ? 's' : ''}`
+}
+
+function construirPlan(deudas, totalDeuda, totalPagoMensual, snowball, avalanche) {
+  const activas = deudas.filter(d => numero(d.saldo_actual) > 0)
+  const conTasa = activas.filter(d => numero(d.tasa_interes) > 0)
+  const foco = conTasa.length
+    ? avalanche.find(d => numero(d.saldo_actual) > 0)
+    : snowball.find(d => numero(d.saldo_actual) > 0)
+  const proximas = activas
+    .filter(d => diasHastaISO(d.fecha_proximo_pago) !== null)
+    .sort((a, b) => diasHastaISO(a.fecha_proximo_pago) - diasHastaISO(b.fecha_proximo_pago))
+  const tarjetasSobre30 = activas.filter(d =>
+    d.tipo === 'credito' &&
+    numero(d.saldo_original) > 0 &&
+    (numero(d.saldo_actual) / numero(d.saldo_original)) > 0.3
+  )
+
+  return {
+    foco,
+    metodo: conTasa.length ? 'Avalanche' : 'Snowball',
+    proximo: proximas[0] ?? null,
+    mesesTotales: totalPagoMensual > 0 ? Math.ceil(totalDeuda / totalPagoMensual) : null,
+    tarjetasSobre30,
+  }
+}
 
 export default function Deudas() {
   const { deudas, loading, error, refetch, saving, totalDeuda, totalPagoMensual, snowball, avalanche, agregar, actualizar, abonar, abonarCredito, eliminar } = useDeudas()
@@ -22,6 +79,7 @@ export default function Deudas() {
   const [montoAbono, setMontoAbono] = useState({})
   const [tab, setTab] = useState('deudas')
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const plan = construirPlan(deudas, totalDeuda, totalPagoMensual, snowball, avalanche)
 
   const abrirEditar = (d) => {
     setEditandoId(d.id)
@@ -108,6 +166,59 @@ export default function Deudas() {
           </div>
         </div>
 
+        {!loading && deudas.length > 0 && (
+          <div className="card p-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-normal mb-1" style={{ color: 'var(--fg-3)', letterSpacing: 0 }}>
+                  Plan de ataque
+                </p>
+                <h2 className="font-bold text-lg" style={{ color: 'var(--fg-1)' }}>
+                  {plan.foco ? `Enfoca pagos extra en ${plan.foco.nombre}` : 'Sin deuda prioritaria'}
+                </h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--fg-3)' }}>
+                  Método sugerido: {plan.metodo}. Si hay tasa capturada, priorizo mayor interés; si no, la deuda más chica para ganar avance.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto lg:min-w-[560px]">
+                <div className="rounded-[var(--r-lg)] p-3" style={{ background: 'var(--primary-50)', border: '1px solid var(--primary-100)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--primary-700)' }}>
+                    <Target className="w-4 h-4" />
+                    <span className="text-xs font-bold">Foco</span>
+                  </div>
+                  <p className="text-sm font-bold truncate" style={{ color: 'var(--fg-1)' }}>{plan.foco?.nombre ?? 'Listo'}</p>
+                  <p className="text-xs tabular" style={{ color: 'var(--fg-3)' }}>{plan.foco ? formatMXN(plan.foco.saldo_actual) : 'Sin saldo'}</p>
+                </div>
+                <div className="rounded-[var(--r-lg)] p-3" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--warning-fg)' }}>
+                    <CalendarClock className="w-4 h-4" />
+                    <span className="text-xs font-bold">Próximo</span>
+                  </div>
+                  <p className="text-sm font-bold truncate" style={{ color: 'var(--fg-1)' }}>{plan.proximo?.nombre ?? 'Sin fecha'}</p>
+                  <p className="text-xs" style={{ color: 'var(--fg-3)' }}>{plan.proximo ? textoVencimiento(plan.proximo) : 'Agrega fechas de pago'}</p>
+                </div>
+                <div className="rounded-[var(--r-lg)] p-3" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--fg-2)' }}>
+                    <TimerReset className="w-4 h-4" />
+                    <span className="text-xs font-bold">Ritmo actual</span>
+                  </div>
+                  <p className="text-sm font-bold" style={{ color: 'var(--fg-1)' }}>{formatearMeses(plan.mesesTotales)}</p>
+                  <p className="text-xs" style={{ color: 'var(--fg-3)' }}>{totalPagoMensual > 0 ? `${formatMXN(totalPagoMensual)}/mes` : 'Captura pagos mensuales'}</p>
+                </div>
+              </div>
+            </div>
+
+            {plan.tarjetasSobre30.length > 0 && (
+              <div className="mt-4 rounded-[var(--r-lg)] px-4 py-3" style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
+                <p className="text-sm font-semibold">
+                  {plan.tarjetasSobre30.length} tarjeta{plan.tarjetasSobre30.length !== 1 ? 's' : ''} arriba del 30%. Conviene bajar utilización antes de acelerar deudas manuales.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
@@ -189,6 +300,10 @@ export default function Deudas() {
                     const pct = d.saldo_original > 0
                       ? ((Number(d.saldo_original) - Number(d.saldo_actual)) / Number(d.saldo_original)) * 100 : 0
                     const expandido = expandida === d.id
+                    const mesesDeuda = mesesParaLiquidar(d)
+                    const esFoco = plan.foco?.id === d.id
+                    const esProximo = plan.proximo?.id === d.id
+                    const vencimiento = textoVencimiento(d)
                     return (
                       <div key={d.id}
                         className="card overflow-hidden"
@@ -209,11 +324,24 @@ export default function Deudas() {
                                     Tarjeta
                                   </span>
                                 )}
+                                {esFoco && (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                    style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                                    Foco extra
+                                  </span>
+                                )}
+                                {esProximo && (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                    style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
+                                    Próxima
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                                 {d.pago_mensual > 0 && <span>Pago: {formatMXN(d.pago_mensual)}/mes</span>}
                                 {d.tasa_interes > 0 && <span>Tasa: {d.tasa_interes}%</span>}
-                                {d.fecha_proximo_pago && <span>Próximo: {d.fecha_proximo_pago}</span>}
+                                {vencimiento && <span>{vencimiento}</span>}
+                                {mesesDeuda && <span>≈ {formatearMeses(mesesDeuda)}</span>}
                               </div>
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0">
