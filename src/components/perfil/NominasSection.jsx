@@ -4,6 +4,7 @@ import { calcNomina, formatMXN, FRECUENCIA_LABEL, MESES, parseMesesPrima, serial
 import { Plus, Trash2, Pencil, Star, Briefcase, Wallet, Calculator } from 'lucide-react'
 import FilterSelect from '../ui/FilterSelect'
 import ConfirmModal from '../ui/ConfirmModal'
+import EmptyState from '../ui/EmptyState'
 
 const FORM_VACIO = {
   nombre: '', es_principal: false, tipo: 'sueldo', frecuencia: 'quincenal',
@@ -48,7 +49,7 @@ const formAPayload = (f) => ({
   mes_utilidades: f.tipo === 'sueldo' && f.tiene_utilidades ? (toNum(f.mes_utilidades) || null) : null,
 })
 
-export default function NominasSection() {
+export default function NominasSection({ onChange }) {
   const { nominas, loading, saving, agregar, actualizar, eliminar } = useNominas()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
@@ -90,7 +91,10 @@ export default function NominasSection() {
     if (!form.nombre || !form.monto_neto) return
     const payload = formAPayload(form)
     const { error } = editandoId ? await actualizar(editandoId, payload) : await agregar(payload)
-    if (!error) cerrar()
+    if (!error) {
+      cerrar()
+      onChange?.()
+    }
   }
 
   // Cálculo en vivo para la previsualización dentro del form
@@ -268,9 +272,19 @@ export default function NominasSection() {
         {loading ? (
           <div className="px-5 py-8"><div className="h-5 bg-gray-50 rounded animate-pulse" /></div>
         ) : nominas.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>
-            Sin nóminas configuradas. Agrega tu fuente de ingreso principal.
-          </p>
+          <div className="px-5 py-6">
+            <EmptyState
+              icon={Wallet}
+              title="Configura tu ingreso principal"
+              description="Con una nómina o ingreso base, el plan mensual y las proyecciones quedan mejor calibradas."
+              action={
+                <button type="button" onClick={abrirNueva} className="btn-primary inline-flex items-center gap-2 text-sm">
+                  <Plus className="h-4 w-4" />
+                  Agregar ingreso
+                </button>
+              }
+            />
+          </div>
         ) : nominas.map(n => {
           const c = calcNomina(n)
           const Icono = n.tipo === 'honorarios' ? Briefcase : Wallet
@@ -314,7 +328,11 @@ export default function NominasSection() {
         open={!!confirmDelete}
         titulo="¿Eliminar nómina?"
         descripcion="Esta acción no se puede deshacer."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const { error } = await eliminar(confirmDelete)
+          if (!error) onChange?.()
+          setConfirmDelete(null)
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
     </div>

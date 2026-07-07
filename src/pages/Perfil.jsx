@@ -5,7 +5,7 @@ import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
-import { Save, Plus, Trash2, Pencil, Check, X, Search } from 'lucide-react'
+import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
@@ -17,6 +17,87 @@ const TIPO_METODO_OPTS = [
   { value: 'efectivo', label: 'Efectivo', dotColor: 'var(--ahorro)'  },
   { value: 'digital',  label: 'Digital',  dotColor: 'var(--deseo)'   },
 ]
+function SetupGuide({ items }) {
+  const completados = items.filter(item => item.done).length
+  const progreso = items.length ? Math.round((completados / items.length) * 100) : 0
+  const siguiente = items.find(item => !item.done)
+
+  return (
+    <section className="card p-5 overflow-hidden">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--primary-700)' }}>
+            Centro de configuración
+          </p>
+          <h2 className="mt-1 text-xl font-bold" style={{ color: 'var(--fg-1)' }}>
+            Tu setup financiero
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: 'var(--fg-3)' }}>
+            Deja listas las piezas que hacen que el dashboard, las alertas y los cálculos trabajen con datos tuyos.
+          </p>
+          {siguiente && (
+            <button
+              type="button"
+              onClick={siguiente.onClick}
+              className="mt-4 inline-flex items-center gap-2 rounded-[var(--r-md)] px-3 py-2 text-sm font-semibold transition-colors"
+              style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}
+            >
+              Siguiente: {siguiente.title}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        <div className="min-w-[190px] rounded-[var(--r-lg)] border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-xs font-semibold" style={{ color: 'var(--fg-3)' }}>Progreso</span>
+            <span className="font-mono text-lg font-bold" style={{ color: 'var(--fg-1)' }}>{completados}/{items.length}</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-3)' }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${progreso}%`, background: 'var(--primary)' }} />
+          </div>
+          <p className="mt-2 text-xs" style={{ color: 'var(--fg-4)' }}>
+            {progreso === 100 ? 'Listo para operar con mejor contexto.' : `${progreso}% configurado`}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.map(item => {
+          const Icon = item.Icon
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.onClick}
+              className="group flex min-h-[92px] items-start gap-3 rounded-[var(--r-lg)] border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+              style={{
+                borderColor: item.done ? 'var(--positive-bg)' : 'var(--border)',
+                background: item.done ? 'var(--positive-bg)' : 'var(--surface)',
+              }}
+            >
+              <span
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--r-md)]"
+                style={{
+                  background: item.done ? 'var(--surface)' : 'var(--primary-50)',
+                  color: item.done ? 'var(--positive-fg)' : 'var(--primary-700)',
+                }}
+              >
+                {item.done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold" style={{ color: 'var(--fg-1)' }}>{item.title}</span>
+                <span className="mt-0.5 block text-xs leading-5" style={{ color: 'var(--fg-3)' }}>{item.detail}</span>
+              </span>
+              {!item.done && <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--fg-4)' }} />}
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
 
@@ -132,6 +213,11 @@ export default function Perfil() {
     return data ?? []
   }, [user?.id])
 
+  const { data: nominasSetup, refetch: refetchNominasSetup } = useSupabaseQuery(async () => {
+    const { data } = await supabase.from('nominas').select('id, es_principal').eq('user_id', user.id)
+    return data ?? []
+  }, [user?.id])
+
   const toggleCategoria = async (id, activa) => {
     await supabase.from('categorias').update({ activa: !activa }).eq('id', id)
     refetchCats()
@@ -165,16 +251,78 @@ export default function Perfil() {
 
   const totalRegla = Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)
   const reglaOk    = Math.abs(totalRegla - 1) < 0.01
+  const metodosActivos = (metodos ?? []).filter(m => m.activo)
+  const categoriasActivas = (categorias ?? []).filter(c => c.activa)
+  const nominasConfiguradas = nominasSetup?.length ?? 0
+
+  const irA = (id, beforeScroll) => {
+    beforeScroll?.()
+    window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  const setupItems = [
+    {
+      key: 'datos',
+      title: 'Datos básicos',
+      detail: nombre.trim().length >= 2 ? 'Nombre listo para personalizar tus vistas.' : 'Agrega tu nombre para identificar tu perfil.',
+      done: nombre.trim().length >= 2,
+      Icon: User,
+      onClick: () => irA('perfil-datos'),
+    },
+    {
+      key: 'whatsapp',
+      title: 'WhatsApp',
+      detail: telefono10.length === 10 ? 'Número completo para futuras alertas.' : 'Captura 10 dígitos para dejarlo listo.',
+      done: telefono10.length === 10,
+      Icon: MessageSquare,
+      onClick: () => irA('perfil-datos'),
+    },
+    {
+      key: 'nomina',
+      title: 'Ingreso principal',
+      detail: nominasConfiguradas > 0 ? `${nominasConfiguradas} fuente${nominasConfiguradas === 1 ? '' : 's'} de ingreso configurada${nominasConfiguradas === 1 ? '' : 's'}.` : 'Agrega al menos una fuente de ingreso.',
+      done: nominasConfiguradas > 0,
+      Icon: TrendingUp,
+      onClick: () => irA('perfil-nomina'),
+    },
+    {
+      key: 'metodos',
+      title: 'Métodos de pago',
+      detail: metodosActivos.length > 0 ? `${metodosActivos.length} método${metodosActivos.length === 1 ? '' : 's'} activo${metodosActivos.length === 1 ? '' : 's'}.` : 'Crea los bancos, tarjetas o efectivo que usas.',
+      done: metodosActivos.length > 0,
+      Icon: CreditCard,
+      onClick: () => irA('perfil-metodos', () => { if (metodosActivos.length === 0) setMostrarFormMetodo(true) }),
+    },
+    {
+      key: 'categorias',
+      title: 'Categorías',
+      detail: categoriasActivas.length > 0 ? `${categoriasActivas.length} categoría${categoriasActivas.length === 1 ? '' : 's'} activa${categoriasActivas.length === 1 ? '' : 's'}.` : 'Activa o crea categorías para clasificar gastos.',
+      done: categoriasActivas.length > 0,
+      Icon: BarChart3,
+      onClick: () => irA('perfil-categorias', () => { if (categoriasActivas.length === 0) setMostrarFormCat(true) }),
+    },
+    {
+      key: 'regla',
+      title: 'Regla 50/30/20',
+      detail: reglaOk ? 'La distribución suma 100%.' : 'Ajusta los porcentajes hasta sumar 100%.',
+      done: reglaOk,
+      Icon: Settings,
+      onClick: () => irA('perfil-regla'),
+    },
+  ]
 
   return (
     <Layout titulo="Perfil">
       <div className="space-y-5">
+        <SetupGuide items={setupItems} />
 
         {/* ── Fila 1: misma altura en ambas columnas ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
           {/* Datos básicos */}
-          <div className="card p-5">
+          <div id="perfil-datos" className="card p-5 scroll-mt-24">
             <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Datos Básicos</h2>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="col-span-2">
@@ -219,7 +367,7 @@ export default function Perfil() {
           </div>
 
           {/* Regla 50/30/20 */}
-          <div className="card p-5">
+          <div id="perfil-regla" className="card p-5 scroll-mt-24">
             <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Regla Personalizada</h2>
             <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
             <div className="space-y-5 mb-4">
@@ -299,13 +447,15 @@ export default function Perfil() {
         </div>
 
         {/* ── Ingresos y Nómina ── */}
-        <NominasSection />
+        <div id="perfil-nomina" className="scroll-mt-24">
+          <NominasSection onChange={refetchNominasSetup} />
+        </div>
 
         {/* ── Fila 2: Métodos de pago + Categorías ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
           {/* Métodos de pago */}
-          <div className="card overflow-hidden">
+          <div id="perfil-metodos" className="card overflow-hidden scroll-mt-24">
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
               <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Métodos de Pago</h2>
               <button onClick={() => setMostrarFormMetodo(v => !v)}
@@ -415,7 +565,7 @@ export default function Perfil() {
           </div>
 
           {/* Categorías */}
-          <div className="card overflow-hidden">
+          <div id="perfil-categorias" className="card overflow-hidden scroll-mt-24">
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
               <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Categorías</h2>
               <button onClick={() => setMostrarFormCat(v => !v)}
