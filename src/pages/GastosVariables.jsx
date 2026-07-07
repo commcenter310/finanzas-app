@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useGastosVariables } from '../hooks/useGastosVariables'
 import { formatMXN } from '../utils/constantes'
@@ -11,6 +12,7 @@ import {
   ChartLegend,
   ChartTooltip,
 } from '../components/ui/Chart'
+import EmptyState from '../components/ui/EmptyState'
 import {
   chartAxisProps,
   chartAxisTick,
@@ -255,7 +257,13 @@ export default function GastosVariables() {
         {loading
           ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">{Array(8).fill(0).map((_,i) => <div key={i} className="card p-4 h-32 animate-pulse bg-gray-50" />)}</div>
           : filtradas.length === 0
-            ? <div className="card p-12 text-center text-gray-300 text-sm">No hay categorías activas</div>
+            ? (
+              <EmptyState
+                title="No hay categorias activas"
+                description="Activa o crea categorias desde Perfil para poder definir limites mensuales."
+                action={<Link to="/perfil" className="btn-primary text-sm">Configurar categorias</Link>}
+              />
+            )
             : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {filtradas.map(cat => (

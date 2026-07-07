@@ -3,9 +3,10 @@ import Layout from '../components/layout/Layout'
 import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
 import { diasHastaDiaDelMes, calcularEstadoTarjeta } from '../utils/calculos'
-import { Plus, Pencil, Trash2, AlertTriangle, Bell } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertTriangle, Bell, CreditCard } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import ErrorState from '../components/ui/ErrorState'
+import EmptyState from '../components/ui/EmptyState'
 
 // ── Resumen global de utilización ────────────────────────────────────────────
 function ResumenGeneral({ creditos }) {
@@ -502,7 +503,21 @@ export default function Creditos() {
         {loading
           ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-48 animate-pulse bg-gray-50" />)}</div>
           : creditos.length === 0
-            ? <div className="card p-16 text-center text-gray-300 text-sm">No tienes tarjetas de crédito registradas</div>
+            ? (
+              <EmptyState
+                icon={CreditCard}
+                title="No tienes tarjetas registradas"
+                description="Agrega tus tarjetas para vigilar fechas de corte, pagos y utilizacion recomendada."
+                action={
+                  <button
+                    onClick={() => { setForm(FORM_VACIO); setEditando(null); setMostrarForm(true) }}
+                    className="btn-primary text-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Agregar Tarjeta
+                  </button>
+                }
+              />
+            )
             : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {creditos.map(c => (
                   <TarjetaCredito key={c.id} credito={c} metodos={metodos}

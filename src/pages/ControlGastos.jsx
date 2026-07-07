@@ -9,6 +9,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { fechaLocalISO } from '../utils/fecha'
 
@@ -310,11 +311,29 @@ export default function ControlGastos() {
             ? <div className="p-5 space-y-2">{Array(6).fill(0).map((_,i) => <div key={i} className="h-12 bg-gray-50 rounded animate-pulse" />)}</div>
             : filtradas.length === 0
               ? (
-                <div className="py-16 text-center">
-                  <p className="text-gray-300 text-4xl mb-3">📋</p>
-                  <p className="text-gray-400 text-sm">
-                    {hayFiltros ? 'Ningún gasto coincide con los filtros' : 'Sin gastos este mes'}
-                  </p>
+                <div className="p-4">
+                  <EmptyState
+                    icon={hayFiltros ? Search : Plus}
+                    title={hayFiltros ? 'Ningun gasto coincide' : 'Sin gastos este mes'}
+                    description={hayFiltros
+                      ? 'Prueba limpiando filtros o ajustando la busqueda.'
+                      : 'Registra tu primer movimiento para alimentar dashboard, presupuesto y tendencias.'}
+                    className="min-h-[240px]"
+                    action={hayFiltros
+                      ? (
+                        <button
+                          onClick={() => { setBusqueda(''); setFiltroClasif(''); setFiltroCategoria(''); setFiltroOrigen(''); setSoloHormiga(false) }}
+                          className="btn-secondary text-sm"
+                        >
+                          <X className="w-4 h-4" /> Limpiar filtros
+                        </button>
+                      )
+                      : (
+                        <button onClick={() => setMostrarForm(true)} className="btn-primary text-sm">
+                          <Plus className="w-4 h-4" /> Registrar Gasto
+                        </button>
+                      )}
+                  />
                 </div>
               )
               : (

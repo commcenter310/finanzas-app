@@ -7,6 +7,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { fechaLocalISO } from '../utils/fecha'
 
@@ -246,9 +247,16 @@ export default function GastosFijos() {
             ))}
           </div>
         ) : gastos.length === 0 ? (
-          <div className="card p-16 text-center text-gray-300 text-sm">
-            Sin gastos fijos este mes. ¡Agrega el primero!
-          </div>
+          <EmptyState
+            icon={Repeat}
+            title="No hay gastos fijos este mes"
+            description="Agrega renta, servicios o suscripciones para que Finni te avise que falta pagar."
+            action={
+              <button onClick={() => { cerrarForm(); setMostrarForm(true) }} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Agregar gasto fijo
+              </button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {gastos.map(g => {

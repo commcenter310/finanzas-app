@@ -7,6 +7,7 @@ import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil,
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 
 const FORM_VACIO = { nombre:'', saldo_original:'', saldo_actual:'', pago_mensual:'', tasa_interes:'', fecha_proximo_pago:'', notas:'' }
@@ -294,7 +295,18 @@ export default function Deudas() {
               {loading
                 ? Array(3).fill(0).map((_,i) => <div key={i} className="card h-20 animate-pulse bg-gray-50" />)
                 : deudas.length === 0
-                  ? <div className="card p-16 text-center text-gray-300 text-sm">Sin deudas registradas 🎉</div>
+                  ? (
+                    <EmptyState
+                      icon={Target}
+                      title="No tienes deudas registradas"
+                      description="Cuando captures una deuda, la app arma un plan de ataque y seguimiento de pagos."
+                      action={
+                        <button onClick={() => { cerrarForm(); setMostrarForm(true) }} className="btn-primary text-sm">
+                          <Plus className="w-4 h-4" /> Agregar Deuda
+                        </button>
+                      }
+                    />
+                  )
                   : deudas.map(d => {
                     const esTarjeta = d.tipo === 'credito'
                     const pct = d.saldo_original > 0
@@ -456,7 +468,14 @@ export default function Deudas() {
                   <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
                 </div>
                 {lista.length === 0
-                  ? <div className="p-8 text-center text-gray-300 text-sm">Sin deudas registradas</div>
+                  ? (
+                    <EmptyState
+                      icon={Target}
+                      title="Sin deudas para ordenar"
+                      description="Agrega una deuda para comparar Snowball y Avalanche."
+                      className="min-h-[180px] border-0 bg-transparent"
+                    />
+                  )
                   : <div className="divide-y divide-gray-50">
                     {lista.map((d, i) => (
                       <div key={d.id} className="flex items-center gap-3 px-5 py-3">

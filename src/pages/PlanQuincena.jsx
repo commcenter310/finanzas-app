@@ -10,6 +10,7 @@ import {
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import ProyeccionView from '../components/plan/ProyeccionView'
 
@@ -243,10 +244,16 @@ export default function PlanQuincena() {
             {Array(4).fill(0).map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-50" />)}
           </div>
         ) : compromisos.length === 0 ? (
-          <div className="card p-16 text-center text-gray-300 text-sm">
-            No hay cobros ni apartados en esta quincena.<br />
-            Agrega gastos fijos con día de cobro {rango.diaInicio}–{rango.diaFin} o aparta algo manualmente.
-          </div>
+          <EmptyState
+            icon={CalendarClock}
+            title="No hay compromisos en esta quincena"
+            description={`Agrega gastos fijos con dia de cobro ${rango.diaInicio}-${rango.diaFin} o aparta algo manualmente.`}
+            action={
+              <button onClick={() => setMostrarManual(true)} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Apartar para otra cosa
+              </button>
+            }
+          />
         ) : (
           <div className="space-y-2">
             {compromisos.map(c => {

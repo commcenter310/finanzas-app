@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, Plus, Receipt, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ErrorState from '../components/ui/ErrorState'
+import EmptyState from '../components/ui/EmptyState'
 import {
   ChartEmptyState,
   ChartLegend,
@@ -599,8 +600,18 @@ export default function Dashboard() {
             )
             : transacciones.slice(0, 8).length === 0
               ? (
-                <div className="p-10 text-center text-sm" style={{ color: 'var(--fg-4)' }}>
-                  Sin movimientos este mes
+                <div className="p-4">
+                  <EmptyState
+                    icon={Receipt}
+                    title="Sin movimientos este mes"
+                    description="Captura un gasto para que el dashboard empiece a mostrar patrones y alertas."
+                    className="min-h-[210px]"
+                    action={
+                      <Link to="/control-gastos" className="btn-primary text-sm">
+                        <Plus className="w-4 h-4" /> Registrar gasto
+                      </Link>
+                    }
+                  />
                 </div>
               )
               : (

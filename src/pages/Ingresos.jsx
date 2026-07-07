@@ -3,10 +3,11 @@ import Layout from '../components/layout/Layout'
 import { useIngresos } from '../hooks/useIngresos'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
-import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
+import { Plus, Trash2, Check, X, Pencil, Wallet } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { fechaLocalISO } from '../utils/fecha'
 
@@ -332,7 +333,23 @@ export default function Ingresos() {
                   <tr key={i}><td colSpan={7} className="px-4 py-3"><div className="h-5 bg-gray-50 rounded animate-pulse" /></td></tr>
                 ))
                 : ingresos.length === 0
-                  ? <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-300 text-sm">Sin ingresos este mes. Agrega el primero.</td></tr>
+                  ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-6">
+                        <EmptyState
+                          icon={Wallet}
+                          title="Sin ingresos este mes"
+                          description="Registra tu quincena o cualquier ingreso para calcular presupuesto, ahorro y proyecciones."
+                          className="min-h-[210px]"
+                          action={
+                            <button onClick={() => setMostrarForm(true)} className="btn-primary text-sm">
+                              <Plus className="w-4 h-4" /> Agregar ingreso
+                            </button>
+                          }
+                        />
+                      </td>
+                    </tr>
+                  )
                   : ingresos.map(i => (
                     <FilaIngreso key={i.id} ingreso={i} onUpdate={actualizar} onDelete={(id) => setConfirmDelete(id)} />
                   ))}

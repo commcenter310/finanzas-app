@@ -4,6 +4,21 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const normalized = id.replaceAll('\\', '/')
+          if (!normalized.includes('/node_modules/')) return
+          if (normalized.includes('/react/') || normalized.includes('/react-dom/') || normalized.includes('/react-router-dom/')) return 'react'
+          if (normalized.includes('/@supabase/')) return 'supabase'
+          if (normalized.includes('/recharts/') || normalized.includes('/d3-')) return 'charts'
+          if (normalized.includes('/lucide-react/')) return 'icons'
+          if (normalized.includes('/xlsx/')) return 'excel'
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

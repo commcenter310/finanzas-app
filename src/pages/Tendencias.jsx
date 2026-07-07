@@ -231,35 +231,37 @@ export default function Tendencias() {
           <div className="px-5 py-4 border-b border-gray-50">
             <h2 className="font-bold text-gray-900">Resumen por Mes</h2>
           </div>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-50">
-                {['Mes','Ingresos','Gastos','Balance','Necesidad','Deseo','Ahorro'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {(tendencias ?? []).map(t => {
-                const balance = t.ingresos - t.gastos
-                return (
-                  <tr key={t.mes} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-semibold text-gray-800">{t.mes}</td>
-                    <td className="px-4 py-3 font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(t.ingresos)}</td>
-                    <td className="px-4 py-3 font-mono text-primary-700">{formatMXN(t.gastos)}</td>
-                    <td className="px-4 py-3 font-mono font-bold">
-                      <span style={{ color: balance >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
-                        {balance >= 0 ? '+' : ''}{formatMXN(balance)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--necesidad-fg)' }}>{formatMXN(t.necesidad)}</td>
-                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--deseo-fg)' }}>{formatMXN(t.deseo)}</td>
-                    <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(t.ahorro)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px]">
+              <thead>
+                <tr className="border-b border-gray-50">
+                  {['Mes','Ingresos','Gastos','Balance','Necesidad','Deseo','Ahorro'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {(tendencias ?? []).map(t => {
+                  const balance = t.ingresos - t.gastos
+                  return (
+                    <tr key={t.mes} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-semibold text-gray-800">{t.mes}</td>
+                      <td className="px-4 py-3 font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(t.ingresos)}</td>
+                      <td className="px-4 py-3 font-mono text-primary-700">{formatMXN(t.gastos)}</td>
+                      <td className="px-4 py-3 font-mono font-bold">
+                        <span style={{ color: balance >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
+                          {balance >= 0 ? '+' : ''}{formatMXN(balance)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--necesidad-fg)' }}>{formatMXN(t.necesidad)}</td>
+                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--deseo-fg)' }}>{formatMXN(t.deseo)}</td>
+                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(t.ahorro)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>

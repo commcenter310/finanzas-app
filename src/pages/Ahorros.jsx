@@ -6,6 +6,7 @@ import { Plus, Trash2, Pencil, Check, X, PiggyBank } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
+import EmptyState   from '../components/ui/EmptyState'
 import { fechaLocalISO } from '../utils/fecha'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
@@ -217,7 +218,18 @@ export default function Ahorros() {
         {loading
           ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-36 animate-pulse bg-gray-50" />)}</div>
           : ahorros.length === 0
-            ? <div className="card p-16 text-center text-gray-300 text-sm">Sin metas de ahorro este mes. ¡Crea la primera!</div>
+            ? (
+              <EmptyState
+                icon={PiggyBank}
+                title="Aun no tienes metas de ahorro"
+                description="Crea una meta para apartar dinero y ver el avance contra tu objetivo."
+                action={
+                  <button onClick={() => setMostrarForm(true)} className="btn-primary text-sm">
+                    <Plus className="w-4 h-4" /> Nueva Meta
+                  </button>
+                }
+              />
+            )
             : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                 {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} />)}
               </div>}
