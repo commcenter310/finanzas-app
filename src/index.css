@@ -173,6 +173,24 @@
     color: var(--primary-800);
   }
 
+  .reminder-popover {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    z-index: 50;
+    width: min(376px, calc(100vw - 24px));
+  }
+
+  @media (max-width: 640px) {
+    .reminder-popover {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      top: 58px;
+      width: auto;
+    }
+  }
+
   .sidebar-shell {
     background:
       linear-gradient(180deg, #070B14 0%, #0D1830 48%, #050812 100%),

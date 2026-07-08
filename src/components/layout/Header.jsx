@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react'
 import { useMes } from '../../context/MesContext'
 import { MESES } from '../../utils/constantes'
+import ReminderBell from './ReminderBell'
 
 export default function Header({ titulo, onMenuClick }) {
   const { mes, anio, setMes, setAnio, irMesAnterior, irMesSiguiente } = useMes()
@@ -31,40 +32,44 @@ export default function Header({ titulo, onMenuClick }) {
         </h1>
       </div>
 
-      {/* Month switcher */}
-      <div className="month-switcher">
-        <button
-          onClick={irMesAnterior}
-          className="icon-button icon-button-sm"
-          aria-label="Mes anterior"
-        >
-          <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
-        </button>
-
-        <span
-          className="text-sm font-semibold tabular text-center px-1 min-w-[80px] lg:min-w-[132px]"
-          style={{ color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}
-        >
-          <span className="hidden sm:inline">{MESES[mes - 1]} {anio}</span>
-          <span className="sm:hidden">{MESES[mes - 1].slice(0, 3)} {String(anio).slice(2)}</span>
-        </span>
-
-        <button
-          onClick={irMesSiguiente}
-          className="icon-button icon-button-sm"
-          aria-label="Mes siguiente"
-        >
-          <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
-        </button>
-
-        {!esActual && (
+      <div className="flex flex-shrink-0 items-center gap-2">
+        {/* Month switcher */}
+        <div className="month-switcher">
           <button
-            onClick={irHoy}
-            className="today-button"
+            onClick={irMesAnterior}
+            className="icon-button icon-button-sm"
+            aria-label="Mes anterior"
           >
-            Hoy
+            <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
           </button>
-        )}
+
+          <span
+            className="text-sm font-semibold tabular text-center px-1 min-w-[80px] lg:min-w-[132px]"
+            style={{ color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}
+          >
+            <span className="hidden sm:inline">{MESES[mes - 1]} {anio}</span>
+            <span className="sm:hidden">{MESES[mes - 1].slice(0, 3)} {String(anio).slice(2)}</span>
+          </span>
+
+          <button
+            onClick={irMesSiguiente}
+            className="icon-button icon-button-sm"
+            aria-label="Mes siguiente"
+          >
+            <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
+          </button>
+
+          {!esActual && (
+            <button
+              onClick={irHoy}
+              className="today-button"
+            >
+              Hoy
+            </button>
+          )}
+        </div>
+
+        <ReminderBell />
       </div>
     </header>
   )
