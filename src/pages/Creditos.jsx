@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout'
 import { useCreditos } from '../hooks/useCreditos'
 import { formatMXN } from '../utils/constantes'
 import { diasHastaDiaDelMes, calcularEstadoTarjeta } from '../utils/calculos'
+import { resolverVencimientoMensual } from '../utils/pagosProgramados'
 import { Plus, Pencil, Trash2, AlertTriangle, Bell, CreditCard } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import ErrorState from '../components/ui/ErrorState'
@@ -30,8 +31,8 @@ function ResumenGeneral({ creditos }) {
     s + Math.max(0, Number(c.saldo_utilizado ?? 0) - (Number(c.limite_credito) * 0.3)), 0)
   const proximoPago = conLimite
     .slice()
-    .sort((a, b) => (diasHastaDiaDelMes(a.fecha_pago) ?? 99) - (diasHastaDiaDelMes(b.fecha_pago) ?? 99))[0]
-  const diasProximoPago = proximoPago ? diasHastaDiaDelMes(proximoPago.fecha_pago) : null
+    .sort((a, b) => getAlerta(a).diasParaPago - getAlerta(b).diasParaPago)[0]
+  const diasProximoPago = proximoPago ? getAlerta(proximoPago).diasParaPago : null
 
   return (
     <div className="card p-5">
@@ -89,7 +90,7 @@ function ResumenGeneral({ creditos }) {
           <p className="text-xs font-bold mb-1" style={{ color: 'var(--fg-3)' }}>Siguiente pago</p>
           <p className="text-sm font-bold truncate" style={{ color: 'var(--fg-1)' }}>{proximoPago?.nombre ?? 'Sin fechas'}</p>
           <p className="text-xs" style={{ color: 'var(--fg-3)' }}>
-            {diasProximoPago != null ? `En ${diasProximoPago} día${diasProximoPago !== 1 ? 's' : ''}` : 'Captura fecha de pago'}
+            {textoDiasPago(diasProximoPago)}
           </p>
         </div>
       </div>
@@ -164,13 +165,20 @@ function estaEnRango(hoy, inicio, fin) {
 }
 
 function getAlerta(credito) {
-  const hoy = new Date().getDate()
+  const hoyFecha = new Date()
+  const hoy = hoyFecha.getDate()
   // Días con calendario real (meses de 28-31 días)
   const diasParaCorte = diasHastaDiaDelMes(credito.fecha_corte) ?? 99
-  const diasParaPago  = diasHastaDiaDelMes(credito.fecha_pago)  ?? 99
+  const pagoProgramado = resolverVencimientoMensual({
+    diaPago: credito.fecha_pago,
+    pagos: credito.pagos_credito,
+    hoy: hoyFecha,
+    ventanaInicio: 'mes',
+  })
+  const diasParaPago = pagoProgramado?.dias ?? 99
   const { inicioOptimo, finOptimo, inicioEvitar, finEvitar } = calcularFechasOptimas(credito.fecha_corte)
   return {
-    diasParaCorte, diasParaPago,
+    diasParaCorte, diasParaPago, pagoProgramado,
     enRangoOptimo: estaEnRango(hoy, inicioOptimo, finOptimo),
     enRangoEvitar: estaEnRango(hoy, inicioEvitar, finEvitar),
     inicioOptimo, finOptimo, inicioEvitar, finEvitar,
@@ -179,12 +187,20 @@ function getAlerta(credito) {
 
 const fmtFechaCorta = (d) => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
 
+const textoDiasPago = (dias) => {
+  if (dias == null || dias >= 90) return 'Captura fecha de pago'
+  if (dias < 0) return `Vencida hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+  if (dias === 0) return 'Vence hoy'
+  return `En ${dias} día${dias !== 1 ? 's' : ''}`
+}
+
 function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
-  const { diasParaCorte, diasParaPago, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
+  const { diasParaCorte, diasParaPago, pagoProgramado, enRangoOptimo, enRangoEvitar, inicioOptimo, finOptimo, inicioEvitar, finEvitar } = getAlerta(credito)
   const pctUso = credito.limite_credito > 0
     ? (credito.saldo_utilizado / credito.limite_credito) * 100 : 0
   const alertaPagoUrgente  = diasParaPago  <= 3
   const alertaPago         = diasParaPago  <= 7
+  const pagoRegistrado     = pagoProgramado?.ciclosPagados > 0
   const alertaCorteUrgente = diasParaCorte <= 3
   const alertaCorte        = diasParaCorte <= 7
   const sobreLimite  = pctUso > 30
@@ -208,6 +224,12 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                 style={{ background: 'var(--primary-50)', color: 'var(--primary-700)', border: '1px solid var(--primary-200)' }}>
                 via {metodoVinculado.nombre}
+              </span>
+            )}
+            {pagoRegistrado && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)', border: '1px solid var(--ahorro-bg)' }}>
+                Pago registrado este ciclo
               </span>
             )}
             {enRangoOptimo && (
@@ -293,15 +315,15 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
           </p>
         </div>
         <div className="rounded-lg p-3"
-          style={alertaPagoUrgente ? { background: 'var(--negative-bg)', border: '1px solid var(--negative)' } : alertaPago ? { background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' } : { background: 'var(--surface-2)' }}>
+          style={pagoRegistrado ? { background: 'var(--ahorro-bg)', border: '1px solid var(--ahorro-bg)' } : alertaPagoUrgente ? { background: 'var(--negative-bg)', border: '1px solid var(--negative)' } : alertaPago ? { background: 'var(--negative-bg)', border: '1px solid var(--negative-bg)' } : { background: 'var(--surface-2)' }}>
           <p className="text-xs text-gray-400 mb-0.5">Fecha de Pago</p>
           <p className="font-bold text-gray-800 font-mono">Día {credito.fecha_pago}</p>
-          <p className="text-xs mt-0.5" style={alertaPago ? { color: 'var(--negative-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
-            {alertaPagoUrgente
-              ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />🔴 ¡{diasParaPago} días!</span>
-              : alertaPago
-              ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />¡{diasParaPago} días!</span>
-              : `En ${diasParaPago} días`}
+          <p className="text-xs mt-0.5" style={pagoRegistrado ? { color: 'var(--ahorro-fg)', fontWeight: 700 } : alertaPago ? { color: 'var(--negative-fg)', fontWeight: 600 } : { color: 'var(--fg-4)' }}>
+            {pagoRegistrado
+              ? 'Pago registrado este ciclo'
+              : alertaPagoUrgente || alertaPago
+              ? <span className="flex items-center gap-0.5"><Bell className="w-3 h-3" />{textoDiasPago(diasParaPago)}</span>
+              : textoDiasPago(diasParaPago)}
           </p>
         </div>
       </div>

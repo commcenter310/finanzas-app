@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
+import { resolverVencimientoMensual } from '../utils/pagosProgramados'
 import { Plus, ChevronDown, ChevronUp, Trash2, CreditCard, ExternalLink, Pencil, Target, CalendarClock, TimerReset } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import DatePicker   from '../components/ui/DatePicker'
@@ -28,21 +29,32 @@ const mesesParaLiquidar = (deuda) => {
   return pago > 0 && saldo > 0 ? Math.ceil(saldo / pago) : null
 }
 
-const diasHastaISO = (fecha) => {
-  if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
-  const objetivo = new Date(`${fecha}T00:00:00`)
-  return Math.ceil((objetivo - hoy) / 86400000)
+const estadoVencimiento = (deuda, hoy = new Date()) => {
+  if (deuda.tipo === 'credito') {
+    return resolverVencimientoMensual({
+      diaPago: deuda.fecha_pago_dia,
+      pagos: deuda.abonos_deuda,
+      hoy,
+      ventanaInicio: 'mes',
+    })
+  }
+
+  return resolverVencimientoMensual({
+    fechaBaseISO: deuda.fecha_proximo_pago,
+    pagos: deuda.abonos_deuda,
+    montoObjetivo: deuda.pago_mensual,
+    saldoActual: deuda.saldo_actual,
+    hoy,
+  })
 }
 
-const textoVencimiento = (deuda) => {
-  if (deuda.tipo === 'credito') return deuda.fecha_proximo_pago
-  const dias = diasHastaISO(deuda.fecha_proximo_pago)
-  if (dias === null) return deuda.fecha_proximo_pago
+const textoVencimiento = (deuda, estado = estadoVencimiento(deuda)) => {
+  if (!estado) return deuda.fecha_proximo_pago
+  const { dias, ciclosPagados } = estado
+  const prefijoPagado = ciclosPagados > 0 ? 'Pago registrado · ' : ''
   if (dias < 0) return `Vencida hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
-  if (dias === 0) return 'Vence hoy'
-  return `Vence en ${dias} día${dias !== 1 ? 's' : ''}`
+  if (dias === 0) return `${prefijoPagado}Vence hoy`
+  return `${prefijoPagado}Vence en ${dias} día${dias !== 1 ? 's' : ''}`
 }
 
 function construirPlan(deudas, totalDeuda, totalPagoMensual, snowball, avalanche) {
@@ -52,8 +64,10 @@ function construirPlan(deudas, totalDeuda, totalPagoMensual, snowball, avalanche
     ? avalanche.find(d => numero(d.saldo_actual) > 0)
     : snowball.find(d => numero(d.saldo_actual) > 0)
   const proximas = activas
-    .filter(d => diasHastaISO(d.fecha_proximo_pago) !== null)
-    .sort((a, b) => diasHastaISO(a.fecha_proximo_pago) - diasHastaISO(b.fecha_proximo_pago))
+    .map(d => ({ deuda: d, estado: estadoVencimiento(d) }))
+    .filter(({ estado }) => estado)
+    .sort((a, b) => a.estado.dias - b.estado.dias)
+    .map(({ deuda }) => deuda)
   const tarjetasSobre30 = activas.filter(d =>
     d.tipo === 'credito' &&
     numero(d.saldo_original) > 0 &&
@@ -315,7 +329,8 @@ export default function Deudas() {
                     const mesesDeuda = mesesParaLiquidar(d)
                     const esFoco = plan.foco?.id === d.id
                     const esProximo = plan.proximo?.id === d.id
-                    const vencimiento = textoVencimiento(d)
+                    const estadoPago = estadoVencimiento(d)
+                    const vencimiento = textoVencimiento(d, estadoPago)
                     return (
                       <div key={d.id}
                         className="card overflow-hidden"
@@ -346,6 +361,12 @@ export default function Deudas() {
                                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
                                     style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
                                     Próxima
+                                  </span>
+                                )}
+                                {estadoPago?.ciclosPagados > 0 && estadoPago.dias >= 0 && (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                    style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                                    Pago registrado
                                   </span>
                                 )}
                               </div>

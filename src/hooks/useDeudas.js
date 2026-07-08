@@ -41,6 +41,7 @@ export function useDeudas() {
     saldo_actual:       Number(c.saldo_utilizado),
     pago_mensual:       null,
     tasa_interes:       null,
+    fecha_pago_dia:      c.fecha_pago,
     fecha_proximo_pago: c.fecha_pago ? `día ${c.fecha_pago}` : null,
     notas:              null,
     liquidada:          false,

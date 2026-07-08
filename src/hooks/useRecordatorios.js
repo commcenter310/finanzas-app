@@ -1,24 +1,17 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 import { formatMXN } from '../utils/constantes'
-
-const MS_DIA = 24 * 60 * 60 * 1000
-
-const inicioDia = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
-const diasEnMes = (anio, mes) => new Date(anio, mes, 0).getDate()
-const fechaPorDia = (anio, mes, dia) => new Date(anio, mes - 1, Math.min(Number(dia), diasEnMes(anio, mes)))
-const parseISO = (iso) => iso ? new Date(`${iso}T12:00:00`) : null
-const diffDias = (fecha, desde) => Math.round((inicioDia(fecha) - inicioDia(desde)) / MS_DIA)
-
-const estadoPorDias = (dias) => {
-  if (dias < 0) return 'vencido'
-  if (dias === 0) return 'hoy'
-  if (dias <= 7) return 'pronto'
-  return 'mes'
-}
+import {
+  diasEnMes,
+  diffDias,
+  estadoPorDias,
+  fechaPorDia,
+  inicioDia,
+  resolverVencimientoMensual,
+} from '../utils/pagosProgramados'
 
 export const formatoFechaRecordatorio = (fecha) =>
   fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
@@ -37,7 +30,7 @@ export function useRecordatorios() {
   const hoyBase = new Date()
   const hoyKey = `${hoyBase.getFullYear()}-${hoyBase.getMonth() + 1}-${hoyBase.getDate()}`
 
-  const { data: gastos, loading: loadingGastos, error: errorGastos } = useSupabaseQuery(async () => {
+  const { data: gastos, loading: loadingGastos, error: errorGastos, refetch: refetchGastos } = useSupabaseQuery(async () => {
     if (!uid) return []
     const { data, error } = await supabase
       .from('gastos_fijos')
@@ -50,22 +43,22 @@ export function useRecordatorios() {
     return data ?? []
   }, [uid, mes, anio], `recordatorios:gastos:${uid}:${mes}:${anio}`)
 
-  const { data: deudas, loading: loadingDeudas, error: errorDeudas } = useSupabaseQuery(async () => {
+  const { data: deudas, loading: loadingDeudas, error: errorDeudas, refetch: refetchDeudas } = useSupabaseQuery(async () => {
     if (!uid) return []
     const { data, error } = await supabase
       .from('deudas')
-      .select('id, nombre, saldo_actual, pago_mensual, fecha_proximo_pago')
+      .select('id, nombre, saldo_actual, pago_mensual, fecha_proximo_pago, abonos_deuda(id, monto, fecha)')
       .eq('user_id', uid)
       .eq('liquidada', false)
     if (error) throw error
     return data ?? []
   }, [uid], `recordatorios:deudas:${uid}`)
 
-  const { data: creditos, loading: loadingCreditos, error: errorCreditos } = useSupabaseQuery(async () => {
+  const { data: creditos, loading: loadingCreditos, error: errorCreditos, refetch: refetchCreditos } = useSupabaseQuery(async () => {
     if (!uid) return []
     const { data, error } = await supabase
       .from('creditos')
-      .select('id, nombre, saldo_utilizado, limite_credito, fecha_pago')
+      .select('id, nombre, saldo_utilizado, limite_credito, fecha_pago, pagos_credito(id, monto, fecha)')
       .eq('user_id', uid)
       .eq('activo', true)
     if (error) throw error
@@ -107,8 +100,15 @@ export function useRecordatorios() {
       ...(deudas ?? [])
         .filter(d => Number(d.saldo_actual ?? 0) > 0 && d.fecha_proximo_pago)
         .map(d => {
-          const fecha = parseISO(d.fecha_proximo_pago)
-          const dias = diffDias(fecha, hoy)
+          const vencimiento = resolverVencimientoMensual({
+            fechaBaseISO: d.fecha_proximo_pago,
+            pagos: d.abonos_deuda,
+            montoObjetivo: d.pago_mensual,
+            saldoActual: d.saldo_actual,
+            hoy,
+          })
+          const fecha = vencimiento?.fecha
+          const dias = vencimiento?.dias
           return {
             id: `deuda-${d.id}`,
             tipo: 'deuda',
@@ -116,7 +116,7 @@ export function useRecordatorios() {
             monto: Number(d.pago_mensual ?? d.saldo_actual ?? 0),
             fecha,
             dias,
-            estado: estadoPorDias(dias),
+            estado: vencimiento?.estado,
             detalle: `Saldo actual: ${formatMXN(d.saldo_actual)}`,
             to: '/deudas',
             action: 'Abonar',
@@ -125,8 +125,16 @@ export function useRecordatorios() {
       ...(creditos ?? [])
         .filter(c => Number(c.saldo_utilizado ?? 0) > 0 && c.fecha_pago)
         .map(c => {
-          const fecha = fechaPorDia(anio, mes, c.fecha_pago)
-          const dias = diffDias(fecha, hoy)
+          const vencimiento = resolverVencimientoMensual({
+            diaPago: c.fecha_pago,
+            mes,
+            anio,
+            pagos: c.pagos_credito,
+            hoy,
+            ventanaInicio: 'mes',
+          })
+          const fecha = vencimiento?.fecha
+          const dias = vencimiento?.dias
           const uso = Number(c.limite_credito) > 0
             ? (Number(c.saldo_utilizado ?? 0) / Number(c.limite_credito)) * 100
             : null
@@ -137,7 +145,7 @@ export function useRecordatorios() {
             monto: Number(c.saldo_utilizado ?? 0),
             fecha,
             dias,
-            estado: estadoPorDias(dias),
+            estado: vencimiento?.estado,
             detalle: uso != null ? `Uso de línea: ${uso.toFixed(0)}%` : 'Saldo utilizado pendiente',
             to: '/creditos',
             action: 'Ver tarjeta',
@@ -178,9 +186,15 @@ export function useRecordatorios() {
     }
   }, [anio, creditos, deudas, gastos, hoyKey, mes])
 
+  const refetch = useCallback(
+    () => Promise.all([refetchGastos(), refetchDeudas(), refetchCreditos()]),
+    [refetchCreditos, refetchDeudas, refetchGastos]
+  )
+
   return {
     ...calculado,
     loading: loadingGastos || loadingDeudas || loadingCreditos,
     error: errorGastos || errorDeudas || errorCreditos,
+    refetch,
   }
 }

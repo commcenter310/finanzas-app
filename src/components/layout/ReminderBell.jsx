@@ -135,6 +135,7 @@ export default function ReminderBell() {
     inmediatos,
     masTarde,
     montoPendiente,
+    refetch,
   } = useRecordatorios()
 
   const badgeCount = vencidos.length + proximos.length
@@ -144,6 +145,7 @@ export default function ReminderBell() {
 
   useEffect(() => {
     if (!open) return undefined
+    refetch()
 
     const onPointerDown = (event) => {
       if (!ref.current?.contains(event.target)) setOpen(false)
@@ -158,7 +160,7 @@ export default function ReminderBell() {
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [open])
+  }, [open, refetch])
 
   const closePanel = () => setOpen(false)
   const badgeLabel = badgeCount > 9 ? '9+' : badgeCount

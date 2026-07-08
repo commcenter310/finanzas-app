@@ -11,7 +11,7 @@ export function useCreditos() {
   const uid = user?.id
   const { data: creditos, loading, error, refetch } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
-      .from('creditos').select('*').eq('user_id', user.id).eq('activo', true)
+      .from('creditos').select('*, pagos_credito(id, monto, fecha)').eq('user_id', user.id).eq('activo', true)
       .order('nombre')
     if (error) throw error
     return data ?? []
