@@ -5,30 +5,53 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
 const APP_TIME_ZONE = process.env.APP_TIME_ZONE || 'America/Chihuahua'
 
+async function readJsonResponse(response) {
+  const text = await response.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { raw: text }
+  }
+}
+
 // ── Enviar mensaje ────────────────────────────────────────────────────────────
 export async function sendMessage(to, text) {
+  if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
+    throw new Error('Missing required environment variable: WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID')
+  }
   console.log('📤 Enviando mensaje a:', to, '| PhoneNumberID:', PHONE_NUMBER_ID)
   const r = await fetch(`https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } }),
   })
-  const data = await r.json()
+  const data = await readJsonResponse(r)
+  if (!r.ok) {
+    const detail = data?.error?.message ?? data?.raw ?? r.statusText
+    throw new Error(`Meta WhatsApp ${r.status}: ${detail}`)
+  }
   console.log('📤 Respuesta de Meta al enviar:', JSON.stringify(data))
 }
 
 // ── Estado conversacional ─────────────────────────────────────────────────────
 async function getEstado(telefono) {
-  const { data } = await supabaseAdmin
-    .from('whatsapp_estado').select('estado, datos').eq('telefono', telefono).single()
+  const { data, error } = await supabaseAdmin
+    .from('whatsapp_estado').select('estado, datos').eq('telefono', telefono).maybeSingle()
+  if (error) {
+    console.error('Error leyendo estado WhatsApp:', error.message)
+    return null
+  }
   return data
 }
 async function setEstado(telefono, estado, datos) {
-  await supabaseAdmin.from('whatsapp_estado')
+  const { error } = await supabaseAdmin.from('whatsapp_estado')
     .upsert({ telefono, estado, datos, updated_at: new Date().toISOString() })
+  if (error) console.error('Error guardando estado WhatsApp:', error.message)
 }
 async function clearEstado(telefono) {
-  await supabaseAdmin.from('whatsapp_estado').delete().eq('telefono', telefono)
+  const { error } = await supabaseAdmin.from('whatsapp_estado').delete().eq('telefono', telefono)
+  if (error) console.error('Error limpiando estado WhatsApp:', error.message)
 }
 
 function rpcNoExiste(error) {
@@ -70,6 +93,13 @@ async function ajustarSaldoCredito(userId, creditoId, delta) {
 
 // ── Normalizar texto ──────────────────────────────────────────────────────────
 const norm = s => s?.toLowerCase().trim() ?? ''
+const AI_TECHNICAL_ERRORS = new Set([
+  'ai_config_missing',
+  'ai_unavailable',
+  'ai_api_error',
+  'ai_empty_response',
+  'parse_failed',
+])
 
 // ── Formatear moneda ──────────────────────────────────────────────────────────
 const fmx = n => `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
@@ -97,9 +127,15 @@ function calcularFecha(diasAtras = 0) {
 // ── Procesar mensaje entrante ─────────────────────────────────────────────────
 export async function processMessage(telefono, texto) {
   // 1. Buscar usuario
-  const { data: profile } = await supabaseAdmin
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles').select('id, regla_necesidad, regla_deseo, regla_ahorro')
-    .eq('telefono', telefono).single()
+    .eq('telefono', telefono).maybeSingle()
+
+  if (profileError) {
+    await sendMessage(telefono, 'No pude consultar tu perfil en este momento. Intenta de nuevo en unos minutos.')
+    await logMessage(telefono, texto, null, null, false, profileError.message)
+    return
+  }
 
   console.log('🔍 Buscando perfil para teléfono:', telefono, '| Resultado:', profile ? 'ENCONTRADO' : 'NO ENCONTRADO')
 
@@ -111,10 +147,16 @@ export async function processMessage(telefono, texto) {
   }
 
   // 2. Cargar categorías y métodos del usuario
-  const [{ data: categorias }, { data: metodos }] = await Promise.all([
+  const [{ data: categorias, error: categoriasError }, { data: metodos, error: metodosError }] = await Promise.all([
     supabaseAdmin.from('categorias').select('id, nombre, clasificacion').eq('user_id', profile.id).eq('activa', true),
     supabaseAdmin.from('metodos_pago').select('id, nombre, credito_id').eq('user_id', profile.id).eq('activo', true),
   ])
+  const setupError = categoriasError || metodosError
+  if (setupError) {
+    await sendMessage(telefono, 'No pude cargar tu configuracion financiera. Intenta de nuevo en unos minutos.')
+    await logMessage(telefono, texto, null, null, false, setupError.message)
+    return
+  }
   const catNames = categorias?.map(c => c.nombre).join(', ') ?? ''
   const metNames = metodos?.map(m => m.nombre).join(', ') ?? ''
 
@@ -227,6 +269,13 @@ export async function processMessage(telefono, texto) {
 
   // 4. Interpretar con Groq
   const result = await categorizeWithGroq(texto, catNames, metNames)
+
+  if (AI_TECHNICAL_ERRORS.has(result.error)) {
+    const msg = 'No pude interpretar tu mensaje por un problema temporal del asistente. Intenta otra vez en unos minutos.'
+    await sendMessage(telefono, msg)
+    await logMessage(telefono, texto, msg, null, false, result.detail ?? result.error)
+    return
+  }
 
   // 5. Comandos especiales
   if (result.comando === 'resumen') {
@@ -621,8 +670,9 @@ async function buildCreditos(userId) {
 
 // ── Log ───────────────────────────────────────────────────────────────────────
 async function logMessage(telefono, entrada, respuesta, txId, procesado, error) {
-  await supabaseAdmin.from('whatsapp_log').insert({
+  const { error: logError } = await supabaseAdmin.from('whatsapp_log').insert({
     telefono, mensaje_entrante: entrada, respuesta_bot: respuesta,
     transaccion_id: txId, procesado, error,
   })
+  if (logError) console.error('Error guardando whatsapp_log:', logError.message)
 }

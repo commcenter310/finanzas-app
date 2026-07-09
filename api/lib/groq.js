@@ -1,4 +1,14 @@
-const GROQ_API_KEY = process.env.GROQ_API_KEY
+import { getRequiredEnv } from './env.js'
+
+async function readJson(response) {
+  const text = await response.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { raw: text }
+  }
+}
 
 export async function categorizeWithGroq(mensaje, categorias, metodos) {
   const systemPrompt = `Eres un asistente financiero personal. Interpretas mensajes en español sobre gastos e ingresos y devuelves JSON estructurado.
@@ -65,28 +75,51 @@ Para consultar presupuesto:
 
 Si no entiendes el mensaje: {"error": "no_entendido"}`
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: mensaje },
-      ],
-      temperature: 0.1,
-      max_tokens: 300,
-      response_format: { type: 'json_object' },
-    }),
-  })
-
-  const data = await response.json()
+  let apiKey
   try {
-    return JSON.parse(data.choices?.[0]?.message?.content || '{}')
-  } catch {
-    return { error: 'parse_failed' }
+    apiKey = getRequiredEnv('GROQ_API_KEY')
+  } catch (error) {
+    return { error: 'ai_config_missing', detail: error.message }
+  }
+
+  let response
+  try {
+    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: mensaje },
+        ],
+        temperature: 0.1,
+        max_tokens: 300,
+        response_format: { type: 'json_object' },
+      }),
+    })
+  } catch (error) {
+    return { error: 'ai_unavailable', detail: error.message }
+  }
+
+  const data = await readJson(response)
+  if (!response.ok) {
+    return {
+      error: 'ai_api_error',
+      status: response.status,
+      detail: data?.error?.message ?? data?.raw ?? response.statusText,
+    }
+  }
+
+  const content = data?.choices?.[0]?.message?.content
+  if (!content) return { error: 'ai_empty_response' }
+
+  try {
+    return JSON.parse(content)
+  } catch (error) {
+    return { error: 'parse_failed', detail: error.message }
   }
 }
