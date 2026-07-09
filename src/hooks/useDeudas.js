@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
 import { fechaLocalISO } from '../utils/fecha'
 
@@ -21,7 +21,7 @@ export function useDeudas() {
   }, [uid], `deudas:${uid}`)
 
   // ── Tarjetas con saldo pendiente (se muestran automáticamente como deudas) ──
-  const { data: creditosConSaldo, refetch: refetchCreditos } = useSupabaseQuery(async () => {
+  const { data: creditosConSaldo } = useSupabaseQuery(async () => {
     const { data } = await supabase
       .from('creditos')
       .select('id, nombre, saldo_utilizado, limite_credito, fecha_pago, pagos_credito(*)')
@@ -55,12 +55,31 @@ export function useDeudas() {
   // Lista unificada: deudas manuales primero, luego tarjetas
   const todasDeudas = [...(deudas ?? []), ...tarjetasComoDeuda]
 
+  const invalidateDeudas = () => invalidateQueryCache([
+    'deudas:',
+    'recordatorios:',
+    'dash:',
+    'plan:',
+    'proyeccion:',
+    'tendencias:',
+  ])
+
+  const invalidateCreditos = () => invalidateQueryCache([
+    'creditos:',
+    'deudas:',
+    'recordatorios:',
+    'dash:',
+    'plan:',
+    'proyeccion:',
+    'tendencias:',
+  ])
+
   // ── CRUD deudas manuales ─────────────────────────────────────────────────
   const agregar = async (datos) => {
     setSaving(true)
     const { error } = await supabase.from('deudas').insert({ ...datos, user_id: user.id })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateDeudas()
     return { error }
   }
 
@@ -86,7 +105,7 @@ export function useDeudas() {
         origen: 'deuda',
       }),
     ])
-    refetch()
+    invalidateDeudas()
     return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
   }
 
@@ -113,7 +132,7 @@ export function useDeudas() {
         origen: 'deuda',
       }),
     ])
-    refetchCreditos()
+    invalidateCreditos()
     return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
   }
 
@@ -129,13 +148,13 @@ export function useDeudas() {
       notas:              datos.notas                  || null,
     }).eq('id', id)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateDeudas()
     return { error }
   }
 
   const eliminar = async (id) => {
     await supabase.from('deudas').delete().eq('id', id)
-    refetch()
+    invalidateDeudas()
   }
 
   // ── Totales y calculadora (usando la lista unificada) ────────────────────

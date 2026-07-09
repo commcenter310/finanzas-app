@@ -19,6 +19,31 @@ const FORM_VACIO = {
 }
 
 const MSI_OPTS = [3, 6, 9, 12, 18, 24].map(n => ({ value: n, label: `${n} meses sin intereses` }))
+const CSV_HEADERS = ['Fecha', 'Descripcion', 'Categoria', 'Tipo', 'Metodo', 'Monto']
+
+function escapeCsvValue(value) {
+  const raw = value == null ? '' : String(value)
+  const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw
+  return `"${safe.replaceAll('"', '""')}"`
+}
+
+function downloadCsv(filename, rows) {
+  const csv = [
+    'sep=,',
+    CSV_HEADERS.map(escapeCsvValue).join(','),
+    ...rows.map(row => CSV_HEADERS.map(header => escapeCsvValue(row[header])).join(',')),
+  ].join('\r\n')
+
+  const blob = new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
 
 export default function ControlGastos() {
   const { profile } = useAuth()
@@ -108,24 +133,18 @@ export default function ControlGastos() {
 
   const hayFiltros = busqueda || filtroClasif || filtroCategoria || filtroOrigen || soloHormiga
 
-  // Exporta los movimientos visibles (respeta filtros) a un archivo .xlsx.
-  // Import dinámico: la librería solo se descarga al usar el botón.
-  const exportarExcel = async () => {
-    const XLSX = await import('xlsx')
+  // Exporta los movimientos visibles (respeta filtros) a CSV compatible con Excel.
+  const exportarCSV = () => {
     const filas = filtradas.map(t => ({
       Fecha:       t.fecha,
-      Descripción: t.descripcion,
-      Categoría:   t.categorias ? `${t.categorias.icono} ${t.categorias.nombre}` : '',
+      Descripcion: t.descripcion,
+      Categoria:   t.categorias ? `${t.categorias.icono} ${t.categorias.nombre}` : '',
       Tipo:        t.clasificacion,
-      Método:      t.metodos_pago?.nombre ?? '',
+      Metodo:      t.metodos_pago?.nombre ?? '',
       Monto:       Number(t.monto),
     }))
-    const ws = XLSX.utils.json_to_sheet(filas)
-    ws['!cols'] = [{ wch: 11 }, { wch: 32 }, { wch: 20 }, { wch: 11 }, { wch: 14 }, { wch: 11 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Gastos')
-    XLSX.writeFile(wb, `gastos-${anio}-${String(mes).padStart(2, '0')}${hayFiltros ? '-filtrado' : ''}.xlsx`)
-    toast('Excel descargado ✓', 'success')
+    downloadCsv(`gastos-${anio}-${String(mes).padStart(2, '0')}${hayFiltros ? '-filtrado' : ''}.csv`, filas)
+    toast('CSV descargado ✓', 'success')
   }
 
   if (error && !loading && transacciones.length === 0) {
@@ -204,10 +223,10 @@ export default function ControlGastos() {
             </button>
           )}
           {filtradas.length > 0 && (
-            <button onClick={exportarExcel}
+            <button onClick={exportarCSV}
               className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--r-md)] text-sm font-medium border transition-all"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--fg-2)' }}
-              title="Descargar los movimientos visibles en Excel">
+              title="Descargar los movimientos visibles en CSV">
               <Download className="w-4 h-4" /> Exportar
             </button>
           )}

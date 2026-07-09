@@ -20,6 +20,9 @@ import {
 
 export default function Tendencias() {
   const { user } = useAuth()
+  const uid = user?.id
+  const hoy = new Date()
+  const periodoKey = `${hoy.getFullYear()}-${hoy.getMonth() + 1}`
 
   const { data: tendencias, loading } = useSupabaseQuery(async () => {
     const resultados = []
@@ -51,7 +54,7 @@ export default function Tendencias() {
       })
     }
     return resultados
-  }, [user?.id])
+  }, [uid, periodoKey], `tendencias:finanzas:${uid}:${periodoKey}`)
 
   // Utilización de crédito por mes
   const { data: creditoTendencia, loading: loadingCredito } = useSupabaseQuery(async () => {
@@ -102,7 +105,7 @@ export default function Tendencias() {
       })
     }
     return { datos: resultados, creditos: creditos ?? [], totalLimite }
-  }, [user?.id])
+  }, [uid, periodoKey], `tendencias:creditos:${uid}:${periodoKey}`)
 
   const nombresTarjetas = creditoTendencia?.creditos
     ?.filter(c => creditoTendencia.datos?.some(d => d[c.nombre] !== undefined))

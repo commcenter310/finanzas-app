@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
@@ -100,6 +100,7 @@ function SetupGuide({ items }) {
 
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
+  const uid = user?.id
 
   // Datos básicos — el teléfono se edita como 10 dígitos; se guarda en formato
   // WhatsApp México (521 + 10 dígitos) sin que el usuario vea el "1"
@@ -168,10 +169,20 @@ export default function Perfil() {
   }
 
   // Métodos de pago
-  const { data: metodos, refetch: refetchMetodos } = useSupabaseQuery(async () => {
+  const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago').select('*').eq('user_id', user.id).order('nombre')
     return data ?? []
-  }, [user?.id])
+  }, [uid], `metodos:perfil:${uid}`)
+
+  const invalidateMetodos = () => invalidateQueryCache([
+    'metodos:',
+    'creditos:',
+    'deudas:',
+    'recordatorios:',
+    'tx:',
+    'dash:',
+    'tendencias:',
+  ])
 
   const [formMetodo, setFormMetodo] = useState({ nombre: '', tipo: 'debito' })
   const [savingMetodo, setSavingMetodo] = useState(false)
@@ -187,7 +198,7 @@ export default function Perfil() {
     setSavingMetodo(false)
     setFormMetodo({ nombre: '', tipo: 'debito' })
     setMostrarFormMetodo(false)
-    refetchMetodos()
+    invalidateMetodos()
   }
 
   const iniciarEditMetodo = (m) => {
@@ -199,28 +210,36 @@ export default function Perfil() {
     if (!formEditMetodo.nombre) return
     await supabase.from('metodos_pago').update(formEditMetodo).eq('id', id)
     setEditandoMetodo(null)
-    refetchMetodos()
+    invalidateMetodos()
   }
 
   const eliminarMetodo = async (id) => {
     await supabase.from('metodos_pago').update({ activo: false }).eq('id', id)
-    refetchMetodos()
+    invalidateMetodos()
   }
 
   // Categorías
-  const { data: categorias, refetch: refetchCats } = useSupabaseQuery(async () => {
+  const { data: categorias } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('categorias').select('*').eq('user_id', user.id).order('clasificacion').order('nombre')
     return data ?? []
-  }, [user?.id])
+  }, [uid], `categorias:perfil:${uid}`)
 
   const { data: nominasSetup, refetch: refetchNominasSetup } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('nominas').select('id, es_principal').eq('user_id', user.id)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `nominas:setup:${uid}`)
+
+  const invalidateCategorias = () => invalidateQueryCache([
+    'categorias:',
+    'tx:',
+    'dash:',
+    'gastosVariables:',
+    'tendencias:',
+  ])
 
   const toggleCategoria = async (id, activa) => {
     await supabase.from('categorias').update({ activa: !activa }).eq('id', id)
-    refetchCats()
+    invalidateCategorias()
   }
 
   const [formCat, setFormCat] = useState({ nombre: '', clasificacion: 'deseo', icono: '📦' })
@@ -234,7 +253,7 @@ export default function Perfil() {
     await supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' })
     setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
     setMostrarFormCat(false)
-    refetchCats()
+    invalidateCategorias()
   }
 
   const iniciarEditCat = (c) => {
@@ -246,7 +265,7 @@ export default function Perfil() {
     if (!formEditCat.nombre) return
     await supabase.from('categorias').update(formEditCat).eq('id', id)
     setEditandoCat(null)
-    refetchCats()
+    invalidateCategorias()
   }
 
   const totalRegla = Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)

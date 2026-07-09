@@ -8,11 +8,12 @@ import { calcNomina, parseMesesPrima, MESES } from '../utils/constantes'
 export function useProyeccion(horizonte = 12) {
   const { user } = useAuth()
   const { mes, anio } = useMes()
+  const uid = user?.id
 
   const { data: nominas, loading: loadingN } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('nominas').select('*').eq('user_id', user.id)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `proyeccion:nominas:${uid}`)
 
   // Plantilla de gastos fijos recurrentes (se repiten cada mes)
   const { data: fijosRec, loading: loadingF } = useSupabaseQuery(async () => {
@@ -21,7 +22,7 @@ export function useProyeccion(horizonte = 12) {
       .select('concepto, monto_previsto, dia_cobro')
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio).eq('es_recurrente', true)
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `proyeccion:fijos:${uid}:${mes}:${anio}`)
 
   const { data: deudas, loading: loadingD } = useSupabaseQuery(async () => {
     const { data } = await supabase
@@ -29,7 +30,7 @@ export function useProyeccion(horizonte = 12) {
       .select('nombre, saldo_actual, pago_mensual, fecha_proximo_pago')
       .eq('user_id', user.id).eq('liquidada', false).gt('pago_mensual', 0)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `proyeccion:deudas:${uid}`)
 
   const loading = loadingN || loadingF || loadingD
 

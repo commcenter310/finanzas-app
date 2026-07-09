@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useIngresos() {
@@ -34,6 +34,8 @@ export function useIngresos() {
     actual:      ingresos?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0,
   }
 
+  const invalidateIngresos = () => invalidateQueryCache(['ingresos:', 'dash:', 'plan:', 'tendencias:'])
+
   const agregar = async (datos) => {
     setSaving(true)
     const hoy = fechaLocalISO()
@@ -53,7 +55,7 @@ export function useIngresos() {
       anio: anioAplicar,
     })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateIngresos()
     return { error }
   }
 
@@ -74,13 +76,13 @@ export function useIngresos() {
       .eq('id', id)
       .select()
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateIngresos()
     return { error }
   }
 
   const eliminar = async (id) => {
     const { error } = await supabase.from('ingresos').delete().eq('id', id)
-    if (!error) refetch()
+    if (!error) invalidateIngresos()
     return { error }
   }
 

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 
 export function useNominas() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
+  const uid = user?.id
 
-  const { data: nominas, loading, refetch } = useSupabaseQuery(async () => {
+  const { data: nominas, loading } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('nominas')
       .select('*')
@@ -16,7 +17,9 @@ export function useNominas() {
       .order('created_at', { ascending: true })
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `nominas:${uid}`)
+
+  const invalidateNominas = () => invalidateQueryCache(['nominas:', 'dash:', 'plan:', 'proyeccion:'])
 
   // Si la nueva/editada nómina es principal, desmarca las demás
   const limpiarOtrosPrincipales = async (exceptoId = null) => {
@@ -30,7 +33,7 @@ export function useNominas() {
     if (datos.es_principal) await limpiarOtrosPrincipales()
     const { error } = await supabase.from('nominas').insert({ ...datos, user_id: user.id })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateNominas()
     return { error }
   }
 
@@ -39,13 +42,13 @@ export function useNominas() {
     if (datos.es_principal) await limpiarOtrosPrincipales(id)
     const { error } = await supabase.from('nominas').update(datos).eq('id', id)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateNominas()
     return { error }
   }
 
   const eliminar = async (id) => {
     const { error } = await supabase.from('nominas').delete().eq('id', id)
-    if (!error) refetch()
+    if (!error) invalidateNominas()
     return { error }
   }
 

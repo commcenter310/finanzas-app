@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useTransacciones() {
@@ -49,6 +49,16 @@ export function useTransacciones() {
     return supabase.rpc('update_saldo_credito', { p_credito_id: creditoId, p_delta: delta })
   }
 
+  const invalidateTransacciones = () => invalidateQueryCache([
+    'tx:',
+    'dash:',
+    'tendencias:',
+    'gastosVariables:',
+    'creditos:',
+    'deudas:',
+    'recordatorios:',
+  ])
+
   const agregar = async (datos) => {
     setSaving(true)
     const creditoId = metodos.find(m => m.id === Number(datos.metodo_pago_id))?.credito_id ?? null
@@ -57,7 +67,7 @@ export function useTransacciones() {
       actualizarSaldoCredito(creditoId, Number(datos.monto)),
     ])
     setSaving(false)
-    if (!errTx && !errSaldo) refetch()
+    if (!errTx && !errSaldo) invalidateTransacciones()
     return { data, error: errTx || errSaldo }
   }
 
@@ -68,7 +78,7 @@ export function useTransacciones() {
       supabase.from('transacciones').delete().eq('id', transaccion.id),
       actualizarSaldoCredito(creditoId, -Number(transaccion.monto)),
     ])
-    refetch()
+    invalidateTransacciones()
   }
 
   const actualizar = async (id, nuevosDatos, transaccionOriginal) => {
@@ -93,7 +103,7 @@ export function useTransacciones() {
     ])
     setSaving(false)
     const errorAjuste = resAjustes.find(r => r?.error)?.error ?? null
-    if (!error && !errorAjuste) refetch()
+    if (!error && !errorAjuste) invalidateTransacciones()
     return { error: error || errorAjuste }
   }
 

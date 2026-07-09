@@ -14,7 +14,6 @@ export default defineConfig({
           if (normalized.includes('/@supabase/')) return 'supabase'
           if (normalized.includes('/recharts/') || normalized.includes('/d3-')) return 'charts'
           if (normalized.includes('/lucide-react/')) return 'icons'
-          if (normalized.includes('/xlsx/')) return 'excel'
         },
       },
     },
@@ -46,7 +45,6 @@ export default defineConfig({
         navigateFallback: '/index.html',
         // El webhook del bot vive en /api — jamás debe servirlo el service worker
         navigateFallbackDenylist: [/^\/api\//],
-        // El chunk de xlsx supera el límite default de 2MB sin comprimir
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     }),

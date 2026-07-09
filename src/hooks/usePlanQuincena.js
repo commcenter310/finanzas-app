@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { rangoQuincena, quincenaActual, calcNomina } from '../utils/constantes'
 import { fechaLocalISO } from '../utils/fecha'
 
 export function usePlanQuincena() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
+  const uid = user?.id
   // modo: 'q1' | 'q2' | 'mes'
   const [modo, setModo] = useState(`q${quincenaActual()}`)
   const [saving, setSaving] = useState(false)
@@ -32,7 +33,7 @@ export function usePlanQuincena() {
       .lte('fecha_recepcion', rango.fechaFin)
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio, modo])
+  }, [uid, mes, anio, modo], `plan:ingresos:${uid}:${mes}:${anio}:${modo}`)
 
   // ── Gastos fijos del mes ──────────────────────────────────────────────────
   const { data: gastosFijos, loading: loadingGF, refetch: refetchGF } = useSupabaseQuery(async () => {
@@ -42,7 +43,7 @@ export function usePlanQuincena() {
       .eq('user_id', user.id).eq('mes', mes).eq('anio', anio)
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio])
+  }, [uid, mes, anio], `plan:fijos:${uid}:${mes}:${anio}`)
 
   // ── Deudas activas con pago mensual ───────────────────────────────────────
   const { data: deudas, loading: loadingD, refetch: refetchD } = useSupabaseQuery(async () => {
@@ -53,7 +54,7 @@ export function usePlanQuincena() {
       .gt('pago_mensual', 0)
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [uid], `plan:deudas:${uid}`)
 
   // ── Metas de ahorro (para el form manual) ─────────────────────────────────
   const { data: metasAhorro } = useSupabaseQuery(async () => {
@@ -61,7 +62,7 @@ export function usePlanQuincena() {
       .from('ahorros').select('id, concepto')
       .eq('user_id', user.id)
     return data ?? []
-  }, [user?.id])
+  }, [uid], `plan:ahorros:${uid}`)
 
   // ── Nómina principal (para estimar ingreso si no hay ingresos registrados) ─
   const { data: nominaPrincipal } = useSupabaseQuery(async () => {
@@ -71,7 +72,7 @@ export function usePlanQuincena() {
       .order('es_principal', { ascending: false })
       .limit(1)
     return data?.[0] ?? null
-  }, [user?.id])
+  }, [uid], `plan:nomina:${uid}`)
 
   // ── Apartados persistidos del periodo ─────────────────────────────────────
   const { data: apartados, loading: loadingA, refetch } = useSupabaseQuery(async () => {
@@ -81,7 +82,9 @@ export function usePlanQuincena() {
     const { data, error } = await q
     if (error) throw error
     return data ?? []
-  }, [user?.id, mes, anio, modo])
+  }, [uid, mes, anio, modo], `plan:apartados:${uid}:${mes}:${anio}:${modo}`)
+
+  const invalidateApartados = () => invalidateQueryCache(['plan:', 'dash:'])
 
   // ── Ingreso del periodo ───────────────────────────────────────────────────
   const ingresoRegistrado = (ingresos ?? []).reduce(
@@ -158,7 +161,7 @@ export function usePlanQuincena() {
       apartado: true, fecha_apartado: fechaLocalISO(),
     })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateApartados()
     return { error }
   }
 
@@ -166,7 +169,7 @@ export function usePlanQuincena() {
     setSaving(true)
     const { error } = await supabase.from('apartados').delete().eq('id', apartadoId)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateApartados()
     return { error }
   }
 
@@ -174,7 +177,7 @@ export function usePlanQuincena() {
     setSaving(true)
     const { error } = await supabase.from('apartados').update({ monto: Number(monto) }).eq('id', apartadoId)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateApartados()
     return { error }
   }
 
@@ -187,7 +190,7 @@ export function usePlanQuincena() {
       apartado: true, fecha_apartado: fechaLocalISO(),
     })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateApartados()
     return { error }
   }
 
@@ -204,7 +207,7 @@ export function usePlanQuincena() {
     }))
     const { error } = await supabase.from('apartados').insert(filas)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateApartados()
     return { error }
   }
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useGastosVariables() {
@@ -23,7 +23,7 @@ export function useGastosVariables() {
       .order('clasificacion').order('nombre')
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [user?.id], `categorias:variables:${user?.id}`)
 
   const { data: presupuestos, loading: loadingPresu, refetch: refetchPresu } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
@@ -45,13 +45,18 @@ export function useGastosVariables() {
       agrupado[t.categoria_id] = (agrupado[t.categoria_id] ?? 0) + Number(t.monto)
     })
     return agrupado
-  }, [user?.id, mes, anio])
+  }, [user?.id, mes, anio], `gastosVariables:gastos:${user?.id}:${mes}:${anio}`)
+
+  const invalidatePresupuestos = () => {
+    refetchPresu()
+    invalidateQueryCache(['gastosVariables:', 'dash:'])
+  }
 
   const actualizarPresupuesto = async (categoria_id, monto_limite) => {
     await supabase.from('presupuestos').upsert({
       user_id: user.id, categoria_id, monto_limite, mes, anio
     }, { onConflict: 'user_id,categoria_id,mes,anio' })
-    refetchPresu()
+    invalidatePresupuestos()
   }
 
   const copiarDelMesAnterior = async () => {
@@ -65,7 +70,7 @@ export function useGastosVariables() {
       anterior.map(p => ({ ...p, mes, anio, user_id: user.id })),
       { onConflict: 'user_id,categoria_id,mes,anio' }
     )
-    refetchPresu()
+    invalidatePresupuestos()
     return { copiados: anterior.length }
   }
 

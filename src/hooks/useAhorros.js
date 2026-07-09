@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
 
 export function useAhorros() {
@@ -24,7 +24,7 @@ export function useAhorros() {
 
   const { data: metodos } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre').eq('user_id', user.id).eq('activo', true)
+      .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
     return data ?? []
   }, [uid], `metodos:${uid}`)
 
@@ -33,11 +33,14 @@ export function useAhorros() {
     actual: ahorros?.reduce((s, a) => s + Number(a.monto_actual), 0) ?? 0,
   }
 
+  const invalidateAhorros = () => invalidateQueryCache(['ahorros:', 'plan:'])
+  const invalidateDeposito = () => invalidateQueryCache(['ahorros:', 'tx:', 'dash:', 'tendencias:', 'gastosVariables:', 'plan:'])
+
   const agregar = async (datos) => {
     setSaving(true)
     const { error } = await supabase.from('ahorros').insert({ ...datos, user_id: user.id, mes, anio })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateAhorros()
     return { error }
   }
 
@@ -45,13 +48,13 @@ export function useAhorros() {
     setSaving(true)
     const { error } = await supabase.from('ahorros').update(datos).eq('id', id)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) invalidateAhorros()
     return { error }
   }
 
   const eliminar = async (id) => {
     await supabase.from('ahorros').delete().eq('id', id)
-    refetch()
+    invalidateAhorros()
   }
 
   const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
@@ -74,7 +77,7 @@ export function useAhorros() {
       }).eq('id', ahorro.id),
     ])
     setSaving(false)
-    if (!errTx && !errAhorro) refetch()
+    if (!errTx && !errAhorro) invalidateDeposito()
     return { error: errTx || errAhorro }
   }
 

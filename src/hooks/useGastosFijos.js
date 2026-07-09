@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { fechaLocalISO } from '../utils/fecha'
 
 export function useGastosFijos() {
@@ -54,11 +54,34 @@ export function useGastosFijos() {
     pagados:  gastos?.filter(g => g.pagado).length ?? 0,
   }
 
+  const invalidateGastosFijos = () => invalidateQueryCache([
+    'dash:',
+    'recordatorios:',
+    'plan:',
+    'proyeccion:',
+    'tendencias:',
+  ])
+
+  const invalidatePagoGastoFijo = () => invalidateQueryCache([
+    'dash:',
+    'recordatorios:',
+    'plan:',
+    'proyeccion:',
+    'tendencias:',
+    'tx:',
+    'creditos:',
+    'deudas:',
+    'gastosVariables:',
+  ])
+
   const agregar = async (datos) => {
     setSaving(true)
     const { error } = await supabase.from('gastos_fijos').insert({ ...datos, user_id: user.id, mes, anio })
     setSaving(false)
-    if (!error) refetch()
+    if (!error) {
+      refetch()
+      invalidateGastosFijos()
+    }
     return { error }
   }
 
@@ -66,7 +89,10 @@ export function useGastosFijos() {
     setSaving(true)
     const { error } = await supabase.from('gastos_fijos').update(datos).eq('id', id)
     setSaving(false)
-    if (!error) refetch()
+    if (!error) {
+      refetch()
+      invalidateGastosFijos()
+    }
     return { error }
   }
 
@@ -114,11 +140,13 @@ export function useGastosFijos() {
       }).eq('id', gasto.id)
     }
     refetch()
+    invalidatePagoGastoFijo()
   }
 
   const eliminar = async (id) => {
     await supabase.from('gastos_fijos').delete().eq('id', id)
     refetch()
+    invalidateGastosFijos()
   }
 
   const copiarRecurrentes = async () => {
@@ -135,6 +163,7 @@ export function useGastosFijos() {
     const nuevos = recurrentes.map(r => ({ ...r, user_id: user.id, mes, anio, pagado: false, monto_actual: 0 }))
     await supabase.from('gastos_fijos').insert(nuevos)
     refetch()
+    invalidateGastosFijos()
     return { copiados: recurrentes.length }
   }
 
