@@ -1,29 +1,29 @@
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { MesProvider } from './context/MesContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './components/ui/Toast'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 import Auth from './pages/Auth'
 
 // Páginas cargadas bajo demanda → divide el bundle.
-// Las páginas con Recharts (Dashboard, Tendencias, Presupuesto)
-// ya no pesan en la carga inicial de las demás.
-const Dashboard       = lazy(() => import('./pages/Dashboard'))
-const Ingresos        = lazy(() => import('./pages/Ingresos'))
-const GastosFijos     = lazy(() => import('./pages/GastosFijos'))
-const GastosVariables = lazy(() => import('./pages/GastosVariables'))
-const ControlGastos   = lazy(() => import('./pages/ControlGastos'))
-const Creditos        = lazy(() => import('./pages/Creditos'))
-const Deudas          = lazy(() => import('./pages/Deudas'))
-const Ahorros         = lazy(() => import('./pages/Ahorros'))
-const PlanQuincena    = lazy(() => import('./pages/PlanQuincena'))
-const Tendencias      = lazy(() => import('./pages/Tendencias'))
-const Perfil          = lazy(() => import('./pages/Perfil'))
-const WhatsappLog     = lazy(() => import('./pages/WhatsappLog'))
-const SimuladorCredito = lazy(() => import('./pages/SimuladorCredito'))
-const Proyeccion      = lazy(() => import('./pages/Proyeccion'))
-const Bienvenida      = lazy(() => import('./pages/Bienvenida'))
+// lazyWithRetry recarga una vez si un chunk quedó viejo tras un deploy nuevo.
+const Dashboard       = lazyWithRetry(() => import('./pages/Dashboard'))
+const Ingresos        = lazyWithRetry(() => import('./pages/Ingresos'))
+const GastosFijos     = lazyWithRetry(() => import('./pages/GastosFijos'))
+const GastosVariables = lazyWithRetry(() => import('./pages/GastosVariables'))
+const ControlGastos   = lazyWithRetry(() => import('./pages/ControlGastos'))
+const Creditos        = lazyWithRetry(() => import('./pages/Creditos'))
+const Deudas          = lazyWithRetry(() => import('./pages/Deudas'))
+const Ahorros         = lazyWithRetry(() => import('./pages/Ahorros'))
+const PlanQuincena    = lazyWithRetry(() => import('./pages/PlanQuincena'))
+const Tendencias      = lazyWithRetry(() => import('./pages/Tendencias'))
+const Perfil          = lazyWithRetry(() => import('./pages/Perfil'))
+const WhatsappLog     = lazyWithRetry(() => import('./pages/WhatsappLog'))
+const SimuladorCredito = lazyWithRetry(() => import('./pages/SimuladorCredito'))
+const Proyeccion      = lazyWithRetry(() => import('./pages/Proyeccion'))
+const Bienvenida      = lazyWithRetry(() => import('./pages/Bienvenida'))
 
 function PageLoader() {
   return (

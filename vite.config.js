@@ -46,6 +46,12 @@ export default defineConfig({
         // El webhook del bot vive en /api — jamás debe servirlo el service worker
         navigateFallbackDenylist: [/^\/api\//],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        // Cuando hay deploy nuevo, el SW nuevo toma control de inmediato y
+        // borra los caches viejos → evita servir un index.html que apunta a
+        // chunks que ya no existen (la causa de "Failed to fetch module").
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
