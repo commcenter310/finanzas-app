@@ -409,7 +409,7 @@ export default function Deudas() {
                           {d.saldo_original > 0 && (
                             <div className="mb-3">
                               <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--negative-bg)' }}>
-                                <div className="h-full rounded-full transition-all"
+                                <div className="h-full rounded-full bar-fill"
                                   style={{
                                     width: `${Math.min(esTarjeta ? (d.saldo_actual / d.saldo_original) * 100 : pct, 100)}%`,
                                     background: esTarjeta ? 'var(--negative)' : 'var(--ahorro)',

@@ -55,7 +55,7 @@ function ResumenGeneral({ creditos }) {
       {/* Barra global con marcador 30% */}
       <div className="relative h-3 rounded-full overflow-visible mb-1" style={{ background: 'var(--surface-3)' }}>
         <div
-          className="h-full rounded-full transition-all"
+          className="h-full rounded-full bar-fill"
           style={{ width: `${Math.min(pctGlobal, 100)}%`, backgroundColor: colorGlobal }}
         />
         <div className="absolute top-0 h-full" style={{ left: '30%' }}>
@@ -271,7 +271,7 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
           </div>
           {/* Barra con marcador del 30% */}
           <div className="relative h-2 bg-gray-100 rounded-full overflow-visible mb-1">
-            <div className="h-full rounded-full transition-all overflow-hidden">
+            <div className="h-full rounded-full bar-fill overflow-hidden">
               <div className="h-full rounded-full" style={{ width: `${Math.min(pctUso, 100)}%`, backgroundColor: colorBarra }} />
             </div>
             {/* Marcador 30% */}

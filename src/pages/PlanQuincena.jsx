@@ -181,7 +181,7 @@ export default function PlanQuincena() {
               <span className="font-mono text-gray-500">{countApartados}/{totalItems}</span>
             </div>
             <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700"
+              <div className="h-full rounded-full bar-fill"
                 style={{ width: `${totalItems > 0 ? (countApartados / totalItems) * 100 : 0}%`, background: 'var(--ahorro)' }} />
             </div>
           </div>

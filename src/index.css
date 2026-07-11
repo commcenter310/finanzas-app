@@ -675,4 +675,50 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /* ---- Relleno de barras de progreso ----
+     Patrón único para todas las barras: solo anima `width` (no `all`), con la
+     curva y duración de los tokens. Reemplaza los transition-all 500/700ms
+     dispersos por página. */
+  .bar-fill {
+    transition: width var(--dur-base) var(--ease-out);
+  }
+}
+
+/* ============================================================================
+   ANIMACIONES DE ENTRADA (modales / sheets)
+   Keyframes en vez de @starting-style para soporte cross-browser amplio.
+   Los modales no se re-disparan rápido, así que reiniciar desde cero está bien.
+   ============================================================================ */
+@keyframes finni-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes finni-modal-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-backdrop-in {
+  animation: finni-backdrop-in var(--dur-fast) var(--ease-out);
+}
+.animate-modal-in {
+  animation: finni-modal-in var(--dur-base) var(--ease-out);
+  transform-origin: center; /* modal centrado: origen correcto (AUDIT §3) */
+}
+
+/* ============================================================================
+   ACCESIBILIDAD — respeta "reducir movimiento" del sistema.
+   No apaga todo: conserva opacidad/color (ayudan a comprender), quita
+   desplazamientos y acorta duraciones. (AUDIT §6)
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Las barras y fades cortos sí se conservan suaves (aportan comprensión) */
+  .bar-fill { transition-duration: 200ms !important; }
+  .animate-modal-in { animation: finni-backdrop-in 120ms var(--ease-out); } /* solo fade, sin escala */
 }

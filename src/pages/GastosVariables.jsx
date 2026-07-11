@@ -84,7 +84,7 @@ function TarjetaCategoria({ cat, onActualizar }) {
       </div>
 
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-500"
+        <div className="h-full rounded-full bar-fill"
           style={{
             width: `${cat.pct}%`,
             backgroundColor: cat.sobre ? 'var(--negative)' : (barColors[cat.clasificacion] ?? 'var(--primary-600)')
@@ -169,7 +169,7 @@ export default function GastosVariables() {
               </div>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden mb-2">
-              <div className="h-full rounded-full transition-all duration-500"
+              <div className="h-full rounded-full bar-fill"
                 style={{ width: `${Math.min(pctTotal, 100)}%`, backgroundColor: colorTotal }} />
             </div>
             <p className={`text-xs font-mono mb-4 ${proyeccionTotal > totalLimite ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>

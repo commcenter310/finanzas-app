@@ -54,7 +54,7 @@ function SetupGuide({ items }) {
             <span className="font-mono text-lg font-bold" style={{ color: 'var(--fg-1)' }}>{completados}/{items.length}</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-3)' }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${progreso}%`, background: 'var(--primary)' }} />
+            <div className="h-full rounded-full bar-fill" style={{ width: `${progreso}%`, background: 'var(--primary)' }} />
           </div>
           <p className="mt-2 text-xs" style={{ color: 'var(--fg-4)' }}>
             {progreso === 100 ? 'Listo para operar con mejor contexto.' : `${progreso}% configurado`}

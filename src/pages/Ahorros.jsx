@@ -92,7 +92,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
       </div>
 
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-500"
+        <div className="h-full rounded-full bar-fill"
           style={{ width: `${pct}%`, backgroundColor: completado ? 'var(--ahorro)' : (barColors[ahorro.clasificacion] ?? 'var(--primary-600)') }} />
       </div>
       <p className="text-xs text-right text-gray-400 mt-1 font-mono">{pct.toFixed(0)}%</p>

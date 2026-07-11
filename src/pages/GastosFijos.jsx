@@ -156,7 +156,7 @@ export default function GastosFijos() {
               <span className="font-mono text-gray-500">{pctPagado.toFixed(0)}%</span>
             </div>
             <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700"
+              <div className="h-full rounded-full bar-fill"
                 style={{ width: `${pctPagado}%`, background: 'var(--ahorro)' }} />
             </div>
           </div>
@@ -367,8 +367,8 @@ export default function GastosFijos() {
 
       {/* Diálogo de pago: monto y fecha reales */}
       {pagando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="card p-6 w-full max-w-sm shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-backdrop-in">
+          <div className="card p-6 w-full max-w-sm shadow-xl animate-modal-in">
             <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--fg-1)' }}>
               Pagar: {pagando.concepto}
             </h3>
