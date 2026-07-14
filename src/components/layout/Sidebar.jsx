@@ -2,62 +2,64 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import {
-  LayoutDashboard, TrendingUp, Receipt, BarChart3,
-  List, CreditCard, AlertCircle, PiggyBank, LineChart,
-  Settings, MessageSquare, LogOut, Wallet, Calculator, X, CalendarRange, Telescope,
-  Moon, Sun
+  BadgeDollarSign,
+  BarChart3,
+  CalendarRange,
+  Calculator,
+  CreditCard,
+  LayoutDashboard,
+  LineChart,
+  List,
+  LogOut,
+  MessageSquare,
+  Moon,
+  PiggyBank,
+  Receipt,
+  Settings,
+  Sun,
+  Telescope,
+  TrendingUp,
+  X,
 } from 'lucide-react'
+import BrandMark from './BrandMark'
 
-// Navegación agrupada por uso: lo diario arriba, lo de consulta abajo
 const NAV_GROUPS = [
   {
-    titulo: 'Día a día',
+    titulo: 'Hoy',
     items: [
-      { to: '/',               icon: LayoutDashboard, label: 'Dashboard'         },
-      { to: '/control-gastos', icon: List,            label: 'Control de Gastos' },
-      { to: '/plan-quincena',  icon: CalendarRange,   label: 'Plan de Quincena'  },
+      { to: '/', icon: LayoutDashboard, label: 'Inicio' },
+      { to: '/control-gastos', icon: List, label: 'Movimientos' },
+      { to: '/plan-quincena', icon: CalendarRange, label: 'Plan de quincena' },
     ],
   },
   {
-    titulo: 'Planeación',
+    titulo: 'Organiza',
     items: [
-      { to: '/ingresos',         icon: TrendingUp, label: 'Ingresos'     },
-      { to: '/gastos-fijos',     icon: Receipt,    label: 'Gastos Fijos' },
-      { to: '/gastos-variables', icon: BarChart3,  label: 'Presupuesto'  },
-      { to: '/ahorros',          icon: PiggyBank,  label: 'Ahorros'      },
+      { to: '/ingresos', icon: TrendingUp, label: 'Ingresos' },
+      { to: '/gastos-fijos', icon: Receipt, label: 'Gastos fijos' },
+      { to: '/gastos-variables', icon: BarChart3, label: 'Presupuesto' },
+      { to: '/ahorros', icon: PiggyBank, label: 'Ahorros' },
+      { to: '/creditos', icon: CreditCard, label: 'Créditos' },
+      { to: '/deudas', icon: BadgeDollarSign, label: 'Deudas' },
     ],
   },
   {
-    titulo: 'Deuda',
-    items: [
-      { to: '/creditos',  icon: CreditCard, label: 'Créditos'  },
-      { to: '/deudas',    icon: AlertCircle, label: 'Deudas'    },
-      { to: '/simulador', icon: Calculator, label: 'Simulador' },
-    ],
-  },
-  {
-    titulo: 'Análisis',
+    titulo: 'Explora',
     items: [
       { to: '/tendencias', icon: LineChart, label: 'Tendencias' },
       { to: '/proyeccion', icon: Telescope, label: 'Proyección' },
-    ],
-  },
-  {
-    titulo: 'Ajustes',
-    items: [
-      { to: '/whatsapp', icon: MessageSquare, label: 'WhatsApp Log' },
-      { to: '/perfil',   icon: Settings,      label: 'Perfil'       },
+      { to: '/simulador', icon: Calculator, label: 'Simulador' },
     ],
   },
 ]
 
-const GLASS_SIDEBAR = {
-  '--sidebar-fg-1': '#F4FBF7',
-  '--sidebar-fg-2': 'rgba(244, 251, 247, 0.76)',
-  '--sidebar-fg-3': 'rgba(244, 251, 247, 0.52)',
+const SIDEBAR_TOKENS = {
+  '--sidebar-fg-1': '#F8FAFF',
+  '--sidebar-fg-2': 'rgba(230, 237, 255, 0.72)',
+  '--sidebar-fg-3': 'rgba(205, 216, 244, 0.42)',
   '--sidebar-line': 'rgba(255, 255, 255, 0.08)',
-  '--sidebar-hover-bg': 'rgba(255, 255, 255, 0.08)',
-  '--sidebar-active-fg': '#C7D7FF',
+  '--sidebar-hover-bg': 'rgba(255, 255, 255, 0.07)',
+  '--sidebar-active-fg': '#FFFFFF',
 }
 
 export default function Sidebar({ open, onClose }) {
@@ -66,49 +68,20 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <aside
-      style={GLASS_SIDEBAR}
-      className={`
-        sidebar-shell w-[248px] h-screen flex flex-col
-        fixed left-0 top-0 z-30
-        transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-        ${open ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:z-10
-      `}
+      style={SIDEBAR_TOKENS}
+      className={`sidebar-shell w-[248px] h-screen flex flex-col fixed left-0 top-0 z-30 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:z-10`}
     >
-      {/* Brand */}
       <div className="sidebar-brand">
-        {/* Brand mark — gradient squircle */}
-        <div
-          className="sidebar-brand-mark"
-        >
-          <Wallet className="w-5 h-5" strokeWidth={2} />
-        </div>
-
-        <div className="min-w-0">
-          <p className="font-bold leading-none text-sm truncate" style={{ color: 'var(--sidebar-fg-1)' }}>
-            Finni Apoyo
-          </p>
-          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--sidebar-fg-3)', fontVariantNumeric: 'tabular-nums' }}>
-            Control Personal
-          </p>
-        </div>
-
-        {/* Botón cerrar — solo mobile */}
-        <button
-          onClick={onClose}
-          className="sidebar-icon-button lg:hidden ml-auto"
-        >
+        <BrandMark inverse />
+        <button type="button" onClick={onClose} className="sidebar-icon-button lg:hidden ml-auto" aria-label="Cerrar menú">
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-3 overflow-y-auto">
+      <nav className="sidebar-nav" aria-label="Secciones de Finni">
         {NAV_GROUPS.map(({ titulo, items }) => (
-          <div key={titulo} className="mb-3 last:mb-0">
-            <p className="sidebar-group-title">
-              {titulo}
-            </p>
+          <section key={titulo} className="sidebar-group">
+            <p className="sidebar-group-title">{titulo}</p>
             <div className="space-y-0.5">
               {items.map(({ to, icon: Icon, label }) => (
                 <NavLink
@@ -116,37 +89,35 @@ export default function Sidebar({ open, onClose }) {
                   to={to}
                   end={to === '/'}
                   onClick={onClose}
-                  className={({ isActive }) =>
-                    `sidebar-nav-link ${isActive ? 'is-active' : ''}`
-                  }
+                  className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}
                 >
-                  <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
-                  {label}
+                  <span className="sidebar-nav-icon"><Icon strokeWidth={1.9} /></span>
+                  <span className="truncate">{label}</span>
                 </NavLink>
               ))}
             </div>
-          </div>
+          </section>
         ))}
       </nav>
 
-      {/* Tema + Logout */}
-      <div className="px-3 pb-4 pt-2 border-t" style={{ borderColor: 'var(--sidebar-line)' }}>
-        <button
-          onClick={toggleTema}
-          className="sidebar-nav-link"
-        >
-          {esOscuro
-            ? <Sun className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
-            : <Moon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />}
-          {esOscuro ? 'Tema claro' : 'Tema oscuro'}
-        </button>
-        <button
-          onClick={signOut}
-          className="sidebar-nav-link danger"
-        >
-          <LogOut className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
-          Cerrar Sesión
-        </button>
+      <div className="sidebar-footer">
+        <NavLink to="/whatsapp" onClick={onClose} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}>
+          <span className="sidebar-nav-icon"><MessageSquare strokeWidth={1.9} /></span>
+          <span>WhatsApp</span>
+        </NavLink>
+        <NavLink to="/perfil" onClick={onClose} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}>
+          <span className="sidebar-nav-icon"><Settings strokeWidth={1.9} /></span>
+          <span>Configuración</span>
+        </NavLink>
+        <div className="sidebar-footer-actions">
+          <button type="button" onClick={toggleTema} className="sidebar-utility-button">
+            {esOscuro ? <Sun /> : <Moon />}
+            <span>{esOscuro ? 'Tema claro' : 'Tema oscuro'}</span>
+          </button>
+          <button type="button" onClick={signOut} className="sidebar-utility-icon danger" aria-label="Cerrar sesión" title="Cerrar sesión">
+            <LogOut />
+          </button>
+        </div>
       </div>
     </aside>
   )

@@ -4,8 +4,8 @@ import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import {
-  AlertTriangle, ArrowRight, CalendarClock, MessageSquare, PiggyBank, Plus,
-  Receipt, Sparkles, Target, TrendingDown, TrendingUp, Wallet,
+  AlertTriangle, ArrowRight, ArrowUpRight, CalendarClock, Gauge, MessageSquare,
+  PiggyBank, Plus, Receipt, Sparkles, Target, TrendingDown, TrendingUp, Wallet,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ErrorState from '../components/ui/ErrorState'
@@ -27,51 +27,34 @@ const COLORES_CATEGORIA = [
   'var(--chart-5)', 'var(--chart-6)', 'var(--chart-7)', 'var(--chart-8)',
 ]
 
-function SkeletonCard() {
+function OverviewSkeleton() {
   return (
-    <div className="card p-5 animate-pulse">
-      <div className="h-4 rounded-lg w-24 mb-3" style={{ background: 'var(--surface-3)' }} />
-      <div className="h-8 rounded-lg w-32" style={{ background: 'var(--surface-3)' }} />
+    <div className="dashboard-overview">
+      <div className="dashboard-balance animate-pulse">
+        <div className="h-3 rounded w-28" style={{ background: 'rgba(255,255,255,.14)' }} />
+        <div className="h-12 rounded w-52 mt-7" style={{ background: 'rgba(255,255,255,.14)' }} />
+        <div className="h-20 rounded mt-10" style={{ background: 'rgba(255,255,255,.08)' }} />
+      </div>
+      <div className="dashboard-focus-panel animate-pulse">
+        <div className="h-4 rounded w-32" style={{ background: 'var(--surface-3)' }} />
+        <div className="h-28 rounded mt-5" style={{ background: 'var(--surface-2)' }} />
+        <div className="h-16 rounded mt-3" style={{ background: 'var(--surface-2)' }} />
+      </div>
     </div>
   )
 }
 
-// Stat card matching Finni spec
-const STAT_CONFIG = (totalIngresos, totalGastos, porAsignar, ahorro) => [
-  {
-    label:      'Ingreso Total',
-    value:      totalIngresos,
-    icon:       TrendingUp,
-    valueColor: 'var(--fg-1)',
-    iconBg:     'var(--positive-bg)',
-    iconColor:  'var(--positive-fg)',
-  },
-  {
-    label:      'Total Gastado',
-    value:      totalGastos,
-    icon:       TrendingDown,
-    valueColor: 'var(--negative-fg)',
-    iconBg:     'var(--negative-bg)',
-    iconColor:  'var(--negative-fg)',
-  },
-  {
-    label:      'Por Asignar',
-    value:      porAsignar,
-    icon:       Wallet,
-    sinDatos:   porAsignar === null,
-    valueColor: porAsignar === null ? 'var(--fg-3)' : porAsignar >= 0 ? 'var(--primary-600)' : 'var(--negative-fg)',
-    iconBg:     porAsignar === null ? 'var(--surface-3)' : porAsignar >= 0 ? 'var(--primary-50)'  : 'var(--negative-bg)',
-    iconColor:  porAsignar === null ? 'var(--fg-3)' : porAsignar >= 0 ? 'var(--primary-700)' : 'var(--negative-fg)',
-  },
-  {
-    label:      'Ahorro del Mes',
-    value:      ahorro,
-    icon:       PiggyBank,
-    valueColor: 'var(--ahorro-fg)',
-    iconBg:     'var(--ahorro-bg)',
-    iconColor:  'var(--ahorro-fg)',
-  },
-]
+function OverviewMetric({ icon: Icon, label, value, tone }) {
+  return (
+    <div className="dashboard-balance-metric">
+      <Icon className="w-4 h-4" style={{ color: tone }} strokeWidth={2.1} />
+      <div className="min-w-0">
+        <p>{label}</p>
+        <strong>{formatMXN(value)}</strong>
+      </div>
+    </div>
+  )
+}
 
 const INSIGHT_STYLE = {
   danger:  { accent: 'var(--negative)', bg: 'var(--negative-bg)', fg: 'var(--negative-fg)' },
@@ -200,35 +183,99 @@ function buildDashboardInsights({
   return insights.slice(0, 4)
 }
 
-function InsightCard({ insight }) {
+function InsightCard({ insight, featured = false }) {
   const Icon = insight.icon
   const style = INSIGHT_STYLE[insight.kind] ?? INSIGHT_STYLE.info
 
   return (
-    <div className="card p-4 flex flex-col justify-between gap-4" style={{ borderLeft: `3px solid ${style.accent}` }}>
-      <div className="flex items-start gap-3">
-        <div
-          className="w-9 h-9 rounded-[var(--r-md)] flex items-center justify-center flex-shrink-0"
-          style={{ background: style.bg, color: style.fg }}
-        >
-          <Icon className="w-4 h-4" />
+    <Link
+      to={insight.to}
+      className={`dashboard-insight ${featured ? 'is-featured' : ''}`}
+      style={{ '--insight-accent': style.accent, '--insight-bg': style.bg, '--insight-fg': style.fg }}
+    >
+      <span className="dashboard-insight-icon"><Icon /></span>
+      <span className="dashboard-insight-copy">
+        <span className="dashboard-insight-title">{insight.title}</span>
+        <strong>{insight.value}</strong>
+        {featured && <span className="dashboard-insight-body">{insight.body}</span>}
+      </span>
+      <span className="dashboard-insight-action">
+        <span>{featured ? insight.action : ''}</span>
+        <ArrowUpRight />
+      </span>
+    </Link>
+  )
+}
+
+function DashboardOverview({ totalIngresos, totalGastos, porAsignar, totalApartado, ahorro, insights }) {
+  const disponibleReal = porAsignar == null ? null : porAsignar - totalApartado
+  const consumoPct = totalIngresos > 0 ? Math.min((totalGastos / totalIngresos) * 100, 100) : 0
+  const positivo = disponibleReal == null || disponibleReal >= 0
+
+  return (
+    <section className="dashboard-overview">
+      <div className="dashboard-balance">
+        <div className="dashboard-balance-topline">
+          <span className="dashboard-balance-status"><Gauge /> Pulso del mes</span>
+          <Link to="/tendencias">Ver análisis <ArrowUpRight /></Link>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-normal mb-1" style={{ color: 'var(--fg-3)', letterSpacing: 0 }}>
-            {insight.title}
-          </p>
-          <p className="text-base font-bold tabular leading-tight truncate" style={{ color: style.fg, fontVariantNumeric: 'tabular-nums' }}>
-            {insight.value}
-          </p>
-          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--fg-3)' }}>
-            {insight.body}
-          </p>
+
+        <div className="dashboard-balance-main">
+          <p>Disponible para decidir</p>
+          <strong className={!positivo ? 'is-negative' : ''}>
+            {disponibleReal == null ? 'Sin ingresos aún' : formatMXN(disponibleReal)}
+          </strong>
+          <span>
+            {totalApartado > 0
+              ? `${formatMXN(totalApartado)} ya están protegidos en tu plan.`
+              : 'Lo que queda después de tus gastos y compromisos registrados.'}
+          </span>
+        </div>
+
+        <div className="dashboard-balance-progress">
+          <div className="flex items-center justify-between gap-3">
+            <span>Ingreso utilizado</span>
+            <strong>{totalIngresos > 0 ? `${Math.round(consumoPct)}%` : '--'}</strong>
+          </div>
+          <div className="dashboard-balance-track">
+            <span style={{ width: `${consumoPct}%` }} />
+          </div>
+        </div>
+
+        <div className="dashboard-balance-metrics">
+          <OverviewMetric icon={TrendingUp} label="Ingreso" value={totalIngresos} tone="#79E6BD" />
+          <OverviewMetric icon={TrendingDown} label="Gastado" value={totalGastos} tone="#FF9CA8" />
+          <OverviewMetric icon={PiggyBank} label="Ahorro" value={ahorro} tone="#8DC7FF" />
         </div>
       </div>
-      <Link to={insight.to} className="text-xs font-bold inline-flex items-center gap-1 self-start" style={{ color: style.fg }}>
-        {insight.action} <ArrowRight className="w-3 h-3" />
-      </Link>
-    </div>
+
+      <div className="dashboard-focus-panel">
+        <div className="dashboard-section-heading">
+          <div>
+            <p>Ahora</p>
+            <h2>Tu siguiente mejor movimiento</h2>
+          </div>
+          <span>{insights.length} prioridad{insights.length !== 1 ? 'es' : ''}</span>
+        </div>
+
+        {insights.length > 0 ? (
+          <div className="dashboard-insight-list">
+            <InsightCard insight={insights[0]} featured />
+            {insights.slice(1, 4).map(insight => (
+              <InsightCard key={`${insight.title}-${insight.value}`} insight={insight} />
+            ))}
+          </div>
+        ) : (
+          <div className="dashboard-focus-empty">
+            <Target />
+            <div>
+              <strong>Todo en orden</strong>
+              <p>No hay prioridades urgentes para este mes.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -255,7 +302,6 @@ export default function Dashboard() {
     { name: 'Ahorro',    actual: ahorro,    meta: totalIngresos * reglas.regla_ahorro,    fill: 'var(--ahorro)' },
   ]
 
-  const tarjetas = STAT_CONFIG(totalIngresos, totalGastos, porAsignar, ahorro)
   const insights = !loading
     ? buildDashboardInsights({
         totalIngresos,
@@ -323,84 +369,17 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Stat Cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-          {loading
-            ? Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
-            : tarjetas.map(({ label, value, icon: Icon, valueColor, iconBg, iconColor, sinDatos }) => (
-              <div key={label} className="card metric-card p-5 pb-8" style={{ '--metric-accent': iconColor }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p
-                    className="text-[11px] font-bold uppercase tracking-normal"
-                    style={{ color: 'var(--fg-3)', letterSpacing: 0 }}
-                  >
-                    {label}
-                  </p>
-                  <div
-                    className="w-9 h-9 rounded-[var(--r-md)] flex items-center justify-center flex-shrink-0"
-                    style={{ background: iconBg, boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.52)' }}
-                  >
-                    <Icon className="w-[17px] h-[17px]" style={{ color: iconColor }} strokeWidth={2} />
-                  </div>
-                </div>
-                {sinDatos
-                  ? <p className="text-sm font-semibold" style={{ color: 'var(--fg-3)' }}>Sin ingresos aún</p>
-                  : <p
-                      className="text-xl sm:text-[26px] font-bold tabular leading-none break-all"
-                      style={{ color: valueColor, fontVariantNumeric: 'tabular-nums' }}
-                    >
-                      {formatMXN(value)}
-                    </p>
-                }
-              </div>
-            ))}
-        </div>
-
-        {!loading && !sinNada && insights.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
-                Prioridades del Mes
-              </h2>
-              <span className="text-xs font-semibold" style={{ color: 'var(--fg-4)' }}>
-                {insights.length} accion{insights.length !== 1 ? 'es' : ''}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-              {insights.map(insight => <InsightCard key={`${insight.title}-${insight.value}`} insight={insight} />)}
-            </div>
-          </section>
-        )}
-
-        {/* ── Dinero ya apartado en Plan de Quincena (informativo) ── */}
-        {!loading && totalApartado > 0 && porAsignar !== null && (
-          <div
-            className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
-            style={{ background: 'var(--primary-50)', borderLeft: '3px solid var(--primary)' }}
-          >
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-normal mb-0.5" style={{ color: 'var(--primary-700)', letterSpacing: 0 }}>
-                🔒 Ya apartaste {formatMXN(totalApartado)} este mes
-              </p>
-              <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
-                Tu disponible real (Por Asignar menos lo apartado).{' '}
-                <Link to="/plan-quincena" className="font-semibold" style={{ color: 'var(--primary-600)' }}>
-                  Ver plan →
-                </Link>
-              </p>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p
-                className="text-xl font-bold tabular"
-                style={{
-                  color: (porAsignar - totalApartado) >= 0 ? 'var(--primary-700)' : 'var(--negative-fg)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {formatMXN(porAsignar - totalApartado)}
-              </p>
-            </div>
-          </div>
+        {loading ? (
+          <OverviewSkeleton />
+        ) : (
+          <DashboardOverview
+            totalIngresos={totalIngresos}
+            totalGastos={totalGastos}
+            porAsignar={porAsignar}
+            totalApartado={totalApartado}
+            ahorro={ahorro}
+            insights={sinNada ? [] : insights}
+          />
         )}
 
         {/* ── Saldo arrastrado del mes anterior (ya incluido en Por Asignar) ── */}
@@ -847,16 +826,6 @@ export default function Dashboard() {
         </div>
 
       </div>
-
-      {/* FAB — solo mobile */}
-      <Link
-        to="/control-gastos"
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center lg:hidden"
-        style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}
-        aria-label="Registrar gasto"
-      >
-        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
-      </Link>
 
     </Layout>
   )

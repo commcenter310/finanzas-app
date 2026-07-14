@@ -20,7 +20,7 @@ export function ToastProvider({ children }) {
     <ToastCtx.Provider value={show}>
       {children}
       {/* Stack — bottom-center, apila hacia arriba */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse gap-2 items-center pointer-events-none">
+      <div className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse gap-2 items-center pointer-events-none">
         {toasts.map(t => (
           <ToastItem key={t.id} {...t} onDismiss={() => dismiss(t.id)} />
         ))}

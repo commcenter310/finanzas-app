@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { useAuth } from '../context/AuthContext'
@@ -51,12 +52,19 @@ export default function ControlGastos() {
   const { transacciones, categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useTransacciones()
   const umbral = profile?.umbral_hormiga ?? 100
   const toast  = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [mostrarForm, setMostrarForm] = useState(false)
+  const [mostrarForm, setMostrarForm] = useState(() => searchParams.get('nuevo') === '1')
   const [editandoId, setEditandoId] = useState(null)
   const [transaccionOriginal, setTransaccionOriginal] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  useEffect(() => {
+    const abrirNuevo = () => setMostrarForm(true)
+    window.addEventListener('finni:new-expense', abrirNuevo)
+    return () => window.removeEventListener('finni:new-expense', abrirNuevo)
+  }, [])
 
   const abrirEditar = (t) => {
     setTransaccionOriginal(t)
@@ -75,6 +83,7 @@ export default function ControlGastos() {
 
   const cerrarForm = () => {
     setMostrarForm(false)
+    if (searchParams.has('nuevo')) setSearchParams({}, { replace: true })
     setEditandoId(null)
     setTransaccionOriginal(null)
     setForm(FORM_VACIO)

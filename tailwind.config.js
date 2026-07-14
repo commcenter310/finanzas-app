@@ -60,8 +60,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        mono: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', 'sans-serif'],
+        mono: ['Manrope', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'finni-sm':      'var(--shadow-sm)',

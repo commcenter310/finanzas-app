@@ -1,7 +1,25 @@
-import { ChevronLeft, ChevronRight, Menu } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Menu, Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useMes } from '../../context/MesContext'
 import { MESES } from '../../utils/constantes'
 import ReminderBell from './ReminderBell'
+
+const PAGE_CONTEXT = {
+  Dashboard: 'Tu panorama financiero',
+  'Plan de Quincena': 'Decide antes de gastar',
+  Ingresos: 'Dinero que entra',
+  'Gastos Fijos': 'Compromisos del mes',
+  Presupuesto: 'Límites que sí ayudan',
+  'Control de Gastos': 'Cada movimiento en su lugar',
+  'Créditos': 'Uso y ciclos de tus tarjetas',
+  Deudas: 'Avance de tus compromisos',
+  Ahorros: 'Metas que toman forma',
+  Tendencias: 'Patrones para decidir mejor',
+  'Proyección 12 Meses': 'Lo que viene, con perspectiva',
+  'Simulador de Crédito': 'Compara antes de comprometerte',
+  'WhatsApp Log': 'Actividad de automatizaciones',
+  Perfil: 'Tu configuración financiera',
+}
 
 export default function Header({ titulo, onMenuClick }) {
   const { mes, anio, setMes, setAnio, irMesAnterior, irMesSiguiente } = useMes()
@@ -15,60 +33,45 @@ export default function Header({ titulo, onMenuClick }) {
 
   return (
     <header className="app-header">
-      {/* Left: hamburger (mobile) + title */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="header-identity">
         <button
+          type="button"
           onClick={onMenuClick}
-          className="icon-button lg:hidden -ml-1 flex-shrink-0"
+          className="icon-button lg:hidden flex-shrink-0"
           aria-label="Abrir menú"
         >
           <Menu className="w-5 h-5" strokeWidth={2} />
         </button>
-        <h1
-          className="font-bold truncate text-base lg:text-[21px]"
-          style={{ color: 'var(--fg-1)', letterSpacing: 0 }}
-        >
-          {titulo}
-        </h1>
+        <span className="header-title-rule" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="header-kicker">Finni / {PAGE_CONTEXT[titulo] ?? 'Control personal'}</p>
+          <h1 className="header-title">{titulo}</h1>
+        </div>
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-2">
-        {/* Month switcher */}
-        <div className="month-switcher">
-          <button
-            onClick={irMesAnterior}
-            className="icon-button icon-button-sm"
-            aria-label="Mes anterior"
-          >
+      <div className="header-actions">
+        <div className="month-switcher" aria-label="Cambiar mes">
+          <button onClick={irMesAnterior} className="icon-button icon-button-sm" aria-label="Mes anterior">
             <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
           </button>
-
-          <span
-            className="text-sm font-semibold tabular text-center px-1 min-w-[80px] lg:min-w-[132px]"
-            style={{ color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}
-          >
+          <span className="month-switcher-label">
             <span className="hidden sm:inline">{MESES[mes - 1]} {anio}</span>
             <span className="sm:hidden">{MESES[mes - 1].slice(0, 3)} {String(anio).slice(2)}</span>
           </span>
-
-          <button
-            onClick={irMesSiguiente}
-            className="icon-button icon-button-sm"
-            aria-label="Mes siguiente"
-          >
+          <button onClick={irMesSiguiente} className="icon-button icon-button-sm" aria-label="Mes siguiente">
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
           </button>
-
-          {!esActual && (
-            <button
-              onClick={irHoy}
-              className="today-button"
-            >
-              Hoy
-            </button>
-          )}
+          {!esActual && <button onClick={irHoy} className="today-button">Hoy</button>}
         </div>
 
+        <Link
+          to="/control-gastos?nuevo=1"
+          className="header-add-button hidden lg:inline-flex"
+          onClick={() => window.dispatchEvent(new Event('finni:new-expense'))}
+        >
+          <Plus className="w-4 h-4" strokeWidth={2.6} />
+          Registrar
+        </Link>
         <ReminderBell />
       </div>
     </header>

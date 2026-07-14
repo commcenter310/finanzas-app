@@ -15,52 +15,52 @@
    Sans. Numbers use tabular figures for column alignment.
    ============================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 html { color-scheme: light; }
 html[data-theme="dark"] { color-scheme: dark; }
 
 :root {
   /* ---- Type families ---------------------------------------------------- */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Plus Jakarta Sans', system-ui, sans-serif; /* numbers: same family + tabular figures */
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Manrope', system-ui, sans-serif;
 
   /* ============================ COLOR ==================================== */
 
   /* ---- App canvas & surfaces (warm porcelain) --------------------------- */
-  --bg-app:        #EEF3FA;   /* page canvas */
-  --bg-app-2:      #E6ECF7;   /* deeper canvas band / gradient stop */
-  --bg-subtle:     #F7F9FD;   /* subtle section fill */
+  --bg-app:        #F1F4F9;
+  --bg-app-2:      #E9EEF6;
+  --bg-subtle:     #F8FAFD;
   --surface:       #FFFFFF;   /* card / sheet */
-  --surface-2:     #F4F7FB;   /* inset, filled input, table head */
-  --surface-3:     #E7EDF6;   /* hover row, chip rest */
-  --surface-glass: rgba(247, 249, 253, 0.84); /* nav/header/FAB */
-  --surface-glass-strong: rgba(255, 255, 255, 0.92);
+  --surface-2:     #F4F7FC;
+  --surface-3:     #E8EEF7;
+  --surface-glass: rgba(245, 248, 253, 0.86);
+  --surface-glass-strong: rgba(255, 255, 255, 0.94);
 
   /* ---- Text / foreground (warm ink) ------------------------------------- */
-  --fg-1: #131B2A;   /* primary text, headings */
-  --fg-2: #40506A;   /* body, secondary */
-  --fg-3: #6B7890;   /* tertiary, captions */
-  --fg-4: #9CA7B8;   /* placeholder, disabled, hint */
+  --fg-1: #111827;
+  --fg-2: #3B465A;
+  --fg-3: #68758C;
+  --fg-4: #9AA6B8;
   --fg-on-primary: #FFFFFF;
   --fg-on-accent:  #FFFFFF;
 
   /* ---- Borders & dividers ----------------------------------------------- */
-  --border:        #DCE4F0;  /* hairline card/control border */
-  --border-strong: #B8C6DA;  /* emphasized / focus-rest */
-  --divider:       #E8EEF6;  /* row dividers */
+  --border:        #D9E1EC;
+  --border-strong: #B6C2D4;
+  --divider:       #E8EDF4;
 
   /* ---- Primary — "Tinta" (warm ink neutral) ----------------------------- */
-  --primary-50:  #EEF4FF;
+  --primary-50:  #EDF3FF;
   --primary-100: #DCE8FF;
-  --primary-200: #BBD3FF;
-  --primary-300: #91B8FF;
-  --primary-400: #5F91F6;
-  --primary-500: #386FDB;
-  --primary-600: #2657D8;   /* default interactive */
-  --primary-700: #1F45A8;   /* hover */
-  --primary-800: #1D397F;   /* press */
-  --primary-900: #192B5E;
+  --primary-200: #B9D0FF;
+  --primary-300: #8AAEFF;
+  --primary-400: #5E87FF;
+  --primary-500: #3764F4;
+  --primary-600: #234FE8;
+  --primary-700: #1D40BE;
+  --primary-800: #203A91;
+  --primary-900: #1F326F;
 
   --primary:      var(--primary-600);
   --primary-soft-bg:  var(--primary-100);  /* tinted button / active nav */
@@ -68,53 +68,53 @@ html[data-theme="dark"] { color-scheme: dark; }
 
   /* ---- Finance classification system (50 / 30 / 20) --------------------- */
   /* Necesidad — Need (índigo) */
-  --necesidad:     #315CD6;
-  --necesidad-bg:  #E6EDFF;
-  --necesidad-fg:  #244BB5;
+  --necesidad:     #315FE8;
+  --necesidad-bg:  #E8EEFF;
+  --necesidad-fg:  #2448B8;
   /* Deseo — Want (ámbar) */
-  --deseo:         #D9822B;
-  --deseo-bg:      #FBEBD8;
-  --deseo-fg:      #9F5412;
+  --deseo:         #E6952D;
+  --deseo-bg:      #FFF0D9;
+  --deseo-fg:      #9A590D;
   /* Ahorro — Save (esmeralda, the brand accent) */
-  --ahorro:        #16A878;
+  --ahorro:        #1DA77A;
   --ahorro-bg:     #E1F6ED;
-  --ahorro-fg:     #087F5B;
+  --ahorro-fg:     #087A59;
 
   /* ---- Status / feedback ------------------------------------------------ */
-  --positive:      #16A878;   /* ingresos, ganancia */
+  --positive:      #1DA77A;   /* ingresos, ganancia */
   --positive-bg:   #E1F6ED;
   --positive-fg:   #087F5B;
-  --negative:      #D94C5C;   /* gastos, deuda, sobre-presupuesto */
-  --negative-bg:   #FBE8EC;
-  --negative-fg:   #B33241;
-  --warning:       #D9822B;
-  --warning-bg:    #FBEBD8;
-  --warning-fg:    #9F5412;
+  --negative:      #E05263;
+  --negative-bg:   #FDE9EC;
+  --negative-fg:   #B42F42;
+  --warning:       #E6952D;
+  --warning-bg:    #FFF0D9;
+  --warning-fg:    #9A590D;
   --info:          var(--primary-600);
   --info-bg:       var(--primary-50);
 
   /* ---- Extra accents (charts, decorative) ------------------------------- */
-  --accent-teal:   #12A6B8;
-  --accent-violet: #7C6FD6;
-  --accent-pink:   #D879A1;
-  --accent-sky:    #3E9FD6;
+  --accent-teal:   #11A8BD;
+  --accent-violet: #7869DA;
+  --accent-pink:   #D86B9E;
+  --accent-sky:    #388FD0;
 
   /* Chart sequence — emerald-led designed spread */
-  --chart-1: #315CD6;
-  --chart-2: #16A878;
-  --chart-3: #D9822B;
-  --chart-4: #12A6B8;
-  --chart-5: #D94C5C;
-  --chart-6: #7C6FD6;
-  --chart-7: #D879A1;
-  --chart-8: #65736C;
+  --chart-1: #315FE8;
+  --chart-2: #1DA77A;
+  --chart-3: #E6952D;
+  --chart-4: #11A8BD;
+  --chart-5: #E05263;
+  --chart-6: #7869DA;
+  --chart-7: #D86B9E;
+  --chart-8: #65748B;
 
   /* ---- Signature gradients (hero balance card, FAB, splash) ------------- */
-  --grad-primary: linear-gradient(135deg, #0B1020 0%, #2657D8 54%, #12A6B8 100%); /* @kind color */
-  --grad-fresh:   linear-gradient(135deg, #315CD6 0%, #12A6B8 100%); /* @kind color */
-  --grad-ahorro:  linear-gradient(135deg, #16A878 0%, #3FD39D 100%); /* @kind color */
-  --grad-sunset:  linear-gradient(135deg, #D9822B 0%, #D94C5C 100%); /* @kind color */
-  --grad-canvas:  linear-gradient(180deg, #F7FAFF 0%, #E6ECF7 100%); /* @kind color */
+  --grad-primary: linear-gradient(135deg, #111827 0%, #17388B 48%, #234FE8 100%); /* @kind color */
+  --grad-fresh:   linear-gradient(135deg, #234FE8 0%, #11A8BD 100%); /* @kind color */
+  --grad-ahorro:  linear-gradient(135deg, #1DA77A 0%, #52D6A7 100%); /* @kind color */
+  --grad-sunset:  linear-gradient(135deg, #E6952D 0%, #E05263 100%); /* @kind color */
+  --grad-canvas:  linear-gradient(180deg, #F8FAFD 0%, #EEF2F8 100%); /* @kind color */
 
   /* ============================ RADII ==================================== */
   --r-xs:   6px;
@@ -126,14 +126,14 @@ html[data-theme="dark"] { color-scheme: dark; }
   --r-full: 999px;
 
   /* ============================ SHADOWS (soft, neutral) ================== */
-  --shadow-xs: 0 1px 2px rgba(21, 32, 28, 0.06);
-  --shadow-sm: 0 1px 2px rgba(21, 32, 28, 0.06), 0 0 0 1px rgba(21, 32, 28, 0.02);
-  --shadow-md: 0 10px 28px rgba(21, 32, 28, 0.08), 0 2px 8px rgba(21, 32, 28, 0.05);
-  --shadow-lg: 0 18px 48px rgba(21, 32, 28, 0.12), 0 8px 18px rgba(21, 32, 28, 0.06);
-  --shadow-xl: 0 28px 70px rgba(21, 32, 28, 0.16), 0 12px 28px rgba(21, 32, 28, 0.08);
-  --shadow-primary: 0 12px 28px rgba(38, 87, 216, 0.28);
-  --shadow-ahorro:  0 12px 28px rgba(22, 168, 120, 0.24);
-  --ring-focus: 0 0 0 4px rgba(38, 87, 216, 0.20);
+  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.05);
+  --shadow-sm: 0 2px 5px rgba(17, 24, 39, 0.05), 0 0 0 1px rgba(17, 24, 39, 0.02);
+  --shadow-md: 0 12px 30px rgba(17, 24, 39, 0.08), 0 2px 7px rgba(17, 24, 39, 0.04);
+  --shadow-lg: 0 20px 52px rgba(17, 24, 39, 0.13), 0 8px 20px rgba(17, 24, 39, 0.06);
+  --shadow-xl: 0 30px 76px rgba(17, 24, 39, 0.18), 0 12px 30px rgba(17, 24, 39, 0.08);
+  --shadow-primary: 0 14px 32px rgba(35, 79, 232, 0.27);
+  --shadow-ahorro:  0 12px 28px rgba(29, 167, 122, 0.22);
+  --ring-focus: 0 0 0 4px rgba(35, 79, 232, 0.18);
 
   /* Glass material (nav bars, floating chrome) */
   --glass-blur: blur(20px) saturate(180%); /* @kind other */

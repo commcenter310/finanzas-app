@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import BottomNav from './BottomNav'
 
 export default function Layout({ titulo, children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -26,6 +27,8 @@ export default function Layout({ titulo, children }) {
           {children}
         </main>
       </div>
+
+      <BottomNav onMore={() => setIsSidebarOpen(true)} />
     </div>
   )
 }
