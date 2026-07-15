@@ -2165,6 +2165,7 @@
   }
 
   .commitment-pay-button:hover { background: var(--primary-700); }
+  .commitment-pay-button:disabled { cursor: not-allowed; opacity: 0.58; }
   .commitment-pay-button svg { width: 14px; height: 14px; }
 
   .commitment-row-tools {

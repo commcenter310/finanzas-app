@@ -56,10 +56,11 @@ function ToastItem({ message, type }) {
       style={{
         background:  bg,
         boxShadow:   'var(--shadow-lg)',
+        maxWidth:    'min(520px, calc(100vw - 24px))',
         transition:  'opacity 280ms ease, transform 280ms var(--ease-out)',
         opacity:     visible ? 1 : 0,
         transform:   visible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.94)',
-        whiteSpace:  'nowrap',
+        whiteSpace:  'normal',
       }}
     >
       <Icon style={{ width: 15, height: 15, flexShrink: 0 }} />

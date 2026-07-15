@@ -10,6 +10,7 @@ import {
   CreditCard,
   ExternalLink,
   ListOrdered,
+  LoaderCircle,
   Pencil,
   Plus,
   Target,
@@ -39,6 +40,7 @@ import {
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
 import { resolverVencimientoMensual } from '../utils/pagosProgramados'
+import { mensajeErrorPago } from '../utils/pagos'
 
 const FORM_VACIO = {
   nombre: '',
@@ -135,6 +137,7 @@ export default function Deudas() {
     error,
     refetch,
     saving,
+    pagosEnCurso,
     totalDeuda,
     totalPagoMensual,
     snowball,
@@ -212,6 +215,11 @@ export default function Deudas() {
     const resultado = deuda?.tipo === 'credito'
       ? await abonarCredito(deuda.credito_id, monto)
       : await abonar(deudaId, monto)
+    if (resultado?.bloqueado) return
+    if (resultado?.error) {
+      toast(mensajeErrorPago(resultado.error), 'error')
+      return
+    }
     if (resultado?.recortado) {
       toast(`Se registró ${formatMXN(resultado.montoAplicado)} (el saldo era menor al pago capturado)`, 'info')
     } else {
@@ -323,6 +331,7 @@ export default function Deudas() {
                 const esFoco = plan.foco?.id === deuda.id
                 const estadoPago = estadoVencimiento(deuda)
                 const tonoPago = tonoVencimiento(estadoPago)
+                const pagoEnCurso = pagosEnCurso.has(String(deuda.id))
                 const historial = [...(deuda.abonos_deuda ?? [])].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
 
                 return (
@@ -370,9 +379,17 @@ export default function Deudas() {
                           placeholder="Monto del pago"
                           value={montoAbono[deuda.id] ?? ''}
                           onChange={event => setMontoAbono(current => ({ ...current, [deuda.id]: event.target.value }))}
+                          disabled={pagoEnCurso}
                         />
-                        <button type="button" className="commitment-pay-button" onClick={() => handleAbonar(deuda.id)}>
-                          <ArrowDownToLine aria-hidden="true" /> Pagar
+                        <button
+                          type="button"
+                          className="commitment-pay-button"
+                          onClick={() => handleAbonar(deuda.id)}
+                          disabled={pagoEnCurso || !montoAbono[deuda.id] || Number(montoAbono[deuda.id]) <= 0}
+                          aria-busy={pagoEnCurso}
+                        >
+                          {pagoEnCurso ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ArrowDownToLine aria-hidden="true" />}
+                          {pagoEnCurso ? 'Guardando' : 'Pagar'}
                         </button>
                         <div className="commitment-row-tools">
                           <button

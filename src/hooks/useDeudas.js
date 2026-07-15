@@ -1,13 +1,33 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
 import { fechaLocalISO } from '../utils/fecha'
+import { crearOperacionPago, prepararPago, rpcPagoNoDisponible } from '../utils/pagos'
+
+const pagoError = (code, message = code) => ({ code, message })
+const valorBooleano = value => value === true || value === 'true'
+
+const normalizarResultadoRpc = (data, montoSolicitado) => {
+  const resultado = Array.isArray(data) ? data[0] : data
+  if (!resultado) return { error: pagoError('PAGO_RESPUESTA_INVALIDA') }
+  return {
+    montoAplicado: Number(resultado.monto_aplicado),
+    saldo: resultado.saldo_anterior == null ? null : Number(resultado.saldo_anterior),
+    saldoNuevo: Number(resultado.saldo_nuevo),
+    recortado: valorBooleano(resultado.recortado) || Number(resultado.monto_aplicado) < Number(montoSolicitado),
+    duplicado: valorBooleano(resultado.duplicado),
+    atomico: true,
+  }
+}
 
 export function useDeudas() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
+  const [pagosEnCurso, setPagosEnCurso] = useState(new Set())
+  const pagosEnCursoRef = useRef(new Set())
+  const operacionesPagoRef = useRef(new Map())
 
   const uid = user?.id
   // ── Deudas manuales ──────────────────────────────────────────────────────
@@ -83,57 +103,158 @@ export function useDeudas() {
     return { error }
   }
 
-  const abonar = async (deuda_id, monto, notas = '') => {
-    const hoy = fechaLocalISO()
-    const deuda = deudas?.find(d => d.id === deuda_id)
-    // Sobrepago: registrar solo hasta el saldo real, no más
-    const saldo = Number(deuda?.saldo_actual ?? 0)
-    const montoAplicado = deuda ? Math.min(Number(monto), saldo) : Number(monto)
-    const nuevo = deuda ? Math.max(0, saldo - montoAplicado) : null
-    const catId = await ensureCategoria(user.id, { nombre: 'Deudas', icono: '💳', clasificacion: 'necesidad' })
+  const ejecutarPagoBloqueado = async (key, operacion) => {
+    const lockKey = String(key)
+    if (pagosEnCursoRef.current.has(lockKey)) return { bloqueado: true }
 
-    await Promise.all([
-      supabase.from('abonos_deuda').insert({ deuda_id, monto: montoAplicado, fecha: hoy, notas }),
-      deuda && supabase.from('deudas').update({ saldo_actual: nuevo, liquidada: nuevo === 0 }).eq('id', deuda_id),
-      supabase.from('transacciones').insert({
-        user_id: user.id,
-        descripcion: `Pago deuda: ${deuda?.nombre ?? 'Deuda'}`,
-        monto: montoAplicado,
-        clasificacion: 'necesidad',
-        categoria_id: catId,
-        fecha: hoy,
-        origen: 'deuda',
-      }),
-    ])
-    invalidateDeudas()
-    return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
+    pagosEnCursoRef.current.add(lockKey)
+    setPagosEnCurso(new Set(pagosEnCursoRef.current))
+    try {
+      return await operacion()
+    } catch (error) {
+      return { error }
+    } finally {
+      pagosEnCursoRef.current.delete(lockKey)
+      setPagosEnCurso(new Set(pagosEnCursoRef.current))
+    }
   }
 
-  // Pagar saldo de tarjeta de crédito → actualiza saldo_utilizado Y guarda historial
-  const abonarCredito = async (creditoId, monto) => {
-    const credito = creditosConSaldo?.find(c => c.id === creditoId)
-    if (!credito) return { recortado: false }
-    // Sobrepago: registrar solo hasta el saldo utilizado real
-    const saldo = Number(credito.saldo_utilizado)
-    const montoAplicado = Math.min(Number(monto), saldo)
-    const nuevoSaldo = Math.max(0, saldo - montoAplicado)
+  const obtenerOperacionPago = (key, monto) => {
+    const lockKey = String(key)
+    const firmaMonto = Number(monto).toFixed(2)
+    const pendiente = operacionesPagoRef.current.get(lockKey)
+    if (pendiente?.firmaMonto === firmaMonto) return pendiente.id
+
+    const id = crearOperacionPago()
+    operacionesPagoRef.current.set(lockKey, { id, firmaMonto })
+    return id
+  }
+
+  const registrarPagoCompatibilidad = async ({ tipo, id, monto, notas = '' }) => {
+    const esCredito = tipo === 'credito'
+    const tablaCuenta = esCredito ? 'creditos' : 'deudas'
+    const saldoCampo = esCredito ? 'saldo_utilizado' : 'saldo_actual'
+    const tablaHistorial = esCredito ? 'pagos_credito' : 'abonos_deuda'
     const hoy = fechaLocalISO()
-    const catId = await ensureCategoria(user.id, { nombre: 'Deudas', icono: '💳', clasificacion: 'necesidad' })
-    await Promise.all([
-      supabase.from('creditos').update({ saldo_utilizado: nuevoSaldo }).eq('id', creditoId),
-      supabase.from('pagos_credito').insert({ credito_id: creditoId, user_id: user.id, monto: montoAplicado, fecha: hoy }),
-      supabase.from('transacciones').insert({
-        user_id: user.id,
-        descripcion: `Pago tarjeta: ${credito.nombre}`,
-        monto: montoAplicado,
-        clasificacion: 'necesidad',
-        categoria_id: catId,
-        fecha: hoy,
-        origen: 'deuda',
-      }),
-    ])
-    invalidateCreditos()
-    return { recortado: montoAplicado < Number(monto), montoAplicado, saldo }
+
+    let cuentaQuery = supabase.from(tablaCuenta)
+      .select(`id, nombre, ${saldoCampo}`)
+      .eq('id', id)
+      .eq('user_id', user.id)
+    if (esCredito) cuentaQuery = cuentaQuery.eq('activo', true)
+
+    const { data: cuenta, error: errorCuenta } = await cuentaQuery.maybeSingle()
+    if (errorCuenta) return { error: errorCuenta }
+    if (!cuenta) return { error: pagoError('PAGO_NO_ENCONTRADO') }
+
+    const pago = prepararPago(monto, cuenta[saldoCampo])
+    if (pago.error) return pago
+
+    const catId = await ensureCategoria(user.id, {
+      nombre: 'Deudas',
+      icono: '💳',
+      clasificacion: 'necesidad',
+    })
+    const historialPayload = esCredito
+      ? { credito_id: id, user_id: user.id, monto: pago.montoAplicado, fecha: hoy, notas: notas || null }
+      : { deuda_id: id, monto: pago.montoAplicado, fecha: hoy, notas: notas || null }
+    const { data: historial, error: errorHistorial } = await supabase
+      .from(tablaHistorial)
+      .insert(historialPayload)
+      .select('id')
+      .single()
+    if (errorHistorial) return { error: errorHistorial }
+
+    const saldoPayload = esCredito
+      ? { saldo_utilizado: pago.saldoNuevo }
+      : { saldo_actual: pago.saldoNuevo, liquidada: pago.liquida }
+    const { data: cuentaActualizada, error: errorSaldo } = await supabase
+      .from(tablaCuenta)
+      .update(saldoPayload)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .eq(saldoCampo, pago.saldoAnterior)
+      .select('id')
+      .maybeSingle()
+
+    if (errorSaldo || !cuentaActualizada) {
+      await supabase.from(tablaHistorial).delete().eq('id', historial.id)
+      return { error: errorSaldo || pagoError('PAGO_CONCURRENCIA') }
+    }
+
+    const { error: errorTransaccion } = await supabase.from('transacciones').insert({
+      user_id: user.id,
+      descripcion: `${esCredito ? 'Pago tarjeta' : 'Pago deuda'}: ${cuenta.nombre}`,
+      monto: pago.montoAplicado,
+      clasificacion: 'necesidad',
+      categoria_id: catId,
+      fecha: hoy,
+      origen: 'deuda',
+    })
+
+    if (errorTransaccion) {
+      const restaurarPayload = esCredito
+        ? { saldo_utilizado: pago.saldoAnterior }
+        : { saldo_actual: pago.saldoAnterior, liquidada: false }
+      const [restauracion, borrado] = await Promise.all([
+        supabase.from(tablaCuenta)
+          .update(restaurarPayload)
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .eq(saldoCampo, pago.saldoNuevo)
+          .select('id')
+          .maybeSingle(),
+        supabase.from(tablaHistorial).delete().eq('id', historial.id),
+      ])
+      if (restauracion.error || !restauracion.data || borrado.error) {
+        return { error: pagoError('PAGO_REVERSION_INCOMPLETA') }
+      }
+      return { error: errorTransaccion }
+    }
+
+    if (esCredito) invalidateCreditos()
+    else invalidateDeudas()
+    return { ...pago, atomico: false }
+  }
+
+  const registrarPago = async ({ tipo, id, key, monto, notas }) => {
+    const esCredito = tipo === 'credito'
+    const operacionId = obtenerOperacionPago(key, monto)
+    const parametros = esCredito
+      ? { p_credito_id: id, p_monto: Number(monto), p_notas: notas || null, p_operacion_id: operacionId }
+      : { p_deuda_id: id, p_monto: Number(monto), p_notas: notas || null, p_operacion_id: operacionId }
+    const { data, error } = await supabase.rpc(
+      esCredito ? 'registrar_pago_credito' : 'registrar_pago_deuda',
+      parametros
+    )
+
+    let resultado
+    if (!error) {
+      if (esCredito) invalidateCreditos()
+      else invalidateDeudas()
+      resultado = normalizarResultadoRpc(data, monto)
+    } else if (rpcPagoNoDisponible(error)) {
+      resultado = await registrarPagoCompatibilidad({ tipo, id, monto, notas })
+    } else {
+      resultado = { error }
+    }
+
+    if (!resultado.error) operacionesPagoRef.current.delete(String(key))
+    return resultado
+  }
+
+  const abonar = (deudaId, monto, notas = '') => ejecutarPagoBloqueado(
+    deudaId,
+    () => registrarPago({ tipo: 'deuda', id: deudaId, key: deudaId, monto, notas })
+  )
+
+  // El saldo, historial y gasto se escriben en una sola transacción cuando las RPC están instaladas.
+  const abonarCredito = (creditoId, monto, notas = '') => {
+    const key = `credito_${creditoId}`
+    return ejecutarPagoBloqueado(
+      key,
+      () => registrarPago({ tipo: 'credito', id: creditoId, key, monto, notas })
+    )
   }
 
   const actualizar = async (id, datos) => {
@@ -169,6 +290,7 @@ export function useDeudas() {
     error,
     refetch,
     saving,
+    pagosEnCurso,
     totalDeuda,
     totalPagoMensual,
     snowball,
