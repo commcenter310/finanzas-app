@@ -10,7 +10,7 @@ const PAGE_CONTEXT = {
   Ingresos: 'Dinero que entra',
   'Gastos Fijos': 'Compromisos del mes',
   Presupuesto: 'Límites que sí ayudan',
-  'Control de Gastos': 'Cada movimiento en su lugar',
+  Movimientos: 'Cada movimiento en su lugar',
   'Créditos': 'Uso y ciclos de tus tarjetas',
   Deudas: 'Avance de tus compromisos',
   Ahorros: 'Metas que toman forma',

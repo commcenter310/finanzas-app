@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { finMesISO, inicioMesISO } from '../utils/fecha'
+import { contextoMes, finMesISO, inicioMesISO } from '../utils/fecha'
 
 export function useGastosVariables() {
   const { user } = useAuth()
@@ -96,8 +96,7 @@ export function useGastosVariables() {
     return { ...cat, gastado, limite, pct, sobre: gastado > limite && limite > 0 }
   }) ?? []
 
-  const diasTranscurridos = new Date().getDate()
-  const diasDelMes = new Date(anio, mes, 0).getDate()
+  const { diasTranscurridos, diasDelMes, esMesActual, esMesPasado } = contextoMes(mes, anio)
   const totalGastado = categoriasConDatos.reduce((s, c) => s + c.gastado, 0)
   const factorProyeccion = diasTranscurridos > 0 ? diasDelMes / diasTranscurridos : 1
   const proyeccionTotal = totalGastado * factorProyeccion
@@ -111,5 +110,7 @@ export function useGastosVariables() {
     proyeccionTotal,
     diasTranscurridos,
     diasDelMes,
+    esMesActual,
+    esMesPasado,
   }
 }

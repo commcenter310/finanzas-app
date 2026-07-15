@@ -134,7 +134,7 @@ export function SegmentedControl({ value, options, onChange, ariaLabel }) {
   )
 }
 
-export function Sheet({ open, onClose, title, description, children, footer }) {
+export function Sheet({ open, onClose, title, description, eyebrow = 'Centro de compromisos', children, footer }) {
   useEffect(() => {
     if (!open) return undefined
     const previousOverflow = document.body.style.overflow
@@ -157,7 +157,7 @@ export function Sheet({ open, onClose, title, description, children, footer }) {
       <section className="commitment-sheet" role="dialog" aria-modal="true" aria-labelledby="commitment-sheet-title">
         <header className="commitment-sheet-header">
           <div>
-            <p>Centro de compromisos</p>
+            <p>{eyebrow}</p>
             <h2 id="commitment-sheet-title">{title}</h2>
             {description && <span>{description}</span>}
           </div>

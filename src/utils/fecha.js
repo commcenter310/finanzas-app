@@ -10,3 +10,18 @@ export const inicioMesISO = (mes, anio) =>
 
 export const finMesISO = (mes, anio) =>
   fechaLocalISO(new Date(anio, mes, 0))
+
+export const contextoMes = (mes, anio, hoy = new Date()) => {
+  const diasDelMes = new Date(anio, mes, 0).getDate()
+  const inicioSeleccionado = new Date(anio, mes - 1, 1)
+  const inicioActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const esMesActual = inicioSeleccionado.getTime() === inicioActual.getTime()
+  const esMesPasado = inicioSeleccionado < inicioActual
+
+  return {
+    diasDelMes,
+    diasTranscurridos: esMesActual ? hoy.getDate() : esMesPasado ? diasDelMes : 0,
+    esMesActual,
+    esMesPasado,
+  }
+}
