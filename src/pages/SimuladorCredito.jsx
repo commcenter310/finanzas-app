@@ -75,6 +75,7 @@ export default function SimuladorCredito() {
     setMonto(String(d.saldo_actual ?? ''))
     setTasa(d.tasa_interes != null ? String(d.tasa_interes) : '')
     setPago(d.pago_mensual != null ? String(d.pago_mensual) : '')
+    setFrecuencia(d.frecuencia_pago === 'quincenal' ? 'quincenal' : 'mensual')
   }
 
   const esQuincenal     = frecuencia === 'quincenal'

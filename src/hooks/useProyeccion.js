@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 import { calcNomina, parseMesesPrima, MESES } from '../utils/constantes'
+import { normalizarFrecuenciaPago } from '../utils/pagosProgramados'
 
 // Proyección hacia adelante de ingresos vs compromisos por mes (y quincena).
 export function useProyeccion(horizonte = 12) {
@@ -27,7 +28,7 @@ export function useProyeccion(horizonte = 12) {
   const { data: deudas, loading: loadingD } = useSupabaseQuery(async () => {
     const { data } = await supabase
       .from('deudas')
-      .select('nombre, saldo_actual, pago_mensual, fecha_proximo_pago')
+      .select('*')
       .eq('user_id', user.id).eq('liquidada', false).gt('pago_mensual', 0)
     return data ?? []
   }, [uid], `proyeccion:deudas:${uid}`)
@@ -63,6 +64,7 @@ export function useProyeccion(horizonte = 12) {
     nombre: d.nombre,
     pago: Number(d.pago_mensual),
     restante: Number(d.saldo_actual),
+    frecuencia: normalizarFrecuenciaPago(d.frecuencia_pago),
     quincena: qDeDia(d.fecha_proximo_pago ? Number(d.fecha_proximo_pago.split('-')[2]) : null),
   }))
 
@@ -79,9 +81,20 @@ export function useProyeccion(horizonte = 12) {
     let deudaQ1 = 0, deudaQ2 = 0
     restantes.forEach(d => {
       if (d.restante <= 0) return
-      const pago = Math.min(d.pago, d.restante)
-      d.restante -= pago
-      if (d.quincena === 1) deudaQ1 += pago; else deudaQ2 += pago
+      if (d.frecuencia === 'quincenal') {
+        const pagoQ1 = Math.min(d.pago, d.restante)
+        d.restante -= pagoQ1
+        deudaQ1 += pagoQ1
+
+        const pagoQ2 = Math.min(d.pago, d.restante)
+        d.restante -= pagoQ2
+        deudaQ2 += pagoQ2
+        return
+      }
+
+      const pagoMensual = Math.min(d.pago, d.restante)
+      d.restante -= pagoMensual
+      if (d.quincena === 1) deudaQ1 += pagoMensual; else deudaQ2 += pagoMensual
     })
 
     const q1Compromisos = fijosQ1 + deudaQ1

@@ -5,6 +5,7 @@ import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { rangoQuincena, quincenaActual, calcNomina } from '../utils/constantes'
 import { fechaLocalISO } from '../utils/fecha'
+import { normalizarFrecuenciaPago } from '../utils/pagosProgramados'
 
 export function usePlanQuincena() {
   const { user } = useAuth()
@@ -49,7 +50,7 @@ export function usePlanQuincena() {
   const { data: deudas, loading: loadingD, refetch: refetchD } = useSupabaseQuery(async () => {
     const { data, error } = await supabase
       .from('deudas')
-      .select('id, nombre, pago_mensual, fecha_proximo_pago')
+      .select('*')
       .eq('user_id', user.id).eq('liquidada', false)
       .gt('pago_mensual', 0)
     if (error) throw error
@@ -110,27 +111,65 @@ export function usePlanQuincena() {
     return dia >= rango.diaInicio && dia <= rango.diaFin
   }
 
-  const findApartado = (tipo, origenId) =>
-    (apartados ?? []).find(a => a.tipo === tipo && a.origen_id === origenId)
+  const findApartado = (tipo, origenId, quincena = null) =>
+    (apartados ?? []).find(a =>
+      a.tipo === tipo
+      && a.origen_id === origenId
+      && (quincena == null || Number(a.quincena) === quincena)
+    )
 
   // ── Construir lista unificada de compromisos ──────────────────────────────
   const itemsFijos = (gastosFijos ?? [])
     .filter(g => incluirPorDia(g.dia_cobro))
-    .map(g => ({
-      key: `gf-${g.id}`, tipo: 'gasto_fijo', origen_id: g.id,
-      concepto: g.concepto, montoSugerido: Number(g.monto_previsto),
-      dia_cobro: g.dia_cobro, sinFecha: g.dia_cobro == null,
-      pagado: g.pagado, apartadoRow: findApartado('gasto_fijo', g.id) ?? null,
-    }))
+    .map(g => {
+      const quincena = quincenaDeDia(g.dia_cobro)
+      return {
+        key: `gf-${g.id}`, tipo: 'gasto_fijo', origen_id: g.id,
+        concepto: g.concepto, montoSugerido: Number(g.monto_previsto),
+        dia_cobro: g.dia_cobro, sinFecha: g.dia_cobro == null,
+        pagado: g.pagado, apartadoRow: findApartado('gasto_fijo', g.id, quincena) ?? null,
+      }
+    })
 
   const itemsDeudas = (deudas ?? [])
-    .filter(d => incluirPorDia(diaDe(d.fecha_proximo_pago)))
-    .map(d => ({
-      key: `de-${d.id}`, tipo: 'deuda', origen_id: d.id,
-      concepto: d.nombre, montoSugerido: Number(d.pago_mensual),
-      dia_cobro: diaDe(d.fecha_proximo_pago), sinFecha: d.fecha_proximo_pago == null,
-      pagado: false, apartadoRow: findApartado('deuda', d.id) ?? null,
-    }))
+    .flatMap(d => {
+      const frecuencia = normalizarFrecuenciaPago(d.frecuencia_pago)
+      const pago = Number(d.pago_mensual)
+      let restante = Number(d.saldo_actual)
+
+      if (frecuencia === 'quincenal') {
+        const dias = esMes
+          ? [15, Math.min(30, ultimoDia)]
+          : [quincenaSel === 1 ? 15 : Math.min(30, ultimoDia)]
+
+        return dias.map(dia => {
+          const quincena = quincenaDeDia(dia)
+          const montoSugerido = Math.min(pago, restante)
+          restante -= montoSugerido
+          return {
+            key: `de-${d.id}-q${quincena}`,
+            tipo: 'deuda',
+            origen_id: d.id,
+            concepto: esMes ? `${d.nombre} · ${quincena}ª quincena` : d.nombre,
+            montoSugerido,
+            dia_cobro: dia,
+            sinFecha: false,
+            pagado: false,
+            apartadoRow: findApartado('deuda', d.id, quincena) ?? null,
+          }
+        }).filter(item => item.montoSugerido > 0)
+      }
+
+      const dia = diaDe(d.fecha_proximo_pago)
+      if (!incluirPorDia(dia)) return []
+      const quincena = quincenaDeDia(dia)
+      return [{
+        key: `de-${d.id}`, tipo: 'deuda', origen_id: d.id,
+        concepto: d.nombre, montoSugerido: Math.min(pago, restante),
+        dia_cobro: dia, sinFecha: d.fecha_proximo_pago == null,
+        pagado: false, apartadoRow: findApartado('deuda', d.id, quincena) ?? null,
+      }]
+    })
 
   const itemsManuales = (apartados ?? [])
     .filter(a => a.tipo === 'ahorro' || a.tipo === 'otro')

@@ -10,7 +10,7 @@ import {
   estadoPorDias,
   fechaPorDia,
   inicioDia,
-  resolverVencimientoMensual,
+  resolverVencimientoProgramado,
 } from '../utils/pagosProgramados'
 
 export const formatoFechaRecordatorio = (fecha) =>
@@ -47,7 +47,7 @@ export function useRecordatorios() {
     if (!uid) return []
     const { data, error } = await supabase
       .from('deudas')
-      .select('id, nombre, saldo_actual, pago_mensual, fecha_proximo_pago, abonos_deuda(id, monto, fecha)')
+      .select('*, abonos_deuda(id, monto, fecha)')
       .eq('user_id', uid)
       .eq('liquidada', false)
     if (error) throw error
@@ -100,13 +100,14 @@ export function useRecordatorios() {
       ...(deudas ?? [])
         .filter(d => Number(d.saldo_actual ?? 0) > 0 && d.fecha_proximo_pago)
         .map(d => {
-          const vencimiento = resolverVencimientoMensual({
+          const vencimiento = resolverVencimientoProgramado({
             fechaBaseISO: d.fecha_proximo_pago,
+            frecuencia: d.frecuencia_pago,
             pagos: d.abonos_deuda,
             montoObjetivo: d.pago_mensual,
             saldoActual: d.saldo_actual,
             hoy,
-            ventanaInicio: 'mes',
+            ventanaInicio: 'periodo',
           })
           const fecha = vencimiento?.fecha
           const dias = vencimiento?.dias
@@ -126,7 +127,7 @@ export function useRecordatorios() {
       ...(creditos ?? [])
         .filter(c => Number(c.saldo_utilizado ?? 0) > 0 && c.fecha_pago)
         .map(c => {
-          const vencimiento = resolverVencimientoMensual({
+          const vencimiento = resolverVencimientoProgramado({
             diaPago: c.fecha_pago,
             mes,
             anio,

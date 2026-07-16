@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS public.deudas (
   saldo_original NUMERIC(12,2),
   saldo_actual NUMERIC(12,2) NOT NULL,
   pago_mensual NUMERIC(12,2),
+  frecuencia_pago TEXT NOT NULL DEFAULT 'mensual' CHECK (frecuencia_pago IN ('mensual','quincenal')),
   tasa_interes NUMERIC(5,2),
   fecha_proximo_pago DATE,
   notas TEXT,

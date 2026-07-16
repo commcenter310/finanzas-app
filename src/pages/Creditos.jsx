@@ -32,7 +32,7 @@ import {
 import { useCreditos } from '../hooks/useCreditos'
 import { calcularEstadoTarjeta, diasHastaDiaDelMes } from '../utils/calculos'
 import { formatMXN } from '../utils/constantes'
-import { resolverVencimientoMensual } from '../utils/pagosProgramados'
+import { resolverVencimientoProgramado } from '../utils/pagosProgramados'
 
 const FORM_VACIO = {
   nombre: '',
@@ -67,7 +67,7 @@ function getAlerta(credito) {
   const hoyFecha = new Date()
   const hoy = hoyFecha.getDate()
   const diasParaCorte = diasHastaDiaDelMes(credito.fecha_corte) ?? 99
-  const pagoProgramado = resolverVencimientoMensual({
+  const pagoProgramado = resolverVencimientoProgramado({
     diaPago: credito.fecha_pago,
     pagos: credito.pagos_credito,
     hoy: hoyFecha,

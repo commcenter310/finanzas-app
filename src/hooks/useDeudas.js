@@ -5,9 +5,13 @@ import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
 import { fechaLocalISO } from '../utils/fecha'
 import { crearOperacionPago, prepararPago, rpcPagoNoDisponible } from '../utils/pagos'
+import { montoMensualProgramado } from '../utils/pagosProgramados'
 
 const pagoError = (code, message = code) => ({ code, message })
 const valorBooleano = value => value === true || value === 'true'
+const faltaColumnaFrecuencia = error =>
+  ['PGRST204', '42703'].includes(error?.code)
+  || String(error?.message ?? '').includes('frecuencia_pago')
 
 const normalizarResultadoRpc = (data, montoSolicitado) => {
   const resultado = Array.isArray(data) ? data[0] : data
@@ -60,6 +64,7 @@ export function useDeudas() {
     saldo_original:     c.limite_credito ?? c.saldo_utilizado,
     saldo_actual:       Number(c.saldo_utilizado),
     pago_mensual:       null,
+    frecuencia_pago:    'mensual',
     tasa_interes:       null,
     fecha_pago_dia:      c.fecha_pago,
     fecha_proximo_pago: c.fecha_pago ? `día ${c.fecha_pago}` : null,
@@ -97,7 +102,12 @@ export function useDeudas() {
   // ── CRUD deudas manuales ─────────────────────────────────────────────────
   const agregar = async (datos) => {
     setSaving(true)
-    const { error } = await supabase.from('deudas').insert({ ...datos, user_id: user.id })
+    let { error } = await supabase.from('deudas').insert({ ...datos, user_id: user.id })
+    if (faltaColumnaFrecuencia(error) && datos.frecuencia_pago !== 'quincenal') {
+      const datosCompatibles = { ...datos }
+      delete datosCompatibles.frecuencia_pago
+      ;({ error } = await supabase.from('deudas').insert({ ...datosCompatibles, user_id: user.id }))
+    }
     setSaving(false)
     if (!error) invalidateDeudas()
     return { error }
@@ -259,15 +269,22 @@ export function useDeudas() {
 
   const actualizar = async (id, datos) => {
     setSaving(true)
-    const { error } = await supabase.from('deudas').update({
+    const payload = {
       nombre:             datos.nombre,
       saldo_actual:       Number(datos.saldo_actual),
       saldo_original:     Number(datos.saldo_original) || null,
       pago_mensual:       Number(datos.pago_mensual)   || null,
+      frecuencia_pago:    datos.frecuencia_pago === 'quincenal' ? 'quincenal' : 'mensual',
       tasa_interes:       Number(datos.tasa_interes)   || null,
       fecha_proximo_pago: datos.fecha_proximo_pago     || null,
       notas:              datos.notas                  || null,
-    }).eq('id', id)
+    }
+    let { error } = await supabase.from('deudas').update(payload).eq('id', id)
+    if (faltaColumnaFrecuencia(error) && payload.frecuencia_pago !== 'quincenal') {
+      const payloadCompatible = { ...payload }
+      delete payloadCompatible.frecuencia_pago
+      ;({ error } = await supabase.from('deudas').update(payloadCompatible).eq('id', id))
+    }
     setSaving(false)
     if (!error) invalidateDeudas()
     return { error }
@@ -280,7 +297,10 @@ export function useDeudas() {
 
   // ── Totales y calculadora (usando la lista unificada) ────────────────────
   const totalDeuda       = todasDeudas.reduce((s, d) => s + Number(d.saldo_actual), 0)
-  const totalPagoMensual = todasDeudas.reduce((s, d) => s + Number(d.pago_mensual ?? 0), 0)
+  const totalPagoMensual = todasDeudas.reduce(
+    (s, d) => s + montoMensualProgramado(d.pago_mensual, d.frecuencia_pago),
+    0
+  )
   const snowball  = [...todasDeudas].sort((a, b) => Number(a.saldo_actual) - Number(b.saldo_actual))
   const avalanche = [...todasDeudas].sort((a, b) => Number(b.tasa_interes ?? 0) - Number(a.tasa_interes ?? 0))
 

@@ -19,6 +19,33 @@ export const sumarMeses = (fecha, meses) => {
   return new Date(destino.getFullYear(), destino.getMonth(), Math.min(dia, ultimoDia))
 }
 
+export const normalizarFrecuenciaPago = (frecuencia) =>
+  frecuencia === 'quincenal' ? 'quincenal' : 'mensual'
+
+export const pagosPorMes = (frecuencia) =>
+  normalizarFrecuenciaPago(frecuencia) === 'quincenal' ? 2 : 1
+
+export const montoMensualProgramado = (monto, frecuencia) =>
+  Number(monto ?? 0) * pagosPorMes(frecuencia)
+
+export const esFechaQuincenalValida = (valor) => {
+  const fecha = typeof valor === 'string' ? parseFechaISO(valor) : valor
+  if (!(fecha instanceof Date) || Number.isNaN(fecha.getTime())) return false
+  const ultimoDia = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate()
+  return fecha.getDate() === 15 || fecha.getDate() === Math.min(30, ultimoDia)
+}
+
+export const siguienteFechaProgramada = (fecha, frecuencia = 'mensual') => {
+  if (normalizarFrecuenciaPago(frecuencia) !== 'quincenal') return sumarMeses(fecha, 1)
+
+  if (fecha.getDate() <= 15) {
+    const ultimoDia = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate()
+    return new Date(fecha.getFullYear(), fecha.getMonth(), Math.min(30, ultimoDia))
+  }
+
+  return new Date(fecha.getFullYear(), fecha.getMonth() + 1, 15)
+}
+
 export const diffDias = (fecha, desde = new Date()) =>
   Math.round((inicioDia(fecha) - inicioDia(desde)) / MS_DIA)
 
@@ -31,6 +58,11 @@ export const estadoPorDias = (dias) => {
 
 const inicioMes = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), 1)
 
+const inicioPeriodo = (fecha, frecuencia) => {
+  if (normalizarFrecuenciaPago(frecuencia) !== 'quincenal') return inicioMes(fecha)
+  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() <= 15 ? 1 : 16)
+}
+
 const normalizarPagos = (pagos) =>
   (pagos ?? [])
     .map(p => ({
@@ -40,11 +72,12 @@ const normalizarPagos = (pagos) =>
     .filter(p => p.fecha && p.monto > 0)
     .sort((a, b) => a.fecha - b.fecha)
 
-export function resolverVencimientoMensual({
+export function resolverVencimientoProgramado({
   fechaBaseISO = null,
   diaPago = null,
   mes = null,
   anio = null,
+  frecuencia = 'mensual',
   pagos = [],
   montoObjetivo = null,
   saldoActual = null,
@@ -68,7 +101,11 @@ export function resolverVencimientoMensual({
   const objetivoMensual = Number(montoObjetivo ?? 0)
 
   for (let i = 0; i < maxCiclos; i++) {
-    const inicioCobertura = ventanaInicio === 'mes' ? inicioMes(proximo) : sumarMeses(proximo, -1)
+    const inicioCobertura = ventanaInicio === 'mes'
+      ? inicioMes(proximo)
+      : ventanaInicio === 'periodo'
+      ? inicioPeriodo(proximo, frecuencia)
+      : sumarMeses(proximo, -1)
     const saldo = Number(saldoActual ?? 0)
     const objetivo = objetivoMensual > 0
       ? Math.min(objetivoMensual, saldo > 0 ? saldo : objetivoMensual)
@@ -108,7 +145,7 @@ export function resolverVencimientoMensual({
 
     ciclosPagados += 1
     montoAplicado += montoCiclo
-    proximo = sumarMeses(proximo, 1)
+    proximo = siguienteFechaProgramada(proximo, frecuencia)
   }
 
   const dias = diffDias(proximo, hoy)

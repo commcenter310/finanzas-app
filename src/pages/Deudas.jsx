@@ -39,7 +39,12 @@ import {
 } from '../components/commitments/CommitmentUI'
 import { useDeudas } from '../hooks/useDeudas'
 import { formatMXN } from '../utils/constantes'
-import { resolverVencimientoMensual } from '../utils/pagosProgramados'
+import {
+  esFechaQuincenalValida,
+  montoMensualProgramado,
+  normalizarFrecuenciaPago,
+  resolverVencimientoProgramado,
+} from '../utils/pagosProgramados'
 import { mensajeErrorPago } from '../utils/pagos'
 
 const FORM_VACIO = {
@@ -47,6 +52,7 @@ const FORM_VACIO = {
   saldo_original: '',
   saldo_actual: '',
   pago_mensual: '',
+  frecuencia_pago: 'mensual',
   tasa_interes: '',
   fecha_proximo_pago: '',
   notas: '',
@@ -63,14 +69,14 @@ const formatearMeses = meses => {
 }
 
 const mesesParaLiquidar = deuda => {
-  const pago = numero(deuda.pago_mensual)
+  const pago = montoMensualProgramado(deuda.pago_mensual, deuda.frecuencia_pago)
   const saldo = numero(deuda.saldo_actual)
   return pago > 0 && saldo > 0 ? Math.ceil(saldo / pago) : null
 }
 
 const estadoVencimiento = (deuda, hoy = new Date()) => {
   if (deuda.tipo === 'credito') {
-    return resolverVencimientoMensual({
+    return resolverVencimientoProgramado({
       diaPago: deuda.fecha_pago_dia,
       pagos: deuda.abonos_deuda,
       hoy,
@@ -78,13 +84,14 @@ const estadoVencimiento = (deuda, hoy = new Date()) => {
     })
   }
 
-  return resolverVencimientoMensual({
+  return resolverVencimientoProgramado({
     fechaBaseISO: deuda.fecha_proximo_pago,
+    frecuencia: deuda.frecuencia_pago,
     pagos: deuda.abonos_deuda,
     montoObjetivo: deuda.pago_mensual,
     saldoActual: deuda.saldo_actual,
     hoy,
-    ventanaInicio: 'mes',
+    ventanaInicio: 'periodo',
   })
 }
 
@@ -176,6 +183,7 @@ export default function Deudas() {
       saldo_actual: deuda.saldo_actual,
       saldo_original: deuda.saldo_original ?? '',
       pago_mensual: deuda.pago_mensual ?? '',
+      frecuencia_pago: normalizarFrecuenciaPago(deuda.frecuencia_pago),
       tasa_interes: deuda.tasa_interes ?? '',
       fecha_proximo_pago: deuda.fecha_proximo_pago ?? '',
       notas: deuda.notas ?? '',
@@ -191,16 +199,28 @@ export default function Deudas() {
 
   const handleGuardar = async () => {
     if (!form.nombre || !form.saldo_actual) return
+    if (form.frecuencia_pago === 'quincenal' && form.fecha_proximo_pago && !esFechaQuincenalValida(form.fecha_proximo_pago)) {
+      toast('Para una deuda quincenal, el próximo pago debe caer el día 15 o 30.', 'error')
+      return
+    }
+    let resultado
     if (editandoId) {
-      await actualizar(editandoId, form)
+      resultado = await actualizar(editandoId, form)
     } else {
-      await agregar({
+      resultado = await agregar({
         ...form,
         saldo_original: form.saldo_original || form.saldo_actual,
         saldo_actual: Number(form.saldo_actual),
         pago_mensual: Number(form.pago_mensual) || null,
         tasa_interes: Number(form.tasa_interes) || null,
       })
+    }
+    if (resultado?.error) {
+      const faltaMigracion = String(resultado.error.message ?? '').includes('frecuencia_pago')
+      toast(faltaMigracion
+        ? 'Falta habilitar la periodicidad de deudas en Supabase.'
+        : 'No se pudo guardar la deuda. Intenta de nuevo.', 'error')
+      return
     }
     cerrarForm()
   }
@@ -329,6 +349,7 @@ export default function Deudas() {
                 const pctUso = saldoOriginal > 0 ? (saldoActual / saldoOriginal) * 100 : 0
                 const expandido = expandida === deuda.id
                 const mesesDeuda = mesesParaLiquidar(deuda)
+                const frecuenciaPago = normalizarFrecuenciaPago(deuda.frecuencia_pago)
                 const esFoco = plan.foco?.id === deuda.id
                 const estadoPago = estadoVencimiento(deuda)
                 const tonoPago = tonoVencimiento(estadoPago)
@@ -342,13 +363,18 @@ export default function Deudas() {
                         <div className="commitment-debt-title">
                           <h3>{deuda.nombre}</h3>
                           {esTarjeta && <StatusPill tone="primary" icon={CreditCard}>Tarjeta</StatusPill>}
+                          {!esTarjeta && frecuenciaPago === 'quincenal' && (
+                            <StatusPill tone="primary" icon={CalendarClock}>15 y 30</StatusPill>
+                          )}
                           {esFoco && <StatusPill tone="positive" icon={Target}>Foco extra</StatusPill>}
                           {estadoPago?.ciclosPagados > 0 && estadoPago.dias >= 0 && (
                             <StatusPill tone="positive" icon={CheckCircle2}>Ciclo cubierto</StatusPill>
                           )}
                         </div>
                         <div className="commitment-debt-meta">
-                          {deuda.pago_mensual > 0 && <span><CircleDollarSign />{formatMXN(deuda.pago_mensual)}/mes</span>}
+                          {deuda.pago_mensual > 0 && (
+                            <span><CircleDollarSign />{formatMXN(deuda.pago_mensual)}/{frecuenciaPago === 'quincenal' ? 'quincena' : 'mes'}</span>
+                          )}
                           {deuda.tasa_interes > 0 && <span><TrendingDown />{deuda.tasa_interes}% de interés</span>}
                           {estadoPago && (
                             <StatusPill tone={tonoPago} icon={CalendarClock}>{textoVencimiento(deuda, estadoPago)}</StatusPill>
@@ -515,7 +541,7 @@ export default function Deudas() {
             <input type="number" min="0" className="input" placeholder="$0.00" value={form.saldo_original} onChange={event => setF('saldo_original', event.target.value)} />
           </div>
           <div className="commitment-form-field">
-            <label className="label">Pago mensual</label>
+            <label className="label">{form.frecuencia_pago === 'quincenal' ? 'Pago por quincena' : 'Pago mensual'}</label>
             <input type="number" min="0" className="input" placeholder="$0.00" value={form.pago_mensual} onChange={event => setF('pago_mensual', event.target.value)} />
           </div>
           <div className="commitment-form-field">
@@ -523,7 +549,19 @@ export default function Deudas() {
             <input type="number" min="0" step="0.01" className="input" placeholder="0%" value={form.tasa_interes} onChange={event => setF('tasa_interes', event.target.value)} />
           </div>
           <div className="commitment-form-field is-wide">
-            <label className="label">Próximo pago</label>
+            <label className="label">Frecuencia de pago</label>
+            <SegmentedControl
+              value={form.frecuencia_pago}
+              ariaLabel="Frecuencia de pago de la deuda"
+              onChange={value => setF('frecuencia_pago', value)}
+              options={[
+                { value: 'mensual', label: 'Mensual' },
+                { value: 'quincenal', label: 'Quincenal · 15 y 30' },
+              ]}
+            />
+          </div>
+          <div className="commitment-form-field is-wide">
+            <label className="label">{form.frecuencia_pago === 'quincenal' ? 'Próximo pago (15 o 30)' : 'Próximo pago'}</label>
             <DatePicker value={form.fecha_proximo_pago} onChange={value => setF('fecha_proximo_pago', value)} />
           </div>
           <div className="commitment-form-field is-wide">
