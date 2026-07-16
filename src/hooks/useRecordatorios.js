@@ -106,6 +106,7 @@ export function useRecordatorios() {
             montoObjetivo: d.pago_mensual,
             saldoActual: d.saldo_actual,
             hoy,
+            ventanaInicio: 'mes',
           })
           const fecha = vencimiento?.fecha
           const dias = vencimiento?.dias

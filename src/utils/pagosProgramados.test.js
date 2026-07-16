@@ -9,6 +9,7 @@ describe('resolverVencimientoMensual', () => {
       montoObjetivo: 1500,
       saldoActual: 18500,
       hoy: new Date(2026, 6, 8),
+      ventanaInicio: 'mes',
     })
 
     expect(r.fecha.getFullYear()).toBe(2026)
@@ -25,6 +26,7 @@ describe('resolverVencimientoMensual', () => {
       montoObjetivo: 1500,
       saldoActual: 18500,
       hoy: new Date(2026, 6, 8),
+      ventanaInicio: 'mes',
     })
 
     expect(r.fecha.getMonth()).toBe(5)
@@ -39,11 +41,48 @@ describe('resolverVencimientoMensual', () => {
       montoObjetivo: 1500,
       saldoActual: 18500,
       hoy: new Date(2026, 6, 8),
+      ventanaInicio: 'mes',
     })
 
     expect(r.fecha.getMonth()).toBe(7)
     expect(r.fecha.getDate()).toBe(15)
     expect(r.ciclosPagados).toBe(2)
+  })
+
+  it('no vuelve a contar el pago del mes anterior si la fecha guardada ya es el siguiente vencimiento', () => {
+    const r = resolverVencimientoMensual({
+      fechaBaseISO: '2026-07-15',
+      pagos: [
+        { fecha: '2026-06-17', monto: 653 },
+        { fecha: '2026-07-16', monto: 653 },
+      ],
+      montoObjetivo: 653,
+      saldoActual: 653,
+      hoy: new Date(2026, 6, 16),
+      ventanaInicio: 'mes',
+    })
+
+    expect(r.fecha.getFullYear()).toBe(2026)
+    expect(r.fecha.getMonth()).toBe(7)
+    expect(r.fecha.getDate()).toBe(15)
+    expect(r.dias).toBe(30)
+    expect(r.ciclosPagados).toBe(1)
+  })
+
+  it('no adelanta una fecha futura con un pago que pertenece al mes anterior', () => {
+    const r = resolverVencimientoMensual({
+      fechaBaseISO: '2026-08-15',
+      pagos: [{ fecha: '2026-07-16', monto: 653 }],
+      montoObjetivo: 653,
+      saldoActual: 653,
+      hoy: new Date(2026, 6, 16),
+      ventanaInicio: 'mes',
+    })
+
+    expect(r.fecha.getMonth()).toBe(7)
+    expect(r.fecha.getDate()).toBe(15)
+    expect(r.dias).toBe(30)
+    expect(r.ciclosPagados).toBe(0)
   })
 
   it('para tarjetas, un pago en el mes del vencimiento mueve el recordatorio al siguiente mes', () => {

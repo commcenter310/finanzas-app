@@ -84,6 +84,7 @@ const estadoVencimiento = (deuda, hoy = new Date()) => {
     montoObjetivo: deuda.pago_mensual,
     saldoActual: deuda.saldo_actual,
     hoy,
+    ventanaInicio: 'mes',
   })
 }
 
