@@ -399,6 +399,8 @@ export default function ControlGastos() {
                 onChange={setFiltroCategoria}
                 options={categorias.map(categoria => ({ value: categoria.id, label: categoria.nombre, icon: categoria.icono }))}
                 placeholder="Todas las categorías"
+                searchable
+                searchPlaceholder="Buscar categoría"
               />
               <FilterSelect
                 className="spending-filter-select"
@@ -568,6 +570,8 @@ export default function ControlGastos() {
               onChange={onCategoriaChange}
               options={categorias.map(categoria => ({ value: categoria.id, label: categoria.nombre, icon: categoria.icono }))}
               placeholder="Sin categoría"
+              searchable
+              searchPlaceholder="Buscar categoría"
             />
           </div>
           <div className="commitment-form-field">

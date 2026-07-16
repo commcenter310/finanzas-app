@@ -192,6 +192,8 @@ export default function GastosFijos() {
                   onChange={onCategoriaChange}
                   options={categorias.map(c => ({ value: c.id, label: c.nombre, icon: c.icono }))}
                   placeholder="Sin categoría"
+                  searchable
+                  searchPlaceholder="Buscar categoría"
                 />
               </div>
               <div>
