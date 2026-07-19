@@ -1,14 +1,22 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { ensureCategoria } from '../utils/categorias'
+import {
+  liberarOperacionId,
+  obtenerOperacionId,
+  rpcNoDisponible,
+} from '../utils/operaciones'
+
+const RPC_AHORROS = ['depositar_ahorro_atomico']
 
 export function useAhorros() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
+  const operacionesRef = useRef(new Map())
 
   const uid = user?.id
   // Los fondos de ahorro son PERMANENTES: no dependen del mes. Una meta creada
@@ -34,7 +42,17 @@ export function useAhorros() {
   }
 
   const invalidateAhorros = () => invalidateQueryCache(['ahorros:', 'plan:'])
-  const invalidateDeposito = () => invalidateQueryCache(['ahorros:', 'tx:', 'dash:', 'tendencias:', 'gastosVariables:', 'plan:'])
+  const invalidateDeposito = () => invalidateQueryCache([
+    'ahorros:',
+    'tx:',
+    'dash:',
+    'tendencias:',
+    'gastosVariables:',
+    'plan:',
+    'creditos:',
+    'deudas:',
+    'recordatorios:',
+  ])
 
   const agregar = async (datos) => {
     setSaving(true)
@@ -57,12 +75,12 @@ export function useAhorros() {
     invalidateAhorros()
   }
 
-  const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
-    setSaving(true)
+  const depositarCompatibilidad = async (ahorro, { monto, metodo_pago_id, fecha }) => {
     const montoNum = Number(monto)
     const catId = await ensureCategoria(user.id, { nombre: 'Ahorro', icono: '🐷', clasificacion: 'ahorro' })
-    const [{ error: errTx }, { error: errAhorro }] = await Promise.all([
-      supabase.from('transacciones').insert({
+    const { data: transaccion, error: errTx } = await supabase
+      .from('transacciones')
+      .insert({
         user_id:        user.id,
         descripcion:    `Ahorro: ${ahorro.concepto}`,
         monto:          montoNum,
@@ -71,14 +89,59 @@ export function useAhorros() {
         fecha,
         origen:         'ahorro',
         metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
-      }),
-      supabase.from('ahorros').update({
+      })
+      .select('id')
+      .single()
+    if (errTx) return { error: errTx, atomico: false }
+
+    const { error: errAhorro } = await supabase
+      .from('ahorros')
+      .update({
         monto_actual: Number(ahorro.monto_actual) + montoNum,
-      }).eq('id', ahorro.id),
-    ])
+      })
+      .eq('id', ahorro.id)
+    if (!errAhorro) return { atomico: false }
+
+    const { error: errorReversion } = await supabase
+      .from('transacciones')
+      .delete()
+      .eq('id', transaccion.id)
+    return {
+      error: errorReversion
+        ? { code: 'OPERACION_REVERSION_INCOMPLETA', message: 'OPERACION_REVERSION_INCOMPLETA' }
+        : errAhorro,
+      atomico: false,
+    }
+  }
+
+  const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
+    setSaving(true)
+    const datosOperacion = {
+      monto: Number(monto),
+      metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
+      fecha,
+    }
+    const key = `depositar:${ahorro.id}`
+    const operacionId = obtenerOperacionId(operacionesRef.current, key, datosOperacion)
+    const { error } = await supabase.rpc('depositar_ahorro_atomico', {
+      p_ahorro_id: ahorro.id,
+      p_monto: datosOperacion.monto,
+      p_metodo_pago_id: datosOperacion.metodo_pago_id,
+      p_fecha: fecha,
+      p_operacion_id: operacionId,
+    })
+    const resultado = !error
+      ? { atomico: true }
+      : rpcNoDisponible(error, RPC_AHORROS)
+      ? await depositarCompatibilidad(ahorro, { monto, metodo_pago_id, fecha })
+      : { error }
+
     setSaving(false)
-    if (!errTx && !errAhorro) invalidateDeposito()
-    return { error: errTx || errAhorro }
+    if (!resultado.error) {
+      liberarOperacionId(operacionesRef.current, key)
+      invalidateDeposito()
+    }
+    return resultado
   }
 
   return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }

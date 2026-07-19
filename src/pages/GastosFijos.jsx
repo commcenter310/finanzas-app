@@ -10,6 +10,7 @@ import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { fechaLocalISO } from '../utils/fecha'
+import { mensajeErrorOperacion } from '../utils/operaciones'
 
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '', metodo_pago_id: '' }
 
@@ -51,9 +52,21 @@ export default function GastosFijos() {
 
   const confirmarPago = async () => {
     if (!pagando) return
-    await togglePagado(pagando, { monto: formPago.monto, fecha: formPago.fecha })
+    const resultado = await togglePagado(pagando, { monto: formPago.monto, fecha: formPago.fecha })
+    if (resultado?.error) {
+      toast(mensajeErrorOperacion(resultado.error), 'error')
+      return
+    }
     toast('Pago registrado ✓', 'success')
     setPagando(null)
+  }
+
+  const desmarcarPago = async gasto => {
+    const resultado = await togglePagado(gasto)
+    toast(
+      resultado?.error ? mensajeErrorOperacion(resultado.error) : 'Pago desmarcado',
+      resultado?.error ? 'error' : 'info'
+    )
   }
 
   // Al elegir categoría, hereda su clasificación (necesidad/deseo/ahorro)
@@ -339,7 +352,8 @@ export default function GastosFijos() {
 
                   {/* Botón pago: al marcar pide monto/fecha reales; desmarcar es directo */}
                   <button
-                    onClick={() => g.pagado ? togglePagado(g) : abrirDialogoPago(g)}
+                    onClick={() => g.pagado ? desmarcarPago(g) : abrirDialogoPago(g)}
+                    disabled={saving}
                     className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-all"
                     style={g.pagado
                       ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }

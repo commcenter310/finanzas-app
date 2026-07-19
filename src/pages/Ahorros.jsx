@@ -8,6 +8,8 @@ import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { fechaLocalISO } from '../utils/fecha'
+import { useToast } from '../components/ui/Toast'
+import { mensajeErrorOperacion } from '../utils/operaciones'
 
 const CLASIF_OPTS = ['necesidad','deseo','ahorro']
 const FORM_VACIO = { concepto:'', monto_meta:'', monto_actual:'', clasificacion:'ahorro' }
@@ -17,6 +19,7 @@ const barColors = { necesidad: 'var(--necesidad)', deseo: 'var(--deseo)', ahorro
 const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: fechaLocalISO() }
 
 function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar, saving }) {
+  const toast = useToast()
   const [editando, setEditando] = useState(false)
   const [depositando, setDepositando] = useState(false)
   const [formDep, setFormDep] = useState(FORM_DEP_VACIO)
@@ -33,7 +36,13 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
   const handleDepositar = async () => {
     if (!formDep.monto) return
     const { error } = await onDepositar(ahorro, formDep)
-    if (!error) { setFormDep(FORM_DEP_VACIO); setDepositando(false) }
+    if (error) {
+      toast(mensajeErrorOperacion(error), 'error')
+      return
+    }
+    toast('Depósito registrado', 'success')
+    setFormDep(FORM_DEP_VACIO)
+    setDepositando(false)
   }
 
   if (editando) {

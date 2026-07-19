@@ -1,3 +1,5 @@
+import { crearOperacionId, rpcNoDisponible } from './operaciones'
+
 const redondearDinero = value => Math.round((Number(value) + Number.EPSILON) * 100) / 100
 
 export function prepararPago(monto, saldo) {
@@ -24,21 +26,11 @@ export function prepararPago(monto, saldo) {
 }
 
 export function crearOperacionPago() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
-    const random = Math.floor(Math.random() * 16)
-    const value = char === 'x' ? random : (random & 0x3) | 0x8
-    return value.toString(16)
-  })
+  return crearOperacionId()
 }
 
 export function rpcPagoNoDisponible(error) {
-  const code = String(error?.code ?? '')
-  const message = String(error?.message ?? '').toLowerCase()
-  return code === 'PGRST202'
-    || code === '42883'
-    || (message.includes('registrar_pago_deuda') && message.includes('schema cache'))
-    || (message.includes('registrar_pago_credito') && message.includes('schema cache'))
+  return rpcNoDisponible(error, ['registrar_pago_deuda', 'registrar_pago_credito'])
 }
 
 export function mensajeErrorPago(error) {

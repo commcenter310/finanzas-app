@@ -1,14 +1,26 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { finMesISO, inicioMesISO } from '../utils/fecha'
+import {
+  liberarOperacionId,
+  obtenerOperacionId,
+  rpcNoDisponible,
+} from '../utils/operaciones'
+
+const RPC_TRANSACCIONES = [
+  'registrar_transaccion_atomica',
+  'actualizar_transaccion_atomica',
+  'eliminar_transaccion_atomica',
+]
 
 export function useTransacciones() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
   const [saving, setSaving] = useState(false)
+  const operacionesRef = useRef(new Map())
 
   const inicioMes = inicioMesISO(mes, anio)
   const finMes = finMesISO(mes, anio)
@@ -18,7 +30,7 @@ export function useTransacciones() {
     const { data, error } = await supabase
       .from('transacciones')
       .select(`
-        id, descripcion, monto, clasificacion, fecha, origen, msi_meses, created_at,
+        id, descripcion, monto, categoria_id, metodo_pago_id, clasificacion, fecha, origen, msi_meses, created_at,
         categorias(id, nombre, icono, clasificacion),
         metodos_pago(id, nombre, credito_id)
       `)
@@ -61,28 +73,96 @@ export function useTransacciones() {
 
   const agregar = async (datos) => {
     setSaving(true)
-    const creditoId = metodos.find(m => m.id === Number(datos.metodo_pago_id))?.credito_id ?? null
-    const [{ data, error: errTx }, { error: errSaldo }] = await Promise.all([
-      supabase.from('transacciones').insert({ ...datos, user_id: user.id }).select().single(),
-      actualizarSaldoCredito(creditoId, Number(datos.monto)),
-    ])
+    const operacionId = obtenerOperacionId(operacionesRef.current, 'crear', datos)
+    const parametros = {
+      p_descripcion: datos.descripcion,
+      p_monto: Number(datos.monto),
+      p_categoria_id: datos.categoria_id ?? null,
+      p_clasificacion: datos.clasificacion,
+      p_metodo_pago_id: datos.metodo_pago_id ?? null,
+      p_fecha: datos.fecha,
+      p_origen: datos.origen ?? 'web',
+      p_msi_meses: datos.msi_meses ?? null,
+      p_operacion_id: operacionId,
+    }
+    const { data, error } = await supabase.rpc('registrar_transaccion_atomica', parametros)
+
+    let resultado
+    if (!error) {
+      resultado = { data: Array.isArray(data) ? data[0] : data, atomico: true }
+    } else if (rpcNoDisponible(error, RPC_TRANSACCIONES)) {
+      resultado = await agregarCompatibilidad(datos)
+    } else {
+      resultado = { error }
+    }
+
     setSaving(false)
-    if (!errTx && !errSaldo) invalidateTransacciones()
-    return { data, error: errTx || errSaldo }
+    if (!resultado.error) {
+      liberarOperacionId(operacionesRef.current, 'crear')
+      invalidateTransacciones()
+    }
+    return resultado
   }
 
-  const eliminar = async (transaccion) => {
+  const agregarCompatibilidad = async (datos) => {
+    const creditoId = metodos.find(m => m.id === Number(datos.metodo_pago_id))?.credito_id ?? null
+    const { data, error } = await supabase
+      .from('transacciones')
+      .insert({ ...datos, user_id: user.id })
+      .select()
+      .single()
+    if (error) return { error, atomico: false }
+
+    const { error: errorSaldo } = await actualizarSaldoCredito(creditoId, Number(datos.monto))
+    if (errorSaldo) {
+      const { error: errorReversion } = await supabase.from('transacciones').delete().eq('id', data.id)
+      return {
+        error: errorReversion
+          ? { code: 'OPERACION_REVERSION_INCOMPLETA', message: 'OPERACION_REVERSION_INCOMPLETA' }
+          : errorSaldo,
+        atomico: false,
+      }
+    }
+    return { data, atomico: false }
+  }
+
+  const eliminarCompatibilidad = async (transaccion) => {
+    if (['gastos_fijos', 'deuda', 'ahorro'].includes(transaccion.origen)) {
+      return {
+        error: { code: 'OPERACION_PROTEGIDA', message: 'OPERACION_PROTEGIDA' },
+        atomico: false,
+      }
+    }
     const metodoId = transaccion.metodos_pago?.id ?? transaccion.metodo_pago_id
     const creditoId = metodos.find(m => m.id === metodoId)?.credito_id ?? null
-    await Promise.all([
+    const [{ error }, { error: errorSaldo }] = await Promise.all([
       supabase.from('transacciones').delete().eq('id', transaccion.id),
       actualizarSaldoCredito(creditoId, -Number(transaccion.monto)),
     ])
-    invalidateTransacciones()
+    return { error: error || errorSaldo, atomico: false }
   }
 
-  const actualizar = async (id, nuevosDatos, transaccionOriginal) => {
-    setSaving(true)
+  const eliminar = async (transaccion) => {
+    const { error } = await supabase.rpc('eliminar_transaccion_atomica', {
+      p_transaccion_id: transaccion.id,
+    })
+    const resultado = !error
+      ? { atomico: true }
+      : rpcNoDisponible(error, RPC_TRANSACCIONES)
+      ? await eliminarCompatibilidad(transaccion)
+      : { error }
+
+    if (!resultado.error) invalidateTransacciones()
+    return resultado
+  }
+
+  const actualizarCompatibilidad = async (id, nuevosDatos, transaccionOriginal) => {
+    if (['gastos_fijos', 'deuda', 'ahorro'].includes(transaccionOriginal?.origen)) {
+      return {
+        error: { code: 'OPERACION_PROTEGIDA', message: 'OPERACION_PROTEGIDA' },
+        atomico: false,
+      }
+    }
     const metodoAntId = transaccionOriginal?.metodos_pago?.id ?? transaccionOriginal?.metodo_pago_id
     const creditoAnt  = metodos.find(m => m.id === metodoAntId)?.credito_id ?? null
     const creditoNvo  = metodos.find(m => m.id === Number(nuevosDatos.metodo_pago_id))?.credito_id ?? null
@@ -101,10 +181,31 @@ export function useTransacciones() {
       supabase.from('transacciones').update(nuevosDatos).eq('id', id),
       ...ajustes,
     ])
-    setSaving(false)
     const errorAjuste = resAjustes.find(r => r?.error)?.error ?? null
-    if (!error && !errorAjuste) invalidateTransacciones()
-    return { error: error || errorAjuste }
+    return { error: error || errorAjuste, atomico: false }
+  }
+
+  const actualizar = async (id, nuevosDatos, transaccionOriginal) => {
+    setSaving(true)
+    const { error } = await supabase.rpc('actualizar_transaccion_atomica', {
+      p_transaccion_id: id,
+      p_descripcion: nuevosDatos.descripcion,
+      p_monto: Number(nuevosDatos.monto),
+      p_categoria_id: nuevosDatos.categoria_id ?? null,
+      p_clasificacion: nuevosDatos.clasificacion,
+      p_metodo_pago_id: nuevosDatos.metodo_pago_id ?? null,
+      p_fecha: nuevosDatos.fecha,
+      p_msi_meses: nuevosDatos.msi_meses ?? null,
+    })
+    const resultado = !error
+      ? { atomico: true }
+      : rpcNoDisponible(error, RPC_TRANSACCIONES)
+      ? await actualizarCompatibilidad(id, nuevosDatos, transaccionOriginal)
+      : { error }
+
+    setSaving(false)
+    if (!resultado.error) invalidateTransacciones()
+    return resultado
   }
 
   const totales = {

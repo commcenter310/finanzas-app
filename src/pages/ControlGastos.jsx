@@ -43,6 +43,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useTransacciones } from '../hooks/useTransacciones'
+import { mensajeErrorOperacion } from '../utils/operaciones'
 import { CLASIF_OPTS, formatMXN, MESES } from '../utils/constantes'
 import { fechaLocalISO } from '../utils/fecha'
 
@@ -240,7 +241,7 @@ export default function ControlGastos() {
       cerrarForm()
       toast(editado ? 'Gasto actualizado' : 'Gasto guardado', 'success')
     } else {
-      toast('Error al guardar el gasto', 'error')
+      toast(mensajeErrorOperacion(result.error), 'error')
     }
   }
 
@@ -495,13 +496,15 @@ export default function ControlGastos() {
                             <Lock aria-hidden="true" />
                           </span>
                         ) : (
-                          <button type="button" onClick={() => abrirEditar(transaccion)} className="icon-button" aria-label={`Editar ${transaccion.descripcion}`} title="Editar">
-                            <Pencil aria-hidden="true" />
-                          </button>
+                          <>
+                            <button type="button" onClick={() => abrirEditar(transaccion)} className="icon-button" aria-label={`Editar ${transaccion.descripcion}`} title="Editar">
+                              <Pencil aria-hidden="true" />
+                            </button>
+                            <button type="button" onClick={() => setConfirmDelete(transaccion)} className="icon-button is-danger" aria-label={`Eliminar ${transaccion.descripcion}`} title="Eliminar">
+                              <Trash2 aria-hidden="true" />
+                            </button>
+                          </>
                         )}
-                        <button type="button" onClick={() => setConfirmDelete(transaccion)} className="icon-button is-danger" aria-label={`Eliminar ${transaccion.descripcion}`} title="Eliminar">
-                          <Trash2 aria-hidden="true" />
-                        </button>
                       </div>
                     </article>
                   )
@@ -616,10 +619,10 @@ export default function ControlGastos() {
         open={Boolean(confirmDelete)}
         titulo="¿Eliminar gasto?"
         descripcion={confirmDelete ? `${confirmDelete.descripcion} — ${confirmDelete.fecha}` : ''}
-        onConfirm={() => {
-          eliminar(confirmDelete)
+        onConfirm={async () => {
+          const resultado = await eliminar(confirmDelete)
           setConfirmDelete(null)
-          toast('Gasto eliminado', 'info')
+          toast(resultado?.error ? mensajeErrorOperacion(resultado.error) : 'Gasto eliminado', resultado?.error ? 'error' : 'info')
         }}
         onCancel={() => setConfirmDelete(null)}
       />
