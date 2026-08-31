@@ -19,26 +19,35 @@ export function useFloatingPosition({
     const rect = trigger.getBoundingClientRect()
     const panel = panelRef.current
     const panelWidth = width ?? Math.max(rect.width, panel?.offsetWidth ?? rect.width)
-    const measuredHeight = panel?.offsetHeight ?? maxHeight
+    // scrollHeight = altura NATURAL del contenido (aunque el panel esté recortado
+    // por un maxHeight previo). Usar offsetHeight aquí se retroalimentaba y dejaba
+    // el panel cada vez más pequeño (calendario mostrando solo el encabezado).
+    const naturalHeight = panel?.scrollHeight || maxHeight
+    const viewportH = window.innerHeight
 
-    const spaceBelow = window.innerHeight - rect.bottom - gap - margin
+    // Altura final: la deseada, pero nunca más alta que la pantalla
+    const height = Math.max(minHeight, Math.min(maxHeight, naturalHeight, viewportH - margin * 2))
+
+    const spaceBelow = viewportH - rect.bottom - gap - margin
     const spaceAbove = rect.top - gap - margin
-    const opensUp = measuredHeight > spaceBelow && spaceAbove > spaceBelow
-    const availableHeight = Math.min(maxHeight, Math.max(minHeight, opensUp ? spaceAbove : spaceBelow))
-    const floatingHeight = Math.min(measuredHeight, availableHeight)
+    // Abre hacia arriba solo si no cabe abajo y arriba hay más espacio
+    const opensUp = height > spaceBelow && spaceAbove > spaceBelow
 
     const maxLeft = Math.max(margin, window.innerWidth - panelWidth - margin)
     const left = Math.min(Math.max(margin, rect.left), maxLeft)
-    const top = opensUp
-      ? Math.max(margin, rect.top - gap - floatingHeight)
-      : Math.min(rect.bottom + gap, window.innerHeight - margin - floatingHeight)
+
+    // Posición preferida según la dirección, luego se acota para quedar siempre
+    // completo dentro de la pantalla (puede solaparse un poco con el trigger si
+    // el espacio es muy justo — preferible a recortar el contenido)
+    const preferredTop = opensUp ? rect.top - gap - height : rect.bottom + gap
+    const top = Math.min(Math.max(margin, preferredTop), viewportH - margin - height)
 
     setStyle({
       position: 'fixed',
       left,
       top,
       width: panelWidth,
-      maxHeight: availableHeight,
+      maxHeight: height,
     })
   }, [gap, margin, maxHeight, minHeight, panelRef, triggerRef, width])
 
