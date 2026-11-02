@@ -313,6 +313,13 @@ RETURNS VOID LANGUAGE SQL SECURITY DEFINER SET search_path = public AS $$
     AND auth.role() = 'service_role';
 $$;
 
+-- Supabase da EXECUTE a `anon` por privilegios por defecto; REVOKE FROM PUBLIC
+-- no lo quita, hay que nombrar el rol (ver supabase-permisos.sql).
+REVOKE ALL ON FUNCTION public.update_saldo_credito(INTEGER, NUMERIC) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.update_saldo_credito(INTEGER, NUMERIC) TO authenticated;
+REVOKE ALL ON FUNCTION public.update_saldo_credito_admin(UUID, INTEGER, NUMERIC) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.update_saldo_credito_admin(UUID, INTEGER, NUMERIC) TO service_role;
+
 -- ============================================
 -- TABLAS AGREGADAS DESPUÉS DEL SCHEMA ORIGINAL
 -- Reconstruidas a partir del código que las usa
@@ -578,8 +585,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
 
@@ -1088,12 +1095,12 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.eliminar_transaccion_atomica(INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.pagar_gasto_fijo_atomico(INTEGER, NUMERIC, DATE, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.desmarcar_gasto_fijo_atomico(INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.depositar_ahorro_atomico(INTEGER, NUMERIC, INTEGER, DATE, UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.eliminar_transaccion_atomica(INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.pagar_gasto_fijo_atomico(INTEGER, NUMERIC, DATE, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.desmarcar_gasto_fijo_atomico(INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.depositar_ahorro_atomico(INTEGER, NUMERIC, INTEGER, DATE, UUID) FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) TO authenticated;

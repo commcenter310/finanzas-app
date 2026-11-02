@@ -1,5 +1,32 @@
 -- Operaciones financieras atómicas e idempotentes.
--- Ejecutar una sola vez en Supabase > SQL Editor.
+-- Ejecutar en Supabase > SQL Editor. Es idempotente (se puede repetir) y va
+-- en una sola transacción: si algo falla, no se aplica nada.
+
+BEGIN;
+
+-- depositar_ahorro_atomico usa ON CONFLICT (user_id, nombre) en categorias.
+-- El esquema ya declara UNIQUE(user_id, nombre); esto solo lo garantiza en
+-- bases creadas con una versión anterior. Si hubiera categorías duplicadas,
+-- falla aquí con un error claro y no se aplica nada.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_index i
+    JOIN pg_class t ON t.oid = i.indrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'public' AND t.relname = 'categorias'
+      AND i.indisunique AND i.indpred IS NULL AND i.indnatts = 2
+      AND (
+        SELECT array_agg(a.attname::TEXT ORDER BY a.attname)
+        FROM pg_attribute a
+        WHERE a.attrelid = t.oid AND a.attnum = ANY (i.indkey)
+      ) = ARRAY['nombre', 'user_id']
+  ) THEN
+    CREATE UNIQUE INDEX categorias_user_id_nombre_uidx
+      ON public.categorias (user_id, nombre);
+  END IF;
+END $$;
 
 ALTER TABLE public.transacciones
   ADD COLUMN IF NOT EXISTS operacion_id UUID;
@@ -501,12 +528,12 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.eliminar_transaccion_atomica(INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.pagar_gasto_fijo_atomico(INTEGER, NUMERIC, DATE, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.desmarcar_gasto_fijo_atomico(INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.depositar_ahorro_atomico(INTEGER, NUMERIC, INTEGER, DATE, UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.eliminar_transaccion_atomica(INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.pagar_gasto_fijo_atomico(INTEGER, NUMERIC, DATE, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.desmarcar_gasto_fijo_atomico(INTEGER) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.depositar_ahorro_atomico(INTEGER, NUMERIC, INTEGER, DATE, UUID) FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION public.registrar_transaccion_atomica(TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, TEXT, INTEGER, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.actualizar_transaccion_atomica(INTEGER, TEXT, NUMERIC, INTEGER, TEXT, INTEGER, DATE, INTEGER) TO authenticated;
@@ -514,3 +541,5 @@ GRANT EXECUTE ON FUNCTION public.eliminar_transaccion_atomica(INTEGER) TO authen
 GRANT EXECUTE ON FUNCTION public.pagar_gasto_fijo_atomico(INTEGER, NUMERIC, DATE, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.desmarcar_gasto_fijo_atomico(INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.depositar_ahorro_atomico(INTEGER, NUMERIC, INTEGER, DATE, UUID) TO authenticated;
+
+COMMIT;

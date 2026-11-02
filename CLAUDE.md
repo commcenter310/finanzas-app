@@ -72,6 +72,8 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 `supabase-operaciones-atomicas.sql` (transactions, fixed-expense payment, savings deposits) is **not yet applied** in production, so `useTransacciones`, `useGastosFijos` and `useAhorros` currently run their `…Compatibilidad` fallbacks (non-atomic, multi-step with manual rollback). Once that script is applied, those fallbacks can be deleted the same way the debt-payment one was.
 
+RPC permissions: in Supabase, `REVOKE ... FROM PUBLIC` does **not** remove EXECUTE from `anon` (Supabase grants it explicitly via default privileges). Every `SECURITY DEFINER` function must `REVOKE ... FROM PUBLIC, anon` and `GRANT EXECUTE ... TO authenticated` (or `service_role` for `update_saldo_credito_admin`). `supabase-permisos.sql` re-applies the grants for existing functions and is safe to re-run.
+
 ### Design tokens
 
 `src/finni-tokens.css` defines all CSS custom properties (colors, surfaces, shadows). Tailwind is configured to use these tokens. Use `var(--token-name)` in inline styles; use Tailwind utility classes for spacing/layout.
