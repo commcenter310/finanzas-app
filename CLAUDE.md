@@ -35,6 +35,10 @@ Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/uti
 
 Every data hook uses `useSupabaseQuery(queryFn, deps)` — a thin wrapper that re-runs `queryFn` whenever `deps` change, returning `{ data, loading, error, refetch }`. Hooks call `refetch()` after mutations instead of updating local state.
 
+Shared catalogs live in `src/hooks/useCatalogos.js` — `useCategorias()`, `useMetodosPago()`, `useNominasLista()` — each with a single query and cacheKey (`categorias:`, `metodos:`, `nominas:`). Use them instead of querying those tables again inside a feature hook. `useSupabaseQuery` discards responses from superseded requests, so switching months quickly can't paint stale data.
+
+Month arithmetic goes through `src/utils/fecha.js` (`mesAnterior`, `mesSiguiente`, `mesAplicacionIngreso`, `ultimosMeses`, `inicioMesISO`/`finMesISO`); never use `setMonth(getMonth() - n)` on today's date (overflows on days 29–31). Per-classification sums use `sumarPorClasificacion` in `calculos.js`; any total that mixes `gastos_fijos` with `transacciones` must drop `origen = 'gastos_fijos'` transactions first (see `sumarTransaccionesSinFijos`).
+
 ### Income / balance logic (important)
 
 Income has **two distinct concepts** so a payday late in a month can fund the next:
