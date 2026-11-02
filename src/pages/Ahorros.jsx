@@ -29,7 +29,11 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
   const completado = ahorro.monto_actual >= ahorro.monto_meta && ahorro.monto_meta > 0
 
   const guardar = async () => {
-    await onActualizar(ahorro.id, { ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) })
+    const { error } = await onActualizar(ahorro.id, { ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) })
+    if (error) {
+      toast('No se pudo guardar la meta. Intenta de nuevo.', 'error')
+      return
+    }
     setEditando(false)
   }
 
@@ -151,7 +155,11 @@ export default function Ahorros() {
   const handleAgregar = async () => {
     if (!form.concepto) return
     if (!form.monto_meta || Number(form.monto_meta) <= 0) return
-    await agregar({ ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) || 0 })
+    const { error } = await agregar({ ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) || 0 })
+    if (error) {
+      toast('No se pudo crear la meta. Intenta de nuevo.', 'error')
+      return
+    }
     setForm(FORM_VACIO); setMostrarForm(false)
   }
 
