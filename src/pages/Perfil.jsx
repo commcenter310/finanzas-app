@@ -9,6 +9,7 @@ import { useNominasLista } from '../hooks/useCatalogos'
 import { useToast } from '../components/ui/Toast'
 import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import NominasSection from '../components/perfil/NominasSection'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
 import { CLASIF_OPTS } from '../utils/constantes'
@@ -230,6 +231,8 @@ export default function Perfil() {
     setEditandoMetodo(null)
     invalidateMetodos()
   }
+
+  const [metodoAEliminar, setMetodoAEliminar] = useState(null)
 
   const eliminarMetodo = async (id) => {
     if (!await guardar(supabase.from('metodos_pago').update({ activo: false }).eq('id', id), 'No se pudo eliminar. Intenta de nuevo.')) return
@@ -575,15 +578,15 @@ export default function Perfil() {
                         <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
                         <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => iniciarEditMetodo(m)}
+                      <div className="flex items-center gap-1 acciones-hover">
+                        <button onClick={() => iniciarEditMetodo(m)} aria-label={`Editar ${m.nombre}`} title="Editar"
                           className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
                           style={{ color: 'var(--fg-4)' }}
                           onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
                           onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => eliminarMetodo(m.id)}
+                        <button onClick={() => setMetodoAEliminar(m)} aria-label={`Eliminar ${m.nombre}`} title="Eliminar"
                           className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
                           style={{ color: 'var(--fg-4)' }}
                           onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
@@ -697,9 +700,9 @@ export default function Perfil() {
                       <span className={`badge badge-${c.clasificacion} flex-shrink-0`}>{c.clasificacion}</span>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      {/* Botón editar — visible en hover */}
-                      <button onClick={() => iniciarEditCat(c)}
-                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
+                      {/* Botón editar (ver .acciones-hover) */}
+                      <button onClick={() => iniciarEditCat(c)} aria-label={`Editar ${c.nombre}`} title="Editar"
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors acciones-hover"
                         style={{ color: 'var(--fg-4)' }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
@@ -720,6 +723,17 @@ export default function Perfil() {
 
         </div>
       </div>
+      <ConfirmModal
+        open={!!metodoAEliminar}
+        titulo={`¿Eliminar ${metodoAEliminar?.nombre ?? 'este método'}?`}
+        descripcion="Dejará de aparecer al registrar gastos. Los movimientos que ya hiciste con él no se borran."
+        onConfirm={async () => {
+          const id = metodoAEliminar.id
+          setMetodoAEliminar(null)
+          await eliminarMetodo(id)
+        }}
+        onCancel={() => setMetodoAEliminar(null)}
+      />
     </Layout>
   )
 }

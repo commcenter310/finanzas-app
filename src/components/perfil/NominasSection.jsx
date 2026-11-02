@@ -309,7 +309,7 @@ export default function NominasSection() {
                   {c.extraordinarioAnual > 0 && ` · +${formatMXN(c.extraordinarioAnual)} prestaciones`}
                 </p>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2 acciones-hover">
                 <button onClick={() => abrirEditar(n)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-primary-50 hover:text-primary-700 transition-colors">
                   <Pencil className="w-3.5 h-3.5" />

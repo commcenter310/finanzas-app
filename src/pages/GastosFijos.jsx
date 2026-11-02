@@ -103,13 +103,14 @@ export default function GastosFijos() {
     delete datos.metodo_pago_id
     if (form.metodo_pago_id) datos.metodo_pago_id = Number(form.metodo_pago_id)
     else if (editandoId) datos.metodo_pago_id = null // permitir quitarlo al editar
-    if (editandoId) {
-      await actualizar(editandoId, datos)
-      toast('Gasto fijo actualizado ✓', 'success')
-    } else {
-      await agregar({ ...datos, monto_actual: 0 })
-      toast('Gasto fijo guardado ✓', 'success')
+    const { error } = editandoId
+      ? await actualizar(editandoId, datos)
+      : await agregar({ ...datos, monto_actual: 0 })
+    if (error) {
+      toast('No se pudo guardar el gasto fijo. Intenta de nuevo.', 'error')
+      return
     }
+    toast(editandoId ? 'Gasto fijo actualizado ✓' : 'Gasto fijo guardado ✓', 'success')
     cerrarForm()
   }
 

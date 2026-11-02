@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { useNominasLista } from './useCatalogos'
-import { rangoQuincena, quincenaActual, calcNomina } from '../utils/constantes'
-import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
-import { normalizarFrecuenciaPago } from '../utils/pagosProgramados'
+import { quincenaActual } from '../utils/constantes'
+import { fechaLocalISO } from '../utils/fecha'
+import { construirPlanQuincena, rangoPeriodo } from '../utils/planificacion'
 
 export function usePlanQuincena() {
   const { user } = useAuth()
@@ -18,11 +18,7 @@ export function usePlanQuincena() {
 
   const esMes = modo === 'mes'
   const quincenaSel = modo === 'q2' ? 2 : 1
-  const ultimoDia = new Date(anio, mes, 0).getDate()
-
-  const rango = esMes
-    ? { diaInicio: 1, diaFin: ultimoDia, fechaInicio: inicioMesISO(mes, anio), fechaFin: finMesISO(mes, anio) }
-    : rangoQuincena(mes, anio, quincenaSel)
+  const rango = rangoPeriodo(modo, mes, anio)
 
   // ── Ingresos del periodo (automático por fecha_recepcion) ─────────────────
   const { data: ingresos, loading: loadingIng, error: errIng, refetch: refetchIng } = useSupabaseQuery(async () => {
@@ -82,107 +78,19 @@ export function usePlanQuincena() {
 
   const invalidateApartados = () => invalidateQueryCache(['plan:', 'dash:'])
 
-  // ── Ingreso del periodo ───────────────────────────────────────────────────
-  const ingresoRegistrado = (ingresos ?? []).reduce(
-    (s, i) => s + Number(i.monto_presupuesto || i.monto_actual || 0), 0)
-  const ingresoRecibido = (ingresos ?? []).reduce(
-    (s, i) => s + Number(i.monto_actual || 0), 0)
-
-  // Estimado desde nómina principal (ordinario, sin prestaciones extraordinarias)
-  const ordinarioMensual = nominaPrincipal ? calcNomina(nominaPrincipal).ingresoOrdinarioAnual / 12 : 0
-  const ingresoEstimado = esMes ? ordinarioMensual : ordinarioMensual / 2
-
-  const usandoEstimado = ingresoRegistrado === 0 && ingresoEstimado > 0
-  const ingresoEsperado = ingresoRegistrado > 0 ? ingresoRegistrado : ingresoEstimado
-
-  // ── Helpers de rango / quincena destino ───────────────────────────────────
-  const diaDe = (fechaStr) => fechaStr ? Number(fechaStr.split('-')[2]) : null
-  const quincenaDeDia = (dia) => dia != null ? (dia <= 15 ? 1 : 2) : quincenaActual()
-  const quincenaManual = esMes ? quincenaActual() : quincenaSel
-
-  const incluirPorDia = (dia) => {
-    if (esMes) return true
-    if (dia == null) return quincenaSel === 1
-    return dia >= rango.diaInicio && dia <= rango.diaFin
-  }
-
-  const findApartado = (tipo, origenId, quincena = null) =>
-    (apartados ?? []).find(a =>
-      a.tipo === tipo
-      && a.origen_id === origenId
-      && (quincena == null || Number(a.quincena) === quincena)
-    )
-
-  // ── Construir lista unificada de compromisos ──────────────────────────────
-  const itemsFijos = (gastosFijos ?? [])
-    .filter(g => incluirPorDia(g.dia_cobro))
-    .map(g => {
-      const quincena = quincenaDeDia(g.dia_cobro)
-      return {
-        key: `gf-${g.id}`, tipo: 'gasto_fijo', origen_id: g.id,
-        concepto: g.concepto, montoSugerido: Number(g.monto_previsto),
-        dia_cobro: g.dia_cobro, sinFecha: g.dia_cobro == null,
-        pagado: g.pagado, apartadoRow: findApartado('gasto_fijo', g.id, quincena) ?? null,
-      }
-    })
-
-  const itemsDeudas = (deudas ?? [])
-    .flatMap(d => {
-      const frecuencia = normalizarFrecuenciaPago(d.frecuencia_pago)
-      const pago = Number(d.pago_mensual)
-      let restante = Number(d.saldo_actual)
-
-      if (frecuencia === 'quincenal') {
-        const dias = esMes
-          ? [15, Math.min(30, ultimoDia)]
-          : [quincenaSel === 1 ? 15 : Math.min(30, ultimoDia)]
-
-        return dias.map(dia => {
-          const quincena = quincenaDeDia(dia)
-          const montoSugerido = Math.min(pago, restante)
-          restante -= montoSugerido
-          return {
-            key: `de-${d.id}-q${quincena}`,
-            tipo: 'deuda',
-            origen_id: d.id,
-            concepto: esMes ? `${d.nombre} · ${quincena}ª quincena` : d.nombre,
-            montoSugerido,
-            dia_cobro: dia,
-            sinFecha: false,
-            pagado: false,
-            apartadoRow: findApartado('deuda', d.id, quincena) ?? null,
-          }
-        }).filter(item => item.montoSugerido > 0)
-      }
-
-      const dia = diaDe(d.fecha_proximo_pago)
-      if (!incluirPorDia(dia)) return []
-      const quincena = quincenaDeDia(dia)
-      return [{
-        key: `de-${d.id}`, tipo: 'deuda', origen_id: d.id,
-        concepto: d.nombre, montoSugerido: Math.min(pago, restante),
-        dia_cobro: dia, sinFecha: d.fecha_proximo_pago == null,
-        pagado: false, apartadoRow: findApartado('deuda', d.id, quincena) ?? null,
-      }]
-    })
-
-  const itemsManuales = (apartados ?? [])
-    .filter(a => a.tipo === 'ahorro' || a.tipo === 'otro')
-    .map(a => ({
-      key: `ap-${a.id}`, tipo: a.tipo, origen_id: a.origen_id,
-      concepto: a.concepto, montoSugerido: Number(a.monto),
-      dia_cobro: null, sinFecha: true, pagado: false, apartadoRow: a,
-    }))
-
-  const compromisos = [...itemsFijos, ...itemsDeudas, ...itemsManuales]
-
-  // ── Totales ───────────────────────────────────────────────────────────────
-  const totalCompromisos = compromisos.reduce(
-    (s, c) => s + Number(c.apartadoRow ? c.apartadoRow.monto : c.montoSugerido), 0)
-  const totalApartado = (apartados ?? []).filter(a => a.apartado).reduce((s, a) => s + Number(a.monto), 0)
-  const libreSiApartasTodo = ingresoEsperado - totalCompromisos
-  const disponibleAhora    = ingresoEsperado - totalApartado
-  const countApartados = (apartados ?? []).filter(a => a.apartado).length
+  // ── Compromisos y totales del periodo (lógica pura en utils/planificacion) ─
+  const {
+    ingresoEsperado, ingresoRecibido, ingresoEstimado, usandoEstimado,
+    quincenaDeDia, quincenaManual,
+    compromisos, totalCompromisos, totalApartado, libreSiApartasTodo, disponibleAhora, countApartados,
+  } = construirPlanQuincena({
+    modo, mes, anio,
+    ingresos: ingresos ?? [],
+    gastosFijos: gastosFijos ?? [],
+    deudas: deudas ?? [],
+    apartados: apartados ?? [],
+    nominaPrincipal,
+  })
 
   // ── Acciones ──────────────────────────────────────────────────────────────
   const apartar = async (item, montoOverride) => {

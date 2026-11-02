@@ -499,6 +499,18 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /* Botones de acción de una fila (editar/borrar): con mouse aparecen al pasar
+     por encima o al enfocar con teclado; en pantallas táctiles, donde no hay
+     hover, siempre están visibles. El contenedor de la fila lleva .group. */
+  .acciones-hover {
+    transition: opacity 150ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .group:not(:hover):not(:focus-within) .acciones-hover {
+      opacity: 0;
+    }
+  }
+
   .chart-tooltip {
     min-width: 172px;
     padding: 10px 12px;
