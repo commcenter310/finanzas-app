@@ -142,6 +142,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
 
 export default function Ahorros() {
   const { ahorros, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar } = useAhorros()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -248,7 +249,12 @@ export default function Ahorros() {
         open={!!confirmDelete}
         titulo="¿Eliminar meta de ahorro?"
         descripcion="Esta acción no se puede deshacer."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const id = confirmDelete
+          setConfirmDelete(null)
+          const { error } = await eliminar(id)
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
     </Layout>

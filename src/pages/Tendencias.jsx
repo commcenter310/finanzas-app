@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { supabase } from '../lib/supabase'
 import { MESES, formatMXN } from '../utils/constantes'
-import { finMesISO, inicioMesISO } from '../utils/fecha'
+import { finMesISO, inicioMesISO, ultimosMeses } from '../utils/fecha'
+import { calcularTotalGastos, sumarPorClasificacion } from '../utils/calculos'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, CartesianGrid, ReferenceLine
@@ -25,86 +26,76 @@ export default function Tendencias() {
   const periodoKey = `${hoy.getFullYear()}-${hoy.getMonth() + 1}`
 
   const { data: tendencias, loading } = useSupabaseQuery(async () => {
-    const resultados = []
-    for (let i = 5; i >= 0; i--) {
-      const fecha = new Date()
-      fecha.setMonth(fecha.getMonth() - i)
-      const m = fecha.getMonth() + 1
-      const a = fecha.getFullYear()
-      const inicio = inicioMesISO(m, a)
-      const fin    = finMesISO(m, a)
-
+    const meses = ultimosMeses(6)
+    // Los 6 meses se consultan en paralelo
+    return Promise.all(meses.map(async ({ mes: m, anio: a }, idx) => {
       const [{ data: ing }, { data: tx }, { data: fijos }] = await Promise.all([
         supabase.from('ingresos').select('monto_actual').eq('user_id', user.id).eq('mes', m).eq('anio', a),
-        supabase.from('transacciones').select('monto, clasificacion').eq('user_id', user.id).gte('fecha', inicio).lte('fecha', fin),
-        supabase.from('gastos_fijos').select('monto_actual').eq('user_id', user.id).eq('mes', m).eq('anio', a),
+        supabase.from('transacciones').select('monto, clasificacion, origen').eq('user_id', user.id)
+          .gte('fecha', inicioMesISO(m, a)).lte('fecha', finMesISO(m, a)),
+        supabase.from('gastos_fijos').select('monto_actual, clasificacion').eq('user_id', user.id).eq('mes', m).eq('anio', a),
       ])
-
-      const totalFijos = fijos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0
-      const totalTx    = tx?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
-
-      resultados.push({
-        mes:       i === 0 ? `${MESES[m - 1].slice(0, 3)}*` : MESES[m - 1].slice(0, 3),
-        esActual:  i === 0,
-        ingresos:  ing?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0,
-        gastos:    totalFijos + totalTx,
-        necesidad: tx?.filter(t => t.clasificacion === 'necesidad').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-        deseo:     tx?.filter(t => t.clasificacion === 'deseo').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-        ahorro:    tx?.filter(t => t.clasificacion === 'ahorro').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-      })
-    }
-    return resultados
+      // Igual que el Dashboard: las transacciones auto-generadas al pagar un
+      // gasto fijo no se suman otra vez (ya cuentan como gasto fijo)
+      const txSinFijos = (tx ?? []).filter(t => t.origen !== 'gastos_fijos')
+      const esActual = idx === meses.length - 1
+      return {
+        mes:      `${MESES[m - 1].slice(0, 3)}${esActual ? '*' : ''}`,
+        esActual,
+        ingresos: ing?.reduce((s, i) => s + Number(i.monto_actual), 0) ?? 0,
+        gastos:   calcularTotalGastos(fijos, txSinFijos).totalGastos,
+        ...sumarPorClasificacion(fijos, txSinFijos),
+      }
+    }))
   }, [uid, periodoKey], `tendencias:finanzas:${uid}:${periodoKey}`)
 
   // Utilización de crédito por mes
   const { data: creditoTendencia, loading: loadingCredito } = useSupabaseQuery(async () => {
-    // Obtener métodos de pago que sean tarjetas de crédito vinculadas
-    const { data: metodos } = await supabase.from('metodos_pago')
-      .select('id, nombre, credito_id').eq('user_id', user.id).eq('activo', true).not('credito_id', 'is', null)
-    // Obtener límite total de crédito
-    const { data: creditos } = await supabase.from('creditos')
-      .select('id, nombre, limite_credito').eq('user_id', user.id).eq('activo', true)
+    // Métodos de pago vinculados a una tarjeta y límite total de crédito
+    const [{ data: metodos }, { data: creditos }] = await Promise.all([
+      supabase.from('metodos_pago')
+        .select('id, nombre, credito_id').eq('user_id', user.id).eq('activo', true).not('credito_id', 'is', null),
+      supabase.from('creditos')
+        .select('id, nombre, limite_credito').eq('user_id', user.id).eq('activo', true),
+    ])
 
     const totalLimite = creditos?.reduce((s, c) => s + Number(c.limite_credito ?? 0), 0) ?? 0
-    if (!totalLimite || !metodos?.length) return []
+    if (!totalLimite || !metodos?.length) return null
 
-    const metodoIds = metodos.map(m => m.id)
-    const resultados = []
+    // Una sola consulta para los 6 meses; se agrupa por mes en memoria
+    const meses = ultimosMeses(6)
+    const primero = meses[0]
+    const ultimo = meses[meses.length - 1]
+    const { data: txRango } = await supabase.from('transacciones')
+      .select('monto, metodo_pago_id, fecha').eq('user_id', user.id)
+      .gte('fecha', inicioMesISO(primero.mes, primero.anio))
+      .lte('fecha', finMesISO(ultimo.mes, ultimo.anio))
+      .in('metodo_pago_id', metodos.map(m => m.id))
 
-    for (let i = 5; i >= 0; i--) {
-      const fecha = new Date()
-      fecha.setMonth(fecha.getMonth() - i)
-      const m = fecha.getMonth() + 1
-      const a = fecha.getFullYear()
+    const datos = meses.map(({ mes: m, anio: a }) => {
       const inicio = inicioMesISO(m, a)
-      const fin    = finMesISO(m, a)
-
-      const { data: tx } = await supabase.from('transacciones')
-        .select('monto, metodo_pago_id').eq('user_id', user.id)
-        .gte('fecha', inicio).lte('fecha', fin)
-        .in('metodo_pago_id', metodoIds)
-
-      const gastado = tx?.reduce((s, t) => s + Number(t.monto), 0) ?? 0
-      const pct = totalLimite > 0 ? (gastado / totalLimite) * 100 : 0
+      const fin = finMesISO(m, a)
+      const tx = (txRango ?? []).filter(t => t.fecha >= inicio && t.fecha <= fin)
+      const gastado = tx.reduce((s, t) => s + Number(t.monto), 0)
 
       // Desglose por tarjeta
-      const desglose = creditos.reduce((acc, c) => {
-        const metodo = metodos.find(m => m.credito_id === c.id)
-        if (!metodo) return acc
-        const gastadoCard = tx?.filter(t => t.metodo_pago_id === metodo.id).reduce((s, t) => s + Number(t.monto), 0) ?? 0
+      const desglose = {}
+      for (const c of creditos) {
+        const metodo = metodos.find(mp => mp.credito_id === c.id)
+        if (!metodo) continue
+        const gastadoCard = tx.filter(t => t.metodo_pago_id === metodo.id).reduce((s, t) => s + Number(t.monto), 0)
         const pctCard = c.limite_credito > 0 ? (gastadoCard / Number(c.limite_credito)) * 100 : 0
-        acc[c.nombre] = parseFloat(pctCard.toFixed(1))
-        return acc
-      }, {})
+        desglose[c.nombre] = parseFloat(pctCard.toFixed(1))
+      }
 
-      resultados.push({
-        mes:    MESES[m - 1].slice(0, 3),
-        pctTotal: parseFloat(pct.toFixed(1)),
+      return {
+        mes: MESES[m - 1].slice(0, 3),
+        pctTotal: parseFloat(((gastado / totalLimite) * 100).toFixed(1)),
         gastado,
         ...desglose,
-      })
-    }
-    return { datos: resultados, creditos: creditos ?? [], totalLimite }
+      }
+    })
+    return { datos, creditos, totalLimite }
   }, [uid, periodoKey], `tendencias:creditos:${uid}:${periodoKey}`)
 
   const nombresTarjetas = creditoTendencia?.creditos

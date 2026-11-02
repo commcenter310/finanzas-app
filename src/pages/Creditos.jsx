@@ -19,6 +19,7 @@ import Layout from '../components/layout/Layout'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import EmptyState from '../components/ui/EmptyState'
 import ErrorState from '../components/ui/ErrorState'
+import { useToast } from '../components/ui/Toast'
 import {
   CommitmentHero,
   CommitmentNav,
@@ -240,6 +241,7 @@ export default function Creditos() {
     eliminar,
     vincularMetodo,
   } = useCreditos()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -337,15 +339,20 @@ export default function Creditos() {
       limite_credito: form.limite_credito ? Number(form.limite_credito) : null,
       saldo_utilizado: form.saldo_utilizado ? Number(form.saldo_utilizado) : 0,
     }
-    let creditoId = editando
-    if (editando) {
-      await actualizar(editando, datos)
-    } else {
-      const { data } = await agregar(datos)
-      creditoId = data?.id
+    const { data, error: errorGuardar } = editando
+      ? await actualizar(editando, datos)
+      : await agregar(datos)
+    if (errorGuardar) {
+      toast('No se pudo guardar la tarjeta. Intenta de nuevo.', 'error')
+      return
     }
+    const creditoId = editando ?? data?.id
     if (creditoId) {
-      await vincularMetodo(creditoId, form.metodo_vinculado_id ? Number(form.metodo_vinculado_id) : null)
+      const { error: errorVinculo } = await vincularMetodo(
+        creditoId,
+        form.metodo_vinculado_id ? Number(form.metodo_vinculado_id) : null
+      )
+      if (errorVinculo) toast('La tarjeta se guardó, pero no se pudo vincular el método de pago.', 'error')
     }
     cerrarForm()
   }
@@ -518,7 +525,12 @@ export default function Creditos() {
         open={!!confirmDelete}
         titulo="¿Eliminar tarjeta?"
         descripcion="La tarjeta dejará de aparecer en Créditos y Deudas. Esta acción no se puede deshacer."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const id = confirmDelete
+          setConfirmDelete(null)
+          const { error } = await eliminar(id)
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
     </Layout>

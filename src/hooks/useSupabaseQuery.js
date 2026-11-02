@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   getQueryCache,
   hasQueryCache,
@@ -23,18 +23,23 @@ export function useSupabaseQuery(queryFn, deps = [], cacheKey = null) {
   const [data, setData] = useState(tieneCache ? getQueryCache(cacheKey) : null)
   const [loading, setLoading] = useState(!tieneCache)
   const [error, setError] = useState(null)
+  // Id de la última petición lanzada: si el usuario cambia de mes rápido, una
+  // respuesta vieja que llegue tarde no debe pisar los datos del mes nuevo.
+  const ultimaPeticionRef = useRef(0)
 
   const fetch = useCallback(async ({ silent = false } = {}) => {
+    const peticion = ++ultimaPeticionRef.current
     if (!silent) setLoading(true)
     setError(null)
     try {
       const result = await queryFn()
-      setData(result)
+      // El cache se guarda siempre: la key corresponde a esta petición
       setQueryCache(cacheKey, result)
+      if (peticion === ultimaPeticionRef.current) setData(result)
     } catch (err) {
-      setError(err.message)
+      if (peticion === ultimaPeticionRef.current) setError(err.message)
     } finally {
-      setLoading(false)
+      if (peticion === ultimaPeticionRef.current) setLoading(false)
     }
   // deps es dinamico por diseno (hook generico de consultas)
   // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo

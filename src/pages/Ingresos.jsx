@@ -9,21 +9,16 @@ import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
-import { fechaLocalISO } from '../utils/fecha'
+import { fechaLocalISO, mesAnterior, mesAplicacionIngreso, mesSiguiente } from '../utils/fecha'
 
 // ── Selector de mes al que aplica el ingreso ─────────────────────────────────
 // Muestra 3 opciones: mes anterior / mes actual / mes siguiente
 function MesPicker({ mesVal, anioVal, onChange, mesBase, anioBase }) {
-  const prevMes  = mesBase === 1  ? 12 : mesBase - 1
-  const prevAnio = mesBase === 1  ? anioBase - 1 : anioBase
-  const nextMes  = mesBase === 12 ? 1  : mesBase + 1
-  const nextAnio = mesBase === 12 ? anioBase + 1 : anioBase
-
   const opciones = [
-    { mes: prevMes,  anio: prevAnio,  short: MESES[prevMes - 1].slice(0, 3) },
-    { mes: mesBase,  anio: anioBase,  short: MESES[mesBase - 1].slice(0, 3)  },
-    { mes: nextMes,  anio: nextAnio,  short: MESES[nextMes - 1].slice(0, 3) },
-  ]
+    mesAnterior(mesBase, anioBase),
+    { mes: mesBase, anio: anioBase },
+    mesSiguiente(mesBase, anioBase),
+  ].map(op => ({ ...op, short: MESES[op.mes - 1].slice(0, 3) }))
 
   return (
     <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
@@ -188,6 +183,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
 export default function Ingresos() {
   const { mes, anio } = useMes()
   const { ingresos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar } = useIngresos()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const hoy = fechaLocalISO()
   const [form, setForm] = useState({ concepto: '', monto_presupuesto: '', monto_actual: '', fecha_recepcion: hoy, notas: '', mes, anio })
@@ -196,9 +192,8 @@ export default function Ingresos() {
   // Al cambiar la fecha, auto-sugerir mes siguiente si el día es ≥ 25
   // (nómina del día 30 cubre gastos del 30 al 15 del mes siguiente)
   const handleFechaChange = (v) => {
-    const [anioF, mesF, diaStr] = v.split('-').map(Number)
-    const mesAplica  = diaStr >= 25 ? (mesF === 12 ? 1  : mesF + 1)  : mesF
-    const anioAplica = diaStr >= 25 ? (mesF === 12 ? anioF + 1 : anioF) : anioF
+    if (!v) return setForm(f => ({ ...f, fecha_recepcion: '' }))
+    const { mes: mesAplica, anio: anioAplica } = mesAplicacionIngreso(v)
     setForm(f => ({ ...f, fecha_recepcion: v, mes: mesAplica, anio: anioAplica }))
   }
 
@@ -374,7 +369,12 @@ export default function Ingresos() {
         open={!!confirmDelete}
         titulo="¿Eliminar ingreso?"
         descripcion="Esta acción no se puede deshacer."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const id = confirmDelete
+          setConfirmDelete(null)
+          const { error } = await eliminar(id)
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
     </Layout>

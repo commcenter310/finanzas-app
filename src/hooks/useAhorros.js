@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
+import { useMetodosPago } from './useCatalogos'
 import { ensureCategoria } from '../utils/categorias'
 import {
   liberarOperacionId,
@@ -30,11 +31,7 @@ export function useAhorros() {
     return data ?? []
   }, [uid], `ahorros:${uid}`)
 
-  const { data: metodos } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
-    return data ?? []
-  }, [uid], `metodos:${uid}`)
+  const metodos = useMetodosPago()
 
   const totales = {
     meta:   ahorros?.reduce((s, a) => s + Number(a.monto_meta), 0) ?? 0,
@@ -71,8 +68,9 @@ export function useAhorros() {
   }
 
   const eliminar = async (id) => {
-    await supabase.from('ahorros').delete().eq('id', id)
-    invalidateAhorros()
+    const { error } = await supabase.from('ahorros').delete().eq('id', id)
+    if (!error) invalidateAhorros()
+    return { error }
   }
 
   const depositarCompatibilidad = async (ahorro, { monto, metodo_pago_id, fecha }) => {
@@ -144,5 +142,5 @@ export function useAhorros() {
     return resultado
   }
 
-  return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
+  return { ahorros: ahorros ?? [], metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
 }

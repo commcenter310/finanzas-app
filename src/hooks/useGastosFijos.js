@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { fechaLocalISO } from '../utils/fecha'
+import { useCategorias, useMetodosPago } from './useCatalogos'
+import { fechaLocalISO, mesAnterior } from '../utils/fecha'
 import {
   liberarOperacionId,
   obtenerOperacionId,
@@ -34,24 +35,12 @@ export function useGastosFijos() {
     return data ?? []
   }, [user?.id, mes, anio])
 
-  const { data: categorias } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('categorias')
-      .select('id, nombre, icono, clasificacion')
-      .eq('user_id', user.id).eq('activa', true)
-      .order('clasificacion').order('nombre')
-    return data ?? []
-  }, [user?.id])
-
-  const { data: metodos } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo, credito_id')
-      .eq('user_id', user.id).eq('activo', true)
-    return data ?? []
-  }, [user?.id], `metodos:${user?.id}`)
+  const categorias = useCategorias()
+  const metodos = useMetodosPago()
 
   // Ajuste atómico del saldo de la tarjeta cuando el gasto fijo se paga con TDC
   const ajustarSaldoCredito = (metodoPagoId, delta) => {
-    const creditoId = metodos?.find(m => m.id === Number(metodoPagoId))?.credito_id
+    const creditoId = metodos.find(m => m.id === Number(metodoPagoId))?.credito_id
     if (!creditoId) return Promise.resolve()
     return supabase.rpc('update_saldo_credito', { p_credito_id: creditoId, p_delta: delta })
   }
@@ -228,24 +217,28 @@ export function useGastosFijos() {
   }
 
   const eliminar = async (id) => {
-    await supabase.from('gastos_fijos').delete().eq('id', id)
-    refetch()
-    invalidateGastosFijos()
+    const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
+    if (!error) {
+      refetch()
+      invalidateGastosFijos()
+    }
+    return { error }
   }
 
   const copiarRecurrentes = async () => {
-    const mesAnterior  = mes === 1 ? 12 : mes - 1
-    const anioAnterior = mes === 1 ? anio - 1 : anio
+    const prev = mesAnterior(mes, anio)
 
-    const { data: recurrentes } = await supabase
+    const { data: recurrentes, error: errorLectura } = await supabase
       .from('gastos_fijos')
       .select('concepto, categoria_id, monto_previsto, clasificacion, es_recurrente, dia_cobro, metodo_pago_id')
-      .eq('user_id', user.id).eq('mes', mesAnterior).eq('anio', anioAnterior).eq('es_recurrente', true)
+      .eq('user_id', user.id).eq('mes', prev.mes).eq('anio', prev.anio).eq('es_recurrente', true)
 
+    if (errorLectura) return { copiados: 0, error: errorLectura }
     if (!recurrentes?.length) return { copiados: 0 }
 
     const nuevos = recurrentes.map(r => ({ ...r, user_id: user.id, mes, anio, pagado: false, monto_actual: 0 }))
-    await supabase.from('gastos_fijos').insert(nuevos)
+    const { error } = await supabase.from('gastos_fijos').insert(nuevos)
+    if (error) return { copiados: 0, error }
     refetch()
     invalidateGastosFijos()
     return { copiados: recurrentes.length }
@@ -264,5 +257,5 @@ export function useGastosFijos() {
     })
   }, [loading, gastos, mes, anio]) // eslint-disable-line
 
-  return { gastos: gastos ?? [], categorias: categorias ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
+  return { gastos: gastos ?? [], categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, copiarRecurrentes, autoCopiadosCount }
 }

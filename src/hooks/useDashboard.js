@@ -2,10 +2,12 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
-import { finMesISO, inicioMesISO } from '../utils/fecha'
+import { useNominasLista } from './useCatalogos'
+import { finMesISO, inicioMesISO, mesAnterior } from '../utils/fecha'
 import {
   calcularTotalGastos, calcularSaldoAnterior, calcularSaldoArrastrado,
   calcularPorAsignar, calcularGastosHormiga, calcularIngresoEsperado, calcularProyeccion,
+  sumarPorClasificacion,
 } from '../utils/calculos'
 
 export function useDashboard() {
@@ -16,8 +18,7 @@ export function useDashboard() {
   const finMes = finMesISO(mes, anio)
 
   // Mes anterior (para calcular saldo arrastrado)
-  const mesPrev  = mes === 1 ? 12 : mes - 1
-  const anioPrev = mes === 1 ? anio - 1 : anio
+  const { mes: mesPrev, anio: anioPrev } = mesAnterior(mes, anio)
   const inicioMesPrev = inicioMesISO(mesPrev, anioPrev)
   const finMesPrev    = finMesISO(mesPrev, anioPrev)
 
@@ -109,10 +110,7 @@ export function useDashboard() {
   }, [uid, mes, anio], `dash:presupuestos:${uid}:${mes}:${anio}`)
 
   // Nóminas configuradas → ingreso esperado del mes (para comparar vs registrado)
-  const { data: nominas } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('nominas').select('*').eq('user_id', user.id)
-    return data ?? []
-  }, [uid], `nominas:${uid}`)
+  const { nominas } = useNominasLista()
 
   // Dinero ya apartado en Plan de Quincena este mes (informativo en Dashboard)
   const { data: apartados } = useSupabaseQuery(async () => {
@@ -133,20 +131,7 @@ export function useDashboard() {
   const saldoArrastrado = calcularSaldoArrastrado(saldoAnterior)
   const porAsignar      = calcularPorAsignar({ totalIngresos, totalGastos, saldoAnterior })
 
-  const necesidad = [
-    ...gastosFijos?.filter(g => g.clasificacion === 'necesidad') ?? [],
-    ...txSinFijos.filter(t => t.clasificacion === 'necesidad'),
-  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
-
-  const deseo = [
-    ...gastosFijos?.filter(g => g.clasificacion === 'deseo') ?? [],
-    ...txSinFijos.filter(t => t.clasificacion === 'deseo'),
-  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
-
-  const ahorro = [
-    ...gastosFijos?.filter(g => g.clasificacion === 'ahorro') ?? [],
-    ...txSinFijos.filter(t => t.clasificacion === 'ahorro'),
-  ].reduce((s, g) => s + Number(g.monto_actual ?? g.monto), 0)
+  const { necesidad, deseo, ahorro } = sumarPorClasificacion(gastosFijos, txSinFijos)
 
   const gastosPorCategoria = transacciones?.reduce((acc, t) => {
     const cat = t.categorias?.nombre ?? 'Sin categoría'

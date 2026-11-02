@@ -291,8 +291,9 @@ export function useDeudas() {
   }
 
   const eliminar = async (id) => {
-    await supabase.from('deudas').delete().eq('id', id)
-    invalidateDeudas()
+    const { error } = await supabase.from('deudas').delete().eq('id', id)
+    if (!error) invalidateDeudas()
+    return { error }
   }
 
   // ── Totales y calculadora (usando la lista unificada) ────────────────────

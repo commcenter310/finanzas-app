@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
+import { useNominasLista } from './useCatalogos'
 import { rangoQuincena, quincenaActual, calcNomina } from '../utils/constantes'
-import { fechaLocalISO } from '../utils/fecha'
+import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
 import { normalizarFrecuenciaPago } from '../utils/pagosProgramados'
 
 export function usePlanQuincena() {
@@ -18,10 +19,9 @@ export function usePlanQuincena() {
   const esMes = modo === 'mes'
   const quincenaSel = modo === 'q2' ? 2 : 1
   const ultimoDia = new Date(anio, mes, 0).getDate()
-  const mm = String(mes).padStart(2, '0')
 
   const rango = esMes
-    ? { diaInicio: 1, diaFin: ultimoDia, fechaInicio: `${anio}-${mm}-01`, fechaFin: `${anio}-${mm}-${String(ultimoDia).padStart(2, '0')}` }
+    ? { diaInicio: 1, diaFin: ultimoDia, fechaInicio: inicioMesISO(mes, anio), fechaFin: finMesISO(mes, anio) }
     : rangoQuincena(mes, anio, quincenaSel)
 
   // ── Ingresos del periodo (automático por fecha_recepcion) ─────────────────
@@ -66,14 +66,9 @@ export function usePlanQuincena() {
   }, [uid], `plan:ahorros:${uid}`)
 
   // ── Nómina principal (para estimar ingreso si no hay ingresos registrados) ─
-  const { data: nominaPrincipal } = useSupabaseQuery(async () => {
-    const { data } = await supabase
-      .from('nominas').select('*')
-      .eq('user_id', user.id)
-      .order('es_principal', { ascending: false })
-      .limit(1)
-    return data?.[0] ?? null
-  }, [uid], `plan:nomina:${uid}`)
+  // La lista viene ordenada con la principal primero
+  const { nominas } = useNominasLista()
+  const nominaPrincipal = nominas[0] ?? null
 
   // ── Apartados persistidos del periodo ─────────────────────────────────────
   const { data: apartados, loading: loadingA, refetch } = useSupabaseQuery(async () => {

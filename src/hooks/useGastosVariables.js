@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { contextoMes, finMesISO, inicioMesISO } from '../utils/fecha'
+import { contextoMes, finMesISO, inicioMesISO, mesAnterior } from '../utils/fecha'
 
 export function useGastosVariables() {
   const { user } = useAuth()
@@ -60,11 +60,10 @@ export function useGastosVariables() {
   }
 
   const copiarDelMesAnterior = async () => {
-    const mesAnt  = mes === 1 ? 12 : mes - 1
-    const anioAnt = mes === 1 ? anio - 1 : anio
+    const prev = mesAnterior(mes, anio)
     const { data: anterior } = await supabase
       .from('presupuestos').select('categoria_id, monto_limite')
-      .eq('user_id', user.id).eq('mes', mesAnt).eq('anio', anioAnt)
+      .eq('user_id', user.id).eq('mes', prev.mes).eq('anio', prev.anio)
     if (!anterior?.length) return { copiados: 0 }
     await supabase.from('presupuestos').upsert(
       anterior.map(p => ({ ...p, mes, anio, user_id: user.id })),

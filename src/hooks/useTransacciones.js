@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
+import { useCategorias, useMetodosPago } from './useCatalogos'
 import { finMesISO, inicioMesISO } from '../utils/fecha'
+import { sumarPorClasificacion } from '../utils/calculos'
 import {
   liberarOperacionId,
   obtenerOperacionId,
@@ -42,19 +44,8 @@ export function useTransacciones() {
     return data ?? []
   }, [uid, mes, anio], `tx:lista:${uid}:${mes}:${anio}`)
 
-  const { data: categorias } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('categorias')
-      .select('id, nombre, icono, clasificacion')
-      .eq('user_id', user.id).eq('activa', true)
-      .order('clasificacion').order('nombre')
-    return data ?? []
-  }, [uid], `categorias:${uid}`)
-
-  const { data: metodos } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
-    return data ?? []
-  }, [uid], `metodos:${uid}`)
+  const categorias = useCategorias()
+  const metodos = useMetodosPago()
 
   const actualizarSaldoCredito = (creditoId, delta) => {
     if (!creditoId) return Promise.resolve({ error: null })
@@ -209,11 +200,9 @@ export function useTransacciones() {
   }
 
   const totales = {
-    total:     transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-    necesidad: transacciones?.filter(t => t.clasificacion === 'necesidad').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-    deseo:     transacciones?.filter(t => t.clasificacion === 'deseo').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
-    ahorro:    transacciones?.filter(t => t.clasificacion === 'ahorro').reduce((s, t) => s + Number(t.monto), 0) ?? 0,
+    total: transacciones?.reduce((s, t) => s + Number(t.monto), 0) ?? 0,
+    ...sumarPorClasificacion(transacciones),
   }
 
-  return { transacciones: transacciones ?? [], categorias: categorias ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar }
+  return { transacciones: transacciones ?? [], categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar }
 }

@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
+import { useNominasLista } from './useCatalogos'
 import { calcNomina, parseMesesPrima, MESES } from '../utils/constantes'
 import { normalizarFrecuenciaPago } from '../utils/pagosProgramados'
 
@@ -11,10 +12,7 @@ export function useProyeccion(horizonte = 12) {
   const { mes, anio } = useMes()
   const uid = user?.id
 
-  const { data: nominas, loading: loadingN } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('nominas').select('*').eq('user_id', user.id)
-    return data ?? []
-  }, [uid], `proyeccion:nominas:${uid}`)
+  const { nominas, loading: loadingN } = useNominasLista()
 
   // Plantilla de gastos fijos recurrentes (se repiten cada mes)
   const { data: fijosRec, loading: loadingF } = useSupabaseQuery(async () => {

@@ -1,23 +1,13 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
+import { invalidateQueryCache } from './useSupabaseQuery'
+import { useNominasLista } from './useCatalogos'
 
 export function useNominas() {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
-  const uid = user?.id
-
-  const { data: nominas, loading } = useSupabaseQuery(async () => {
-    const { data, error } = await supabase
-      .from('nominas')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('es_principal', { ascending: false })
-      .order('created_at', { ascending: true })
-    if (error) throw error
-    return data ?? []
-  }, [uid], `nominas:${uid}`)
+  const { nominas, loading } = useNominasLista()
 
   const invalidateNominas = () => invalidateQueryCache(['nominas:', 'dash:', 'plan:', 'proyeccion:'])
 
@@ -52,5 +42,5 @@ export function useNominas() {
     return { error }
   }
 
-  return { nominas: nominas ?? [], loading, saving, agregar, actualizar, eliminar }
+  return { nominas, loading, saving, agregar, actualizar, eliminar }
 }
