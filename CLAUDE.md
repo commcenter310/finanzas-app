@@ -13,6 +13,8 @@ npm test           # Run unit tests once (Vitest)
 npm run test:watch # Run tests in watch mode
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, lint, tests, build, an import check of `api/webhook.js` and `npm audit --omit=dev` on every push and on PRs to `main`.
+
 Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/utils/constantes.js` (`calcNomina`), covered by `*.test.js` next to them. Run `npm test` and `npm run build` before committing changes to calculations.
 
 ## Architecture
