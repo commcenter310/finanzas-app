@@ -6,6 +6,5 @@ export function mensajeErrorPago(error) {
   if (source.includes('PAGO_SIN_SALDO')) return 'Esta cuenta ya no tiene saldo pendiente.'
   if (source.includes('PAGO_NO_ENCONTRADO')) return 'No encontramos la cuenta. Actualiza la página e intenta de nuevo.'
   if (source.includes('PAGO_CONCURRENCIA')) return 'El saldo cambió mientras pagabas. La información ya fue actualizada.'
-  if (source.includes('PAGO_REVERSION_INCOMPLETA')) return 'El pago requiere revisión. Actualiza antes de volver a intentarlo.'
   return 'No pudimos registrar el pago. Intenta de nuevo.'
 }

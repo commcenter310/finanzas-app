@@ -70,7 +70,7 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 ### Atomic RPCs: production status
 
-`supabase-operaciones-atomicas.sql` (transactions, fixed-expense payment, savings deposits) is **not yet applied** in production, so `useTransacciones`, `useGastosFijos` and `useAhorros` currently run their `…Compatibilidad` fallbacks (non-atomic, multi-step with manual rollback). Once that script is applied, those fallbacks can be deleted the same way the debt-payment one was.
+`supabase-pagos-atomicos.sql`, `supabase-operaciones-atomicas.sql` and `supabase-permisos.sql` are all applied in production (verified Nov 2026). Every money-moving write goes through an RPC — `registrar/actualizar/eliminar_transaccion_atomica`, `pagar/desmarcar_gasto_fijo_atomico`, `depositar_ahorro_atomico`, `registrar_pago_deuda/credito` — which updates the row and the linked credit-card balance in one DB transaction. There are **no client-side fallbacks**: never write `transacciones` + `creditos.saldo_utilizado` in separate client calls. Creates pass an `operacion_id` (`obtenerOperacionId` in `utils/operaciones.js`) so a retried submit is not duplicated. Error codes raised by the RPCs (`OPERACION_*`, `PAGO_*`) are translated by `mensajeErrorOperacion` / `mensajeErrorPago`.
 
 RPC permissions: in Supabase, `REVOKE ... FROM PUBLIC` does **not** remove EXECUTE from `anon` (Supabase grants it explicitly via default privileges). Every `SECURITY DEFINER` function must `REVOKE ... FROM PUBLIC, anon` and `GRANT EXECUTE ... TO authenticated` (or `service_role` for `update_saldo_credito_admin`). `supabase-permisos.sql` re-applies the grants for existing functions and is safe to re-run.
 

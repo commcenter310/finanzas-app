@@ -5,13 +5,7 @@ import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { useCategorias, useMetodosPago } from './useCatalogos'
 import { fechaLocalISO, mesAnterior } from '../utils/fecha'
-import {
-  liberarOperacionId,
-  obtenerOperacionId,
-  rpcNoDisponible,
-} from '../utils/operaciones'
-
-const RPC_GASTOS_FIJOS = ['pagar_gasto_fijo_atomico', 'desmarcar_gasto_fijo_atomico']
+import { liberarOperacionId, obtenerOperacionId } from '../utils/operaciones'
 
 export function useGastosFijos() {
   const { user } = useAuth()
@@ -37,13 +31,6 @@ export function useGastosFijos() {
 
   const categorias = useCategorias()
   const metodos = useMetodosPago()
-
-  // Ajuste atómico del saldo de la tarjeta cuando el gasto fijo se paga con TDC
-  const ajustarSaldoCredito = (metodoPagoId, delta) => {
-    const creditoId = metodos.find(m => m.id === Number(metodoPagoId))?.credito_id
-    if (!creditoId) return Promise.resolve()
-    return supabase.rpc('update_saldo_credito', { p_credito_id: creditoId, p_delta: delta })
-  }
 
   const totales = {
     previsto: gastos?.reduce((s, g) => s + Number(g.monto_previsto), 0) ?? 0,
@@ -93,86 +80,13 @@ export function useGastosFijos() {
     return { error }
   }
 
-  const togglePagadoCompatibilidad = async (gasto, opciones = {}) => {
-    const hoy = fechaLocalISO()
-    if (!gasto.pagado) {
-      const montoReal = opciones.monto != null && opciones.monto !== '' ? Number(opciones.monto) : Number(gasto.monto_previsto)
-      const fechaReal = opciones.fecha || hoy
-      // Marcar como pagado → crear transacción en Control de Gastos
-      // (con el método del gasto fijo: si es tarjeta, alimenta su ciclo de corte)
-      const txPayload = {
-        user_id: user.id,
-        descripcion: gasto.concepto,
-        monto: montoReal,
-        clasificacion: gasto.clasificacion,
-        categoria_id: gasto.categoria_id ?? null,
-        fecha: fechaReal,
-        origen: 'gastos_fijos',
-      }
-      if (gasto.metodo_pago_id) txPayload.metodo_pago_id = gasto.metodo_pago_id
-      const { data: tx, error: errorTx } = await supabase
-        .from('transacciones')
-        .insert(txPayload)
-        .select('id')
-        .single()
-      if (errorTx) return { error: errorTx, atomico: false }
-
-      const ajusteSaldo = await ajustarSaldoCredito(gasto.metodo_pago_id, montoReal)
-      const errorSaldo = ajusteSaldo?.error ?? null
-      if (errorSaldo) {
-        const { error: errorReversion } = await supabase.from('transacciones').delete().eq('id', tx.id)
-        return {
-          error: errorReversion
-            ? { code: 'OPERACION_REVERSION_INCOMPLETA', message: 'OPERACION_REVERSION_INCOMPLETA' }
-            : errorSaldo,
-          atomico: false,
-        }
-      }
-
-      const { error } = await supabase.from('gastos_fijos').update({
-        pagado: true,
-        monto_actual: montoReal,
-        fecha_pago: fechaReal,
-        transaccion_id: tx?.id ?? null,
-      }).eq('id', gasto.id)
-      if (error) {
-        const [reversionTx, reversionSaldo] = await Promise.all([
-          supabase.from('transacciones').delete().eq('id', tx.id),
-          ajustarSaldoCredito(gasto.metodo_pago_id, -montoReal),
-        ])
-        if (reversionTx?.error || reversionSaldo?.error) {
-          return {
-            error: { code: 'OPERACION_REVERSION_INCOMPLETA', message: 'OPERACION_REVERSION_INCOMPLETA' },
-            atomico: false,
-          }
-        }
-      }
-      return { error, atomico: false }
-    } else {
-      // Desmarcar → borrar la transacción vinculada y revertir el saldo de la TDC
-      const [borrado, ajusteSaldo] = await Promise.all([
-        gasto.transaccion_id
-          ? supabase.from('transacciones').delete().eq('id', gasto.transaccion_id)
-          : Promise.resolve(),
-        ajustarSaldoCredito(gasto.metodo_pago_id, -Number(gasto.monto_actual || 0)),
-      ])
-      const errorPrevio = borrado?.error || ajusteSaldo?.error
-      if (errorPrevio) return { error: errorPrevio, atomico: false }
-
-      const { error } = await supabase.from('gastos_fijos').update({
-        pagado: false,
-        monto_actual: 0,
-        fecha_pago: null,
-        transaccion_id: null,
-      }).eq('id', gasto.id)
-      return { error, atomico: false }
-    }
-  }
-
+  // Pagar crea la transacción en Control de Gastos (con el método del gasto
+  // fijo: si es tarjeta, suma a su saldo) y marca el gasto; desmarcar lo
+  // revierte. Ambas van por RPC en una sola transacción de la base de datos.
   // opciones: { monto, fecha } — monto/fecha REALES del pago (si difieren de lo previsto)
   const togglePagado = async (gasto, opciones = {}) => {
     setSaving(true)
-    let resultado
+    let error
 
     if (!gasto.pagado) {
       const monto = opciones.monto != null && opciones.monto !== ''
@@ -185,35 +99,23 @@ export function useGastosFijos() {
         fecha,
         metodo_pago_id: gasto.metodo_pago_id ?? null,
       })
-      const { error } = await supabase.rpc('pagar_gasto_fijo_atomico', {
+      ;({ error } = await supabase.rpc('pagar_gasto_fijo_atomico', {
         p_gasto_id: gasto.id,
         p_monto: monto,
         p_fecha: fecha,
         p_operacion_id: operacionId,
-      })
-      resultado = !error
-        ? { atomico: true }
-        : rpcNoDisponible(error, RPC_GASTOS_FIJOS)
-        ? await togglePagadoCompatibilidad(gasto, opciones)
-        : { error }
-      if (!resultado.error) liberarOperacionId(operacionesPagoRef.current, key)
+      }))
+      if (!error) liberarOperacionId(operacionesPagoRef.current, key)
     } else {
-      const { error } = await supabase.rpc('desmarcar_gasto_fijo_atomico', {
-        p_gasto_id: gasto.id,
-      })
-      resultado = !error
-        ? { atomico: true }
-        : rpcNoDisponible(error, RPC_GASTOS_FIJOS)
-        ? await togglePagadoCompatibilidad(gasto, opciones)
-        : { error }
+      ;({ error } = await supabase.rpc('desmarcar_gasto_fijo_atomico', { p_gasto_id: gasto.id }))
     }
 
     setSaving(false)
-    if (!resultado.error) {
+    if (!error) {
       refetch()
       invalidatePagoGastoFijo()
     }
-    return resultado
+    return { error }
   }
 
   const eliminar = async (id) => {

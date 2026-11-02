@@ -4,7 +4,6 @@ import {
   liberarOperacionId,
   mensajeErrorOperacion,
   obtenerOperacionId,
-  rpcNoDisponible,
 } from './operaciones'
 
 describe('operaciones idempotentes', () => {
@@ -31,15 +30,9 @@ describe('operaciones idempotentes', () => {
 })
 
 describe('errores de operaciones', () => {
-  it('detecta RPC pendientes de instalar sin ocultar errores reales', () => {
-    expect(rpcNoDisponible({ code: 'PGRST202' }, ['registrar_transaccion_atomica'])).toBe(true)
-    expect(rpcNoDisponible({ message: 'registrar_transaccion_atomica was not found in the schema cache' }, ['registrar_transaccion_atomica'])).toBe(true)
-    expect(rpcNoDisponible({ code: '42501' }, ['registrar_transaccion_atomica'])).toBe(false)
-  })
-
   it('convierte errores tecnicos en mensajes accionables', () => {
     expect(mensajeErrorOperacion({ message: 'OPERACION_PROTEGIDA' })).toContain('módulo de origen')
-    expect(mensajeErrorOperacion({ code: 'OPERACION_REVERSION_INCOMPLETA' })).toContain('revertirse')
+    expect(mensajeErrorOperacion({ code: 'OPERACION_METODO_INVALIDO' })).toContain('método de pago')
     expect(mensajeErrorOperacion({ message: 'desconocido' })).toContain('No pudimos')
   })
 })

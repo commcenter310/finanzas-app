@@ -55,13 +55,6 @@ async function clearEstado(telefono) {
   if (error) console.error('Error limpiando estado WhatsApp:', error.message)
 }
 
-function rpcNoExiste(error) {
-  const msg = error?.message ?? ''
-  return error?.code === '42883' ||
-    /function .* does not exist/i.test(msg) ||
-    /could not find the function/i.test(msg)
-}
-
 async function ajustarSaldoCredito(userId, creditoId, delta) {
   if (!creditoId || !Number.isFinite(Number(delta)) || Number(delta) === 0) return { error: null }
 
@@ -70,26 +63,7 @@ async function ajustarSaldoCredito(userId, creditoId, delta) {
     p_credito_id: creditoId,
     p_delta: Number(delta),
   })
-  if (!error) return { error: null }
-  if (!rpcNoExiste(error)) return { error }
-
-  // Fallback para despliegues donde la migracion SQL aun no se aplico.
-  // No es tan fuerte como la RPC atomica, pero evita dejar de registrar gastos.
-  const { data: credito, error: errRead } = await supabaseAdmin
-    .from('creditos')
-    .select('saldo_utilizado')
-    .eq('id', creditoId)
-    .eq('user_id', userId)
-    .single()
-  if (errRead) return { error: errRead }
-
-  const nuevoSaldo = Math.max(0, Number(credito?.saldo_utilizado ?? 0) + Number(delta))
-  const { error: errUpdate } = await supabaseAdmin
-    .from('creditos')
-    .update({ saldo_utilizado: nuevoSaldo })
-    .eq('id', creditoId)
-    .eq('user_id', userId)
-  return { error: errUpdate ?? null }
+  return { error: error ?? null }
 }
 
 // ── Normalizar texto ──────────────────────────────────────────────────────────

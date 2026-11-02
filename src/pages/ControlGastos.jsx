@@ -233,7 +233,7 @@ export default function ControlGastos() {
     else if (transaccionOriginal?.msi_meses) datos.msi_meses = null
 
     const result = editandoId
-      ? await actualizar(editandoId, datos, transaccionOriginal)
+      ? await actualizar(editandoId, datos)
       : await agregar(datos)
 
     if (!result.error) {
