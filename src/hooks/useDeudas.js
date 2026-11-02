@@ -2,16 +2,11 @@ import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { ensureCategoria } from '../utils/categorias'
-import { fechaLocalISO } from '../utils/fecha'
-import { crearOperacionPago, prepararPago, rpcPagoNoDisponible } from '../utils/pagos'
+import { liberarOperacionId, obtenerOperacionId } from '../utils/operaciones'
 import { montoMensualProgramado } from '../utils/pagosProgramados'
 
 const pagoError = (code, message = code) => ({ code, message })
 const valorBooleano = value => value === true || value === 'true'
-const faltaColumnaFrecuencia = error =>
-  ['PGRST204', '42703'].includes(error?.code)
-  || String(error?.message ?? '').includes('frecuencia_pago')
 
 const normalizarResultadoRpc = (data, montoSolicitado) => {
   const resultado = Array.isArray(data) ? data[0] : data
@@ -102,12 +97,7 @@ export function useDeudas() {
   // ── CRUD deudas manuales ─────────────────────────────────────────────────
   const agregar = async (datos) => {
     setSaving(true)
-    let { error } = await supabase.from('deudas').insert({ ...datos, user_id: user.id })
-    if (faltaColumnaFrecuencia(error) && datos.frecuencia_pago !== 'quincenal') {
-      const datosCompatibles = { ...datos }
-      delete datosCompatibles.frecuencia_pago
-      ;({ error } = await supabase.from('deudas').insert({ ...datosCompatibles, user_id: user.id }))
-    }
+    const { error } = await supabase.from('deudas').insert({ ...datos, user_id: user.id })
     setSaving(false)
     if (!error) invalidateDeudas()
     return { error }
@@ -129,107 +119,12 @@ export function useDeudas() {
     }
   }
 
-  const obtenerOperacionPago = (key, monto) => {
-    const lockKey = String(key)
-    const firmaMonto = Number(monto).toFixed(2)
-    const pendiente = operacionesPagoRef.current.get(lockKey)
-    if (pendiente?.firmaMonto === firmaMonto) return pendiente.id
-
-    const id = crearOperacionPago()
-    operacionesPagoRef.current.set(lockKey, { id, firmaMonto })
-    return id
-  }
-
-  const registrarPagoCompatibilidad = async ({ tipo, id, monto, notas = '' }) => {
-    const esCredito = tipo === 'credito'
-    const tablaCuenta = esCredito ? 'creditos' : 'deudas'
-    const saldoCampo = esCredito ? 'saldo_utilizado' : 'saldo_actual'
-    const tablaHistorial = esCredito ? 'pagos_credito' : 'abonos_deuda'
-    const hoy = fechaLocalISO()
-
-    let cuentaQuery = supabase.from(tablaCuenta)
-      .select(`id, nombre, ${saldoCampo}`)
-      .eq('id', id)
-      .eq('user_id', user.id)
-    if (esCredito) cuentaQuery = cuentaQuery.eq('activo', true)
-
-    const { data: cuenta, error: errorCuenta } = await cuentaQuery.maybeSingle()
-    if (errorCuenta) return { error: errorCuenta }
-    if (!cuenta) return { error: pagoError('PAGO_NO_ENCONTRADO') }
-
-    const pago = prepararPago(monto, cuenta[saldoCampo])
-    if (pago.error) return pago
-
-    const catId = await ensureCategoria(user.id, {
-      nombre: 'Deudas',
-      icono: '💳',
-      clasificacion: 'necesidad',
-    })
-    const historialPayload = esCredito
-      ? { credito_id: id, user_id: user.id, monto: pago.montoAplicado, fecha: hoy, notas: notas || null }
-      : { deuda_id: id, monto: pago.montoAplicado, fecha: hoy, notas: notas || null }
-    const { data: historial, error: errorHistorial } = await supabase
-      .from(tablaHistorial)
-      .insert(historialPayload)
-      .select('id')
-      .single()
-    if (errorHistorial) return { error: errorHistorial }
-
-    const saldoPayload = esCredito
-      ? { saldo_utilizado: pago.saldoNuevo }
-      : { saldo_actual: pago.saldoNuevo, liquidada: pago.liquida }
-    const { data: cuentaActualizada, error: errorSaldo } = await supabase
-      .from(tablaCuenta)
-      .update(saldoPayload)
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .eq(saldoCampo, pago.saldoAnterior)
-      .select('id')
-      .maybeSingle()
-
-    if (errorSaldo || !cuentaActualizada) {
-      await supabase.from(tablaHistorial).delete().eq('id', historial.id)
-      return { error: errorSaldo || pagoError('PAGO_CONCURRENCIA') }
-    }
-
-    const { error: errorTransaccion } = await supabase.from('transacciones').insert({
-      user_id: user.id,
-      descripcion: `${esCredito ? 'Pago tarjeta' : 'Pago deuda'}: ${cuenta.nombre}`,
-      monto: pago.montoAplicado,
-      clasificacion: 'necesidad',
-      categoria_id: catId,
-      fecha: hoy,
-      origen: 'deuda',
-    })
-
-    if (errorTransaccion) {
-      const restaurarPayload = esCredito
-        ? { saldo_utilizado: pago.saldoAnterior }
-        : { saldo_actual: pago.saldoAnterior, liquidada: false }
-      const [restauracion, borrado] = await Promise.all([
-        supabase.from(tablaCuenta)
-          .update(restaurarPayload)
-          .eq('id', id)
-          .eq('user_id', user.id)
-          .eq(saldoCampo, pago.saldoNuevo)
-          .select('id')
-          .maybeSingle(),
-        supabase.from(tablaHistorial).delete().eq('id', historial.id),
-      ])
-      if (restauracion.error || !restauracion.data || borrado.error) {
-        return { error: pagoError('PAGO_REVERSION_INCOMPLETA') }
-      }
-      return { error: errorTransaccion }
-    }
-
-    if (esCredito) invalidateCreditos()
-    else invalidateDeudas()
-    return { ...pago, atomico: false }
-  }
-
+  // Las RPC registran saldo, historial y gasto en una sola transacción
+  // (supabase-pagos-atomicos.sql). Reintentar el mismo monto reutiliza el
+  // operacion_id, así un doble envío no duplica el pago.
   const registrarPago = async ({ tipo, id, key, monto, notas }) => {
     const esCredito = tipo === 'credito'
-    const operacionId = obtenerOperacionPago(key, monto)
+    const operacionId = obtenerOperacionId(operacionesPagoRef.current, key, Number(monto).toFixed(2))
     const parametros = esCredito
       ? { p_credito_id: id, p_monto: Number(monto), p_notas: notas || null, p_operacion_id: operacionId }
       : { p_deuda_id: id, p_monto: Number(monto), p_notas: notas || null, p_operacion_id: operacionId }
@@ -238,18 +133,12 @@ export function useDeudas() {
       parametros
     )
 
-    let resultado
-    if (!error) {
-      if (esCredito) invalidateCreditos()
-      else invalidateDeudas()
-      resultado = normalizarResultadoRpc(data, monto)
-    } else if (rpcPagoNoDisponible(error)) {
-      resultado = await registrarPagoCompatibilidad({ tipo, id, monto, notas })
-    } else {
-      resultado = { error }
-    }
+    if (error) return { error }
 
-    if (!resultado.error) operacionesPagoRef.current.delete(String(key))
+    if (esCredito) invalidateCreditos()
+    else invalidateDeudas()
+    const resultado = normalizarResultadoRpc(data, monto)
+    if (!resultado.error) liberarOperacionId(operacionesPagoRef.current, key)
     return resultado
   }
 
@@ -258,7 +147,6 @@ export function useDeudas() {
     () => registrarPago({ tipo: 'deuda', id: deudaId, key: deudaId, monto, notas })
   )
 
-  // El saldo, historial y gasto se escriben en una sola transacción cuando las RPC están instaladas.
   const abonarCredito = (creditoId, monto, notas = '') => {
     const key = `credito_${creditoId}`
     return ejecutarPagoBloqueado(
@@ -279,12 +167,7 @@ export function useDeudas() {
       fecha_proximo_pago: datos.fecha_proximo_pago     || null,
       notas:              datos.notas                  || null,
     }
-    let { error } = await supabase.from('deudas').update(payload).eq('id', id)
-    if (faltaColumnaFrecuencia(error) && payload.frecuencia_pago !== 'quincenal') {
-      const payloadCompatible = { ...payload }
-      delete payloadCompatible.frecuencia_pago
-      ;({ error } = await supabase.from('deudas').update(payloadCompatible).eq('id', id))
-    }
+    const { error } = await supabase.from('deudas').update(payload).eq('id', id)
     setSaving(false)
     if (!error) invalidateDeudas()
     return { error }

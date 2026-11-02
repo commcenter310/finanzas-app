@@ -64,9 +64,13 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 `useDeudas` returns a **unified list** of manual debts (`deudas` table) + credit cards from `creditos` that have `saldo_utilizado > 0`. Credit cards are mapped to the same "debt shape" with a synthetic ID `credito_${id}` and a `tipo: 'credito'` flag the UI uses to branch.
 
-- `abonarCredito(creditoId, monto)` reduces `creditos.saldo_utilizado` AND inserts a row into `pagos_credito` (in parallel via `Promise.all`).
+- `abonar` / `abonarCredito` call the RPCs `registrar_pago_deuda` / `registrar_pago_credito` (`supabase-pagos-atomicos.sql`, applied in production), which update the balance, write the history row and the `origen='deuda'` transaction in one DB transaction. There is no client-side fallback.
 - The credit card payment history reuses the `abonos_deuda` field name, mapped from `pagos_credito`, so the UI renders both with one code path.
 - `pagos_credito` is the credit-card mirror of `abonos_deuda` (manual debts).
+
+### Atomic RPCs: production status
+
+`supabase-operaciones-atomicas.sql` (transactions, fixed-expense payment, savings deposits) is **not yet applied** in production, so `useTransacciones`, `useGastosFijos` and `useAhorros` currently run their `…Compatibilidad` fallbacks (non-atomic, multi-step with manual rollback). Once that script is applied, those fallbacks can be deleted the same way the debt-payment one was.
 
 ### Design tokens
 
