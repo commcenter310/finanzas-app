@@ -7,13 +7,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          const normalized = id.replaceAll('\\', '/')
-          if (!normalized.includes('/node_modules/')) return
-          if (normalized.includes('/react/') || normalized.includes('/react-dom/') || normalized.includes('/react-router-dom/')) return 'react'
-          if (normalized.includes('/@supabase/')) return 'supabase'
-          if (normalized.includes('/recharts/') || normalized.includes('/d3-')) return 'charts'
-          if (normalized.includes('/lucide-react/')) return 'icons'
+        // Paquetes de vendors separados para cachearlos entre deploys.
+        // React va con prioridad más alta: si no, al recolectar las
+        // dependencias de recharts su envoltorio CJS (require_react) acababa
+        // en el chunk de gráficas y TODA la app precargaba sus 400 KB.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/, priority: 40 },
+            { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/, priority: 30 },
+            { name: 'icons', test: /node_modules[\\/]lucide-react[\\/]/, priority: 30 },
+            { name: 'charts', test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/, priority: 20 },
+          ],
         },
       },
     },
