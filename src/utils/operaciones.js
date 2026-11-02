@@ -22,16 +22,6 @@ export function liberarOperacionId(store, key) {
   store.delete(String(key))
 }
 
-export function rpcNoDisponible(error, nombres = []) {
-  const code = String(error?.code ?? '')
-  const message = String(error?.message ?? '').toLowerCase()
-  if (code === 'PGRST202' || code === '42883') return true
-  return nombres.some(nombre =>
-    message.includes(String(nombre).toLowerCase())
-    && (message.includes('schema cache') || message.includes('does not exist'))
-  )
-}
-
 export function mensajeErrorOperacion(error) {
   const source = `${error?.code ?? ''} ${error?.message ?? ''}`
   if (source.includes('OPERACION_MONTO_INVALIDO')) return 'Ingresa un monto mayor a $0.'
@@ -40,6 +30,5 @@ export function mensajeErrorOperacion(error) {
   if (source.includes('OPERACION_METODO_INVALIDO')) return 'El método de pago ya no está disponible.'
   if (source.includes('OPERACION_CREDITO_INVALIDO')) return 'La tarjeta vinculada ya no está disponible.'
   if (source.includes('OPERACION_CATEGORIA_INVALIDA')) return 'La categoría seleccionada ya no está disponible.'
-  if (source.includes('OPERACION_REVERSION_INCOMPLETA')) return 'La operación no pudo revertirse por completo. Actualiza los datos antes de reintentar.'
   return 'No pudimos completar la operación. Intenta de nuevo.'
 }

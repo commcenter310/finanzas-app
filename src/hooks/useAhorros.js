@@ -3,14 +3,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { ensureCategoria } from '../utils/categorias'
-import {
-  liberarOperacionId,
-  obtenerOperacionId,
-  rpcNoDisponible,
-} from '../utils/operaciones'
-
-const RPC_AHORROS = ['depositar_ahorro_atomico']
+import { useMetodosPago } from './useCatalogos'
+import { liberarOperacionId, obtenerOperacionId } from '../utils/operaciones'
 
 export function useAhorros() {
   const { user } = useAuth()
@@ -30,11 +24,7 @@ export function useAhorros() {
     return data ?? []
   }, [uid], `ahorros:${uid}`)
 
-  const { data: metodos } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo, credito_id').eq('user_id', user.id).eq('activo', true)
-    return data ?? []
-  }, [uid], `metodos:${uid}`)
+  const metodos = useMetodosPago()
 
   const totales = {
     meta:   ahorros?.reduce((s, a) => s + Number(a.monto_meta), 0) ?? 0,
@@ -71,47 +61,9 @@ export function useAhorros() {
   }
 
   const eliminar = async (id) => {
-    await supabase.from('ahorros').delete().eq('id', id)
-    invalidateAhorros()
-  }
-
-  const depositarCompatibilidad = async (ahorro, { monto, metodo_pago_id, fecha }) => {
-    const montoNum = Number(monto)
-    const catId = await ensureCategoria(user.id, { nombre: 'Ahorro', icono: '🐷', clasificacion: 'ahorro' })
-    const { data: transaccion, error: errTx } = await supabase
-      .from('transacciones')
-      .insert({
-        user_id:        user.id,
-        descripcion:    `Ahorro: ${ahorro.concepto}`,
-        monto:          montoNum,
-        clasificacion:  'ahorro',
-        categoria_id:   catId,
-        fecha,
-        origen:         'ahorro',
-        metodo_pago_id: metodo_pago_id ? Number(metodo_pago_id) : null,
-      })
-      .select('id')
-      .single()
-    if (errTx) return { error: errTx, atomico: false }
-
-    const { error: errAhorro } = await supabase
-      .from('ahorros')
-      .update({
-        monto_actual: Number(ahorro.monto_actual) + montoNum,
-      })
-      .eq('id', ahorro.id)
-    if (!errAhorro) return { atomico: false }
-
-    const { error: errorReversion } = await supabase
-      .from('transacciones')
-      .delete()
-      .eq('id', transaccion.id)
-    return {
-      error: errorReversion
-        ? { code: 'OPERACION_REVERSION_INCOMPLETA', message: 'OPERACION_REVERSION_INCOMPLETA' }
-        : errAhorro,
-      atomico: false,
-    }
+    const { error } = await supabase.from('ahorros').delete().eq('id', id)
+    if (!error) invalidateAhorros()
+    return { error }
   }
 
   const depositar = async (ahorro, { monto, metodo_pago_id, fecha }) => {
@@ -130,19 +82,13 @@ export function useAhorros() {
       p_fecha: fecha,
       p_operacion_id: operacionId,
     })
-    const resultado = !error
-      ? { atomico: true }
-      : rpcNoDisponible(error, RPC_AHORROS)
-      ? await depositarCompatibilidad(ahorro, { monto, metodo_pago_id, fecha })
-      : { error }
-
     setSaving(false)
-    if (!resultado.error) {
+    if (!error) {
       liberarOperacionId(operacionesRef.current, key)
       invalidateDeposito()
     }
-    return resultado
+    return { error }
   }
 
-  return { ahorros: ahorros ?? [], metodos: metodos ?? [], loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
+  return { ahorros: ahorros ?? [], metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
 }

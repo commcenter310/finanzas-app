@@ -377,7 +377,12 @@ export default function GastosFijos() {
         open={!!confirmDelete}
         titulo="¿Eliminar gasto fijo?"
         descripcion="Esta acción no se puede deshacer."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const id = confirmDelete
+          setConfirmDelete(null)
+          const { error } = await eliminar(id)
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
 

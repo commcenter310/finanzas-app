@@ -2,22 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { useFloatingPosition } from './useFloatingPosition'
+import { MESES } from '../../utils/constantes'
+import { fechaLocalISO as toISO } from '../../utils/fecha'
 
 const DIAS  = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 function parseISO(str) {
   if (!str) return null
   const [y, m, d] = str.split('-').map(Number)
   return new Date(y, m - 1, d)
-}
-
-function toISO(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
 }
 
 function formatDisplay(str) {

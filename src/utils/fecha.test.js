@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { contextoMes, fechaLocalISO, finMesISO, inicioMesISO } from './fecha'
+import {
+  contextoMes, fechaLocalISO, finMesISO, inicioMesISO,
+  mesAnterior, mesSiguiente, mesAplicacionIngreso, ultimosMeses,
+} from './fecha'
 
 describe('fechaLocalISO', () => {
   it('formatea fechas locales como YYYY-MM-DD', () => {
@@ -31,5 +34,33 @@ describe('fechaLocalISO', () => {
       esMesActual: false,
       esMesPasado: false,
     })
+  })
+})
+
+describe('mesAnterior / mesSiguiente', () => {
+  it('cruza el cambio de año', () => {
+    expect(mesAnterior(1, 2026)).toEqual({ mes: 12, anio: 2025 })
+    expect(mesAnterior(7, 2026)).toEqual({ mes: 6, anio: 2026 })
+    expect(mesSiguiente(12, 2026)).toEqual({ mes: 1, anio: 2027 })
+    expect(mesSiguiente(7, 2026)).toEqual({ mes: 8, anio: 2026 })
+  })
+})
+
+describe('mesAplicacionIngreso', () => {
+  it('sugiere el mes siguiente a partir del día 25', () => {
+    expect(mesAplicacionIngreso('2026-05-24')).toEqual({ mes: 5, anio: 2026 })
+    expect(mesAplicacionIngreso('2026-05-25')).toEqual({ mes: 6, anio: 2026 })
+    expect(mesAplicacionIngreso('2026-12-30')).toEqual({ mes: 1, anio: 2027 })
+  })
+})
+
+describe('ultimosMeses', () => {
+  it('no repite meses en días 29-31 y cruza el año', () => {
+    expect(ultimosMeses(3, new Date(2026, 9, 31))).toEqual([
+      { mes: 8, anio: 2026 }, { mes: 9, anio: 2026 }, { mes: 10, anio: 2026 },
+    ])
+    expect(ultimosMeses(2, new Date(2026, 0, 30))).toEqual([
+      { mes: 12, anio: 2025 }, { mes: 1, anio: 2026 },
+    ])
   })
 })

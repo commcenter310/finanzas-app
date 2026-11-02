@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { processMessage } from './lib/whatsapp.js'
-import { envFlag } from './lib/env.js'
+import { envFlag, maskTelefono } from './lib/env.js'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -69,7 +69,8 @@ export default async function handler(req, res) {
         const telefono = message.from
         const texto    = message.text.body.trim()
 
-        console.log('Mensaje recibido de:', telefono, '| Texto:', texto)
+        // Sin el texto: contiene montos y conceptos de gasto del usuario
+        console.log('Mensaje recibido de:', maskTelefono(telefono), '| largo:', texto.length)
 
         if (texto) {
           await processMessage(telefono, texto)

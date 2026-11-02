@@ -309,28 +309,5 @@ html[data-theme="dark"] { color-scheme: dark; }
 /* ============================================================================
    SEMANTIC HELPERS — opt-in classes mirroring the tokens above.
    ============================================================================ */
-.font-sans { font-family: var(--font-sans); }
 .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-.t-display-lg { font: var(--display-lg); letter-spacing: var(--display-lg-ls); color: var(--fg-1); }
-.t-display    { font: var(--display);    letter-spacing: var(--display-ls);    color: var(--fg-1); }
-.t-h1         { font: var(--h1);  letter-spacing: var(--h1-ls);  color: var(--fg-1); }
-.t-h2         { font: var(--h2);  letter-spacing: var(--h2-ls);  color: var(--fg-1); }
-.t-h3         { font: var(--h3);  letter-spacing: var(--h3-ls);  color: var(--fg-1); }
-.t-body-lg    { font: var(--body-lg); letter-spacing: var(--body-lg-ls); color: var(--fg-2); }
-.t-body       { font: var(--body);    color: var(--fg-2); }
-.t-body-sm    { font: var(--body-sm); color: var(--fg-3); }
-.t-caption    { font: var(--caption); color: var(--fg-3); }
-.t-overline   { font: var(--overline); letter-spacing: var(--overline-ls); text-transform: uppercase; color: var(--fg-3); }
-.t-num-xl     { font: var(--num-xl); color: var(--fg-1); }
-.t-num-lg     { font: var(--num-lg); color: var(--fg-1); }
-.t-num        { font: var(--num);    color: var(--fg-2); }
-
-/* Classification badges (pill) */
-.badge { display: inline-flex; align-items: center; gap: 4px; border-radius: var(--r-full);
-         font: var(--caption); padding: 3px 10px; line-height: 1; }
-.badge-necesidad { background: var(--necesidad-bg); color: var(--necesidad-fg); }
-.badge-deseo     { background: var(--deseo-bg);     color: var(--deseo-fg); }
-.badge-ahorro    { background: var(--ahorro-bg);    color: var(--ahorro-fg); }
-.badge-positive  { background: var(--positive-bg);  color: var(--positive-fg); }
-.badge-negative  { background: var(--negative-bg);  color: var(--negative-fg); }

@@ -13,6 +13,8 @@ npm test           # Run unit tests once (Vitest)
 npm run test:watch # Run tests in watch mode
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, lint, tests, build, an import check of `api/webhook.js` and `npm audit --omit=dev` on every push and on PRs to `main`.
+
 Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/utils/constantes.js` (`calcNomina`), covered by `*.test.js` next to them. Run `npm test` and `npm run build` before committing changes to calculations.
 
 ## Architecture
@@ -34,6 +36,10 @@ Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/uti
 ### Data fetching pattern
 
 Every data hook uses `useSupabaseQuery(queryFn, deps)` — a thin wrapper that re-runs `queryFn` whenever `deps` change, returning `{ data, loading, error, refetch }`. Hooks call `refetch()` after mutations instead of updating local state.
+
+Shared catalogs live in `src/hooks/useCatalogos.js` — `useCategorias()`, `useMetodosPago()`, `useNominasLista()` — each with a single query and cacheKey (`categorias:`, `metodos:`, `nominas:`). Use them instead of querying those tables again inside a feature hook. `useSupabaseQuery` discards responses from superseded requests, so switching months quickly can't paint stale data.
+
+Month arithmetic goes through `src/utils/fecha.js` (`mesAnterior`, `mesSiguiente`, `mesAplicacionIngreso`, `ultimosMeses`, `inicioMesISO`/`finMesISO`); never use `setMonth(getMonth() - n)` on today's date (overflows on days 29–31). Per-classification sums use `sumarPorClasificacion` in `calculos.js`; any total that mixes `gastos_fijos` with `transacciones` must drop `origen = 'gastos_fijos'` transactions first (see `sumarTransaccionesSinFijos`).
 
 ### Income / balance logic (important)
 
@@ -60,9 +66,15 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 `useDeudas` returns a **unified list** of manual debts (`deudas` table) + credit cards from `creditos` that have `saldo_utilizado > 0`. Credit cards are mapped to the same "debt shape" with a synthetic ID `credito_${id}` and a `tipo: 'credito'` flag the UI uses to branch.
 
-- `abonarCredito(creditoId, monto)` reduces `creditos.saldo_utilizado` AND inserts a row into `pagos_credito` (in parallel via `Promise.all`).
+- `abonar` / `abonarCredito` call the RPCs `registrar_pago_deuda` / `registrar_pago_credito` (`supabase-pagos-atomicos.sql`, applied in production), which update the balance, write the history row and the `origen='deuda'` transaction in one DB transaction. There is no client-side fallback.
 - The credit card payment history reuses the `abonos_deuda` field name, mapped from `pagos_credito`, so the UI renders both with one code path.
 - `pagos_credito` is the credit-card mirror of `abonos_deuda` (manual debts).
+
+### Atomic RPCs: production status
+
+`supabase-pagos-atomicos.sql`, `supabase-operaciones-atomicas.sql` and `supabase-permisos.sql` are all applied in production (verified Nov 2026). Every money-moving write goes through an RPC — `registrar/actualizar/eliminar_transaccion_atomica`, `pagar/desmarcar_gasto_fijo_atomico`, `depositar_ahorro_atomico`, `registrar_pago_deuda/credito` — which updates the row and the linked credit-card balance in one DB transaction. There are **no client-side fallbacks**: never write `transacciones` + `creditos.saldo_utilizado` in separate client calls. Creates pass an `operacion_id` (`obtenerOperacionId` in `utils/operaciones.js`) so a retried submit is not duplicated. Error codes raised by the RPCs (`OPERACION_*`, `PAGO_*`) are translated by `mensajeErrorOperacion` / `mensajeErrorPago`.
+
+RPC permissions: in Supabase, `REVOKE ... FROM PUBLIC` does **not** remove EXECUTE from `anon` (Supabase grants it explicitly via default privileges). Every `SECURITY DEFINER` function must `REVOKE ... FROM PUBLIC, anon` and `GRANT EXECUTE ... TO authenticated` (or `service_role` for `update_saldo_credito_admin`). `supabase-permisos.sql` re-applies the grants for existing functions and is safe to re-run.
 
 ### Design tokens
 

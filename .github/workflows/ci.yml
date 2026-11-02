@@ -1,0 +1,41 @@
+name: CI
+
+# Revisa cada push y cada PR hacia main: si algo falla, no debe llegar a Vercel.
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: La API del bot carga sin errores
+        run: node -e "import('./api/webhook.js').then(m => { if (typeof m.default !== 'function') process.exit(1) })"
+
+      - name: Sin vulnerabilidades en dependencias de producción
+        run: npm audit --omit=dev --audit-level=high

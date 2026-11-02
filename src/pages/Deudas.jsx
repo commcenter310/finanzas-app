@@ -575,7 +575,12 @@ export default function Deudas() {
         open={!!confirmDelete}
         titulo="¿Eliminar deuda?"
         descripcion="Se eliminará la deuda manual y su historial asociado."
-        onConfirm={() => { eliminar(confirmDelete); setConfirmDelete(null) }}
+        onConfirm={async () => {
+          const id = confirmDelete
+          setConfirmDelete(null)
+          const { error } = await eliminar(id)
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+        }}
         onCancel={() => setConfirmDelete(null)}
       />
     </Layout>

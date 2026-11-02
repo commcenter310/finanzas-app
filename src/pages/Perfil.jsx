@@ -5,6 +5,8 @@ import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { invalidateQueryCache, useSupabaseQuery } from '../hooks/useSupabaseQuery'
+import { useNominasLista } from '../hooks/useCatalogos'
+import { useToast } from '../components/ui/Toast'
 import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import NominasSection from '../components/perfil/NominasSection'
@@ -101,6 +103,14 @@ function SetupGuide({ items }) {
 export default function Perfil() {
   const { user, profile, refreshProfile } = useAuth()
   const uid = user?.id
+  const toast = useToast()
+
+  // Ejecuta una mutación de Supabase y avisa si falla. Devuelve true si salió bien.
+  const guardar = async (consulta, mensajeError = 'No se pudo guardar. Intenta de nuevo.') => {
+    const { error } = await consulta
+    if (error) toast(mensajeError, 'error')
+    return !error
+  }
 
   // Datos básicos — el teléfono se edita como 10 dígitos; se guarda en formato
   // WhatsApp México (521 + 10 dígitos) sin que el usuario vea el "1"
@@ -124,13 +134,20 @@ export default function Perfil() {
       return
     }
     setSavingBasico(true)
-    await supabase.from('profiles').update({
+    const { error } = await supabase.from('profiles').update({
       nombre,
       telefono: telefonoAWhatsApp(telefono10),   // null si está vacío
       umbral_hormiga: Number(umbralHormiga),
     }).eq('id', user.id)
-    await refreshProfile()
     setSavingBasico(false)
+    if (error) {
+      // 23505 = unique_violation: el teléfono ya está ligado a otra cuenta
+      toast(error.code === '23505'
+        ? 'Ese número de WhatsApp ya está registrado en otra cuenta.'
+        : 'No se pudieron guardar tus datos. Intenta de nuevo.', 'error')
+      return
+    }
+    await refreshProfile()
     setMsgBasico('Guardado ✅')
     setTimeout(() => setMsgBasico(''), 2000)
   }
@@ -159,12 +176,12 @@ export default function Perfil() {
     if (Math.abs(total - 1) > 0.01) return setErrorRegla('Los porcentajes deben sumar 100%')
     setSavingRegla(true)
     setErrorRegla('')
-    await supabase.from('profiles').update({
-      regla_necesidad: Number(regla.necesidad),
-      regla_deseo:     Number(regla.deseo),
-      regla_ahorro:    Number(regla.ahorro),
-    }).eq('id', user.id)
-    await refreshProfile()
+    const ok = await guardar(supabase.from('profiles').update({
+      regla_necesidad: n,
+      regla_deseo:     d,
+      regla_ahorro:    a,
+    }).eq('id', user.id))
+    if (ok) await refreshProfile()
     setSavingRegla(false)
   }
 
@@ -194,8 +211,9 @@ export default function Perfil() {
   const agregarMetodo = async () => {
     if (!formMetodo.nombre) return
     setSavingMetodo(true)
-    await supabase.from('metodos_pago').insert({ ...formMetodo, user_id: user.id })
+    const ok = await guardar(supabase.from('metodos_pago').insert({ ...formMetodo, user_id: user.id }))
     setSavingMetodo(false)
+    if (!ok) return
     setFormMetodo({ nombre: '', tipo: 'debito' })
     setMostrarFormMetodo(false)
     invalidateMetodos()
@@ -208,13 +226,13 @@ export default function Perfil() {
 
   const guardarEditMetodo = async (id) => {
     if (!formEditMetodo.nombre) return
-    await supabase.from('metodos_pago').update(formEditMetodo).eq('id', id)
+    if (!await guardar(supabase.from('metodos_pago').update(formEditMetodo).eq('id', id))) return
     setEditandoMetodo(null)
     invalidateMetodos()
   }
 
   const eliminarMetodo = async (id) => {
-    await supabase.from('metodos_pago').update({ activo: false }).eq('id', id)
+    if (!await guardar(supabase.from('metodos_pago').update({ activo: false }).eq('id', id), 'No se pudo eliminar. Intenta de nuevo.')) return
     invalidateMetodos()
   }
 
@@ -224,10 +242,7 @@ export default function Perfil() {
     return data ?? []
   }, [uid], `categorias:perfil:${uid}`)
 
-  const { data: nominasSetup, refetch: refetchNominasSetup } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('nominas').select('id, es_principal').eq('user_id', user.id)
-    return data ?? []
-  }, [uid], `nominas:setup:${uid}`)
+  const { nominas } = useNominasLista()
 
   const invalidateCategorias = () => invalidateQueryCache([
     'categorias:',
@@ -238,7 +253,7 @@ export default function Perfil() {
   ])
 
   const toggleCategoria = async (id, activa) => {
-    await supabase.from('categorias').update({ activa: !activa }).eq('id', id)
+    if (!await guardar(supabase.from('categorias').update({ activa: !activa }).eq('id', id))) return
     invalidateCategorias()
   }
 
@@ -250,7 +265,7 @@ export default function Perfil() {
 
   const agregarCategoria = async () => {
     if (!formCat.nombre) return
-    await supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' })
+    if (!await guardar(supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' }))) return
     setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
     setMostrarFormCat(false)
     invalidateCategorias()
@@ -263,7 +278,7 @@ export default function Perfil() {
 
   const guardarEditCat = async (id) => {
     if (!formEditCat.nombre) return
-    await supabase.from('categorias').update(formEditCat).eq('id', id)
+    if (!await guardar(supabase.from('categorias').update(formEditCat).eq('id', id))) return
     setEditandoCat(null)
     invalidateCategorias()
   }
@@ -272,7 +287,7 @@ export default function Perfil() {
   const reglaOk    = Math.abs(totalRegla - 1) < 0.01
   const metodosActivos = (metodos ?? []).filter(m => m.activo)
   const categoriasActivas = (categorias ?? []).filter(c => c.activa)
-  const nominasConfiguradas = nominasSetup?.length ?? 0
+  const nominasConfiguradas = nominas.length
 
   const irA = (id, beforeScroll) => {
     beforeScroll?.()
@@ -467,7 +482,7 @@ export default function Perfil() {
 
         {/* ── Ingresos y Nómina ── */}
         <div id="perfil-nomina" className="scroll-mt-24">
-          <NominasSection onChange={refetchNominasSetup} />
+          <NominasSection />
         </div>
 
         {/* ── Fila 2: Métodos de pago + Categorías ── */}

@@ -9,6 +9,18 @@ export const sumarTransaccionesSinFijos = (transacciones) =>
     .filter(t => t.origen !== 'gastos_fijos')
     .reduce((s, t) => s + Number(t.monto), 0)
 
+// Suma por clasificación (necesidad/deseo/ahorro) de gastos fijos y/o
+// transacciones. Los gastos fijos pesan su monto_actual; las transacciones, su monto.
+export const sumarPorClasificacion = (...listas) => {
+  const totales = { necesidad: 0, deseo: 0, ahorro: 0 }
+  for (const item of listas.flatMap(l => l ?? [])) {
+    if (item.clasificacion in totales) {
+      totales[item.clasificacion] += Number(item.monto_actual ?? item.monto ?? 0)
+    }
+  }
+  return totales
+}
+
 // Total de gastos del mes = gastos fijos (monto real) + transacciones variables.
 export const calcularTotalGastos = (gastosFijos, transacciones) => {
   const totalFijos = (gastosFijos ?? []).reduce((s, g) => s + Number(g.monto_actual ?? 0), 0)

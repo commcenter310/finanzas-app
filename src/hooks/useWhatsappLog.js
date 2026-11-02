@@ -3,22 +3,21 @@ import { useAuth } from '../context/AuthContext'
 import { useSupabaseQuery } from './useSupabaseQuery'
 
 export function useWhatsappLog() {
-  const { user } = useAuth()
+  const { profile } = useAuth()
+  // Solo puede ver los logs de su número (el perfil ya trae el teléfono)
+  const telefono = profile?.telefono
 
   const { data: logs, loading } = useSupabaseQuery(async () => {
-    // Solo puede ver logs de su número
-    const { data: profile } = await supabase.from('profiles').select('telefono').eq('id', user.id).single()
-    if (!profile?.telefono) return []
-
+    if (!telefono) return []
     const { data, error } = await supabase
       .from('whatsapp_log')
       .select('*, transacciones(descripcion, monto)')
-      .eq('telefono', profile.telefono)
+      .eq('telefono', telefono)
       .order('created_at', { ascending: false })
       .limit(50)
     if (error) throw error
     return data ?? []
-  }, [user?.id])
+  }, [telefono])
 
   return { logs: logs ?? [], loading }
 }

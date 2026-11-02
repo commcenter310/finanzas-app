@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil, Star, Briefcase, Wallet, Calculator } from 'lucid
 import FilterSelect from '../ui/FilterSelect'
 import ConfirmModal from '../ui/ConfirmModal'
 import EmptyState from '../ui/EmptyState'
+import { useToast } from '../ui/Toast'
 
 const FORM_VACIO = {
   nombre: '', es_principal: false, tipo: 'sueldo', frecuencia: 'quincenal',
@@ -49,8 +50,9 @@ const formAPayload = (f) => ({
   mes_utilidades: f.tipo === 'sueldo' && f.tiene_utilidades ? (toNum(f.mes_utilidades) || null) : null,
 })
 
-export default function NominasSection({ onChange }) {
+export default function NominasSection() {
   const { nominas, loading, saving, agregar, actualizar, eliminar } = useNominas()
+  const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
   const [form, setForm] = useState(FORM_VACIO)
@@ -91,10 +93,8 @@ export default function NominasSection({ onChange }) {
     if (!form.nombre || !form.monto_neto) return
     const payload = formAPayload(form)
     const { error } = editandoId ? await actualizar(editandoId, payload) : await agregar(payload)
-    if (!error) {
-      cerrar()
-      onChange?.()
-    }
+    if (error) toast('No se pudo guardar la nómina. Intenta de nuevo.', 'error')
+    else cerrar()
   }
 
   // Cálculo en vivo para la previsualización dentro del form
@@ -330,7 +330,7 @@ export default function NominasSection({ onChange }) {
         descripcion="Esta acción no se puede deshacer."
         onConfirm={async () => {
           const { error } = await eliminar(confirmDelete)
-          if (!error) onChange?.()
+          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
           setConfirmDelete(null)
         }}
         onCancel={() => setConfirmDelete(null)}

@@ -499,26 +499,6 @@
     box-shadow: var(--shadow-sm);
   }
 
-  .metric-card {
-    background: var(--surface);
-    isolation: isolate;
-  }
-  .metric-card::after {
-    content: "";
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 14px;
-    height: 2px;
-    border-radius: var(--r-full);
-    background: linear-gradient(90deg, var(--metric-accent, var(--primary)) 0%, transparent 82%);
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  html[data-theme="dark"] .metric-card {
-    background: var(--surface);
-  }
-
   .chart-tooltip {
     min-width: 172px;
     padding: 10px 12px;

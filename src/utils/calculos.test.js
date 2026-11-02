@@ -3,7 +3,7 @@ import {
   sumarTransaccionesSinFijos, calcularTotalGastos, calcularSaldoAnterior,
   calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
   calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
-  cortesRecientes, calcularEstadoTarjeta,
+  cortesRecientes, calcularEstadoTarjeta, sumarPorClasificacion,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -324,5 +324,23 @@ describe('calcularProyeccion', () => {
       ingresoEsperado: null, saldoArrastrado: 0, mes: 6, anio: 2026, hoy,
     })
     expect(r.saldoProyectado).toBeNull()
+  })
+})
+
+describe('sumarPorClasificacion', () => {
+  it('suma fijos (monto_actual) y transacciones (monto) por clasificación', () => {
+    const fijos = [
+      { clasificacion: 'necesidad', monto_actual: 1000 },
+      { clasificacion: 'ahorro', monto_actual: 500 },
+    ]
+    const tx = [
+      { clasificacion: 'necesidad', monto: 200 },
+      { clasificacion: 'deseo', monto: '150.5' },
+      { clasificacion: 'otra', monto: 999 },
+    ]
+    expect(sumarPorClasificacion(fijos, tx)).toEqual({ necesidad: 1200, deseo: 150.5, ahorro: 500 })
+  })
+  it('tolera listas nulas', () => {
+    expect(sumarPorClasificacion(null, undefined)).toEqual({ necesidad: 0, deseo: 0, ahorro: 0 })
   })
 })

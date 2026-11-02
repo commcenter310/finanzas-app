@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
+import { useMetodosPago } from './useCatalogos'
 import { fechaLocalISO } from '../utils/fecha'
 
 export function useCreditos() {
@@ -17,12 +18,7 @@ export function useCreditos() {
     return data ?? []
   }, [uid], `creditos:${uid}`)
 
-  const { data: metodos } = useSupabaseQuery(async () => {
-    const { data } = await supabase.from('metodos_pago')
-      .select('id, nombre, tipo, credito_id')
-      .eq('user_id', user.id).eq('activo', true)
-    return data ?? []
-  }, [uid], `metodos:${uid}`)
+  const metodos = useMetodosPago()
 
   // Compras hechas con tarjetas (métodos vinculados a un crédito) — últimos 26
   // meses para cubrir planes MSI largos. Alimenta el ciclo de corte por tarjeta.
@@ -72,19 +68,21 @@ export function useCreditos() {
   }
 
   const eliminar = async (id) => {
-    await supabase.from('creditos').update({ activo: false }).eq('id', id)
-    invalidateCreditos()
+    const { error } = await supabase.from('creditos').update({ activo: false }).eq('id', id)
+    if (!error) invalidateCreditos()
+    return { error }
   }
 
   const vincularMetodo = async (creditoId, metodoId) => {
-    await supabase.from('metodos_pago').update({ credito_id: null })
+    let { error } = await supabase.from('metodos_pago').update({ credito_id: null })
       .eq('credito_id', creditoId).eq('user_id', user.id)
-    if (metodoId) {
-      await supabase.from('metodos_pago').update({ credito_id: creditoId })
-        .eq('id', metodoId).eq('user_id', user.id)
+    if (!error && metodoId) {
+      ;({ error } = await supabase.from('metodos_pago').update({ credito_id: creditoId })
+        .eq('id', metodoId).eq('user_id', user.id))
     }
     invalidateMetodosCredito()
+    return { error }
   }
 
-  return { creditos: creditos ?? [], metodos: metodos ?? [], comprasTarjeta: comprasTarjeta ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
+  return { creditos: creditos ?? [], metodos, comprasTarjeta: comprasTarjeta ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
 }
