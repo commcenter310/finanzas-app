@@ -1,5 +1,6 @@
 import { categorizeWithGroq } from './groq.js'
 import { supabaseAdmin } from './supabase-admin.js'
+import { maskTelefono } from './env.js'
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
@@ -20,7 +21,7 @@ export async function sendMessage(to, text) {
   if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
     throw new Error('Missing required environment variable: WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID')
   }
-  console.log('📤 Enviando mensaje a:', to, '| PhoneNumberID:', PHONE_NUMBER_ID)
+  console.log('📤 Enviando mensaje a:', maskTelefono(to))
   const r = await fetch(`https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
@@ -31,7 +32,7 @@ export async function sendMessage(to, text) {
     const detail = data?.error?.message ?? data?.raw ?? r.statusText
     throw new Error(`Meta WhatsApp ${r.status}: ${detail}`)
   }
-  console.log('📤 Respuesta de Meta al enviar:', JSON.stringify(data))
+  console.log('📤 Meta aceptó el mensaje:', data?.messages?.[0]?.id ?? 'sin id')
 }
 
 // ── Estado conversacional ─────────────────────────────────────────────────────
@@ -137,7 +138,7 @@ export async function processMessage(telefono, texto) {
     return
   }
 
-  console.log('🔍 Buscando perfil para teléfono:', telefono, '| Resultado:', profile ? 'ENCONTRADO' : 'NO ENCONTRADO')
+  console.log('🔍 Buscando perfil para teléfono:', maskTelefono(telefono), '| Resultado:', profile ? 'ENCONTRADO' : 'NO ENCONTRADO')
 
   if (!profile) {
     await sendMessage(telefono,
