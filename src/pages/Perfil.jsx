@@ -4,115 +4,26 @@ import { useState, useEffect } from 'react'
 import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { invalidateQueryCache, useSupabaseQuery } from '../hooks/useSupabaseQuery'
+import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { useNominasLista } from '../hooks/useCatalogos'
 import { useToast } from '../components/ui/Toast'
-import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
-import FilterSelect from '../components/ui/FilterSelect'
-import ConfirmModal from '../components/ui/ConfirmModal'
+import { Save, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings } from 'lucide-react'
 import ErrorState from '../components/ui/ErrorState'
 import NominasSection from '../components/perfil/NominasSection'
+import MetodosPagoSection from '../components/perfil/MetodosPagoSection'
+import CategoriasSection from '../components/perfil/CategoriasSection'
+import SetupGuide from '../components/perfil/SetupGuide'
+import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
-import { CLASIF_OPTS } from '../utils/constantes'
-
-const TIPO_METODO_OPTS = [
-  { value: 'debito',   label: 'Débito',   dotColor: 'var(--fg-3)'    },
-  { value: 'credito',  label: 'Crédito',  dotColor: 'var(--primary)' },
-  { value: 'efectivo', label: 'Efectivo', dotColor: 'var(--ahorro)'  },
-  { value: 'digital',  label: 'Digital',  dotColor: 'var(--deseo)'   },
-]
-function SetupGuide({ items }) {
-  const completados = items.filter(item => item.done).length
-  const progreso = items.length ? Math.round((completados / items.length) * 100) : 0
-  const siguiente = items.find(item => !item.done)
-
-  return (
-    <section className="card p-5 overflow-hidden">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--primary-700)' }}>
-            Centro de configuración
-          </p>
-          <h2 className="mt-1 text-xl font-bold" style={{ color: 'var(--fg-1)' }}>
-            Tu setup financiero
-          </h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--fg-3)' }}>
-            Deja listas las piezas que hacen que el dashboard, las alertas y los cálculos trabajen con datos tuyos.
-          </p>
-          {siguiente && (
-            <button
-              type="button"
-              onClick={siguiente.onClick}
-              className="mt-4 inline-flex items-center gap-2 rounded-[var(--r-md)] px-3 py-2 text-sm font-semibold transition-colors"
-              style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}
-            >
-              Siguiente: {siguiente.title}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="min-w-[190px] rounded-[var(--r-lg)] border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs font-semibold" style={{ color: 'var(--fg-3)' }}>Progreso</span>
-            <span className="font-mono text-lg font-bold" style={{ color: 'var(--fg-1)' }}>{completados}/{items.length}</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-3)' }}>
-            <div className="h-full rounded-full bar-fill" style={{ width: `${progreso}%`, background: 'var(--primary)' }} />
-          </div>
-          <p className="mt-2 text-xs" style={{ color: 'var(--fg-4)' }}>
-            {progreso === 100 ? 'Listo para operar con mejor contexto.' : `${progreso}% configurado`}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {items.map(item => {
-          const Icon = item.Icon
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={item.onClick}
-              className="group flex min-h-[92px] items-start gap-3 rounded-[var(--r-lg)] border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-              style={{
-                borderColor: item.done ? 'var(--primary-200)' : 'var(--border)',
-                background: item.done ? 'var(--primary-50)' : 'var(--surface)',
-              }}
-            >
-              <span
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--r-md)]"
-                style={{
-                  background: item.done ? 'var(--primary-100)' : 'var(--primary-50)',
-                  color: 'var(--primary-700)',
-                }}
-              >
-                {item.done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold" style={{ color: 'var(--fg-1)' }}>{item.title}</span>
-                <span className="mt-0.5 block text-xs leading-5" style={{ color: 'var(--fg-3)' }}>{item.detail}</span>
-              </span>
-              {!item.done && <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--fg-4)' }} />}
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 export default function Perfil() {
   const { user, profile, profileError, refreshProfile } = useAuth()
   const uid = user?.id
   const toast = useToast()
-
-  // Ejecuta una mutación de Supabase y avisa si falla. Devuelve true si salió bien.
-  const guardar = async (consulta, mensajeError = 'No se pudo guardar. Intenta de nuevo.') => {
-    const { error } = await consulta
-    if (error) toast(mensajeError, 'error')
-    return !error
-  }
+  const guardar = useGuardarConAviso()
+  // La guía de configuración abre estos formularios cuando la lista está vacía
+  const [mostrarFormMetodo, setMostrarFormMetodo] = useState(false)
+  const [mostrarFormCat, setMostrarFormCat] = useState(false)
 
   // Datos básicos — el teléfono se edita como 10 dígitos; se guarda en formato
   // WhatsApp México (521 + 10 dígitos) sin que el usuario vea el "1"
@@ -195,53 +106,6 @@ export default function Perfil() {
     return data ?? []
   }, [uid], `metodos:perfil:${uid}`)
 
-  const invalidateMetodos = () => invalidateQueryCache([
-    'metodos:',
-    'creditos:',
-    'deudas:',
-    'recordatorios:',
-    'tx:',
-    'dash:',
-    'tendencias:',
-  ])
-
-  const [formMetodo, setFormMetodo] = useState({ nombre: '', tipo: 'debito' })
-  const [savingMetodo, setSavingMetodo] = useState(false)
-  const [mostrarFormMetodo, setMostrarFormMetodo] = useState(false)
-  const [busquedaMetodo, setBusquedaMetodo] = useState('')
-  const [editandoMetodo, setEditandoMetodo] = useState(null)   // id del método en edición
-  const [formEditMetodo, setFormEditMetodo] = useState({})
-
-  const agregarMetodo = async () => {
-    if (!formMetodo.nombre) return
-    setSavingMetodo(true)
-    const ok = await guardar(supabase.from('metodos_pago').insert({ ...formMetodo, user_id: user.id }))
-    setSavingMetodo(false)
-    if (!ok) return
-    setFormMetodo({ nombre: '', tipo: 'debito' })
-    setMostrarFormMetodo(false)
-    invalidateMetodos()
-  }
-
-  const iniciarEditMetodo = (m) => {
-    setEditandoMetodo(m.id)
-    setFormEditMetodo({ nombre: m.nombre, tipo: m.tipo })
-  }
-
-  const guardarEditMetodo = async (id) => {
-    if (!formEditMetodo.nombre) return
-    if (!await guardar(supabase.from('metodos_pago').update(formEditMetodo).eq('id', id))) return
-    setEditandoMetodo(null)
-    invalidateMetodos()
-  }
-
-  const [metodoAEliminar, setMetodoAEliminar] = useState(null)
-
-  const eliminarMetodo = async (id) => {
-    if (!await guardar(supabase.from('metodos_pago').update({ activo: false }).eq('id', id), 'No se pudo eliminar. Intenta de nuevo.')) return
-    invalidateMetodos()
-  }
-
   // Categorías
   const { data: categorias } = useSupabaseQuery(async () => {
     const { data } = await supabase.from('categorias').select('*').eq('user_id', user.id).order('clasificacion').order('nombre')
@@ -249,45 +113,6 @@ export default function Perfil() {
   }, [uid], `categorias:perfil:${uid}`)
 
   const { nominas } = useNominasLista()
-
-  const invalidateCategorias = () => invalidateQueryCache([
-    'categorias:',
-    'tx:',
-    'dash:',
-    'gastosVariables:',
-    'tendencias:',
-  ])
-
-  const toggleCategoria = async (id, activa) => {
-    if (!await guardar(supabase.from('categorias').update({ activa: !activa }).eq('id', id))) return
-    invalidateCategorias()
-  }
-
-  const [formCat, setFormCat] = useState({ nombre: '', clasificacion: 'deseo', icono: '📦' })
-  const [mostrarFormCat, setMostrarFormCat] = useState(false)
-  const [busquedaCat, setBusquedaCat] = useState('')
-  const [editandoCat, setEditandoCat] = useState(null)   // id de la categoría en edición
-  const [formEditCat, setFormEditCat] = useState({})
-
-  const agregarCategoria = async () => {
-    if (!formCat.nombre) return
-    if (!await guardar(supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' }))) return
-    setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
-    setMostrarFormCat(false)
-    invalidateCategorias()
-  }
-
-  const iniciarEditCat = (c) => {
-    setEditandoCat(c.id)
-    setFormEditCat({ icono: c.icono, nombre: c.nombre, clasificacion: c.clasificacion })
-  }
-
-  const guardarEditCat = async (id) => {
-    if (!formEditCat.nombre) return
-    if (!await guardar(supabase.from('categorias').update(formEditCat).eq('id', id))) return
-    setEditandoCat(null)
-    invalidateCategorias()
-  }
 
   const totalRegla = Number(regla.necesidad) + Number(regla.deseo) + Number(regla.ahorro)
   const reglaOk    = Math.abs(totalRegla - 1) < 0.01
@@ -507,249 +332,11 @@ export default function Perfil() {
         {/* ── Fila 2: Métodos de pago + Categorías ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-          {/* Métodos de pago */}
-          <div id="perfil-metodos" className="card overflow-hidden scroll-mt-24">
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
-              <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Métodos de Pago</h2>
-              <button onClick={() => setMostrarFormMetodo(v => !v)}
-                className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
-                <Plus className="w-3.5 h-3.5" /> Agregar
-              </button>
-            </div>
-            {mostrarFormMetodo && (
-              <div className="p-4 border-b" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div>
-                    <label className="label">Nombre</label>
-                    <input className="input text-sm" placeholder="Ej: HSBC..."
-                      value={formMetodo.nombre} onChange={e => setFormMetodo(f => ({ ...f, nombre: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="label">Tipo</label>
-                    <FilterSelect
-                      value={formMetodo.tipo}
-                      onChange={v => setFormMetodo(f => ({ ...f, tipo: v }))}
-                      options={TIPO_METODO_OPTS}
-                      placeholder="Tipo"
-                      showClear={false}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="btn-primary text-xs py-2 px-4" onClick={agregarMetodo} disabled={savingMetodo}>Guardar</button>
-                  <button className="btn-ghost text-xs" onClick={() => setMostrarFormMetodo(false)}>Cancelar</button>
-                </div>
-              </div>
-            )}
-            {/* Buscador métodos */}
-            <div className="px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--fg-4)' }} />
-                <input
-                  className="input text-sm pl-8 py-1.5"
-                  placeholder="Buscar método..."
-                  value={busquedaMetodo}
-                  onChange={e => setBusquedaMetodo(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
-              {(() => {
-                const lista = (metodos ?? []).filter(m => m.activo && m.nombre.toLowerCase().includes(busquedaMetodo.toLowerCase()))
-                if (lista.length === 0) return <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>{busquedaMetodo ? 'Sin resultados' : 'Sin métodos de pago'}</p>
-                return lista.map(m => (
-                  editandoMetodo === m.id ? (
-                    /* ── Fila en modo edición ── */
-                    <div key={m.id} className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'var(--primary-50)' }}>
-                      <input
-                        className="input text-sm flex-1 py-1.5"
-                        value={formEditMetodo.nombre}
-                        onChange={e => setFormEditMetodo(f => ({ ...f, nombre: e.target.value }))}
-                        autoFocus
-                        onKeyDown={e => { if (e.key === 'Enter') guardarEditMetodo(m.id); if (e.key === 'Escape') setEditandoMetodo(null) }}
-                      />
-                      <div className="w-32 flex-shrink-0">
-                        <FilterSelect
-                          value={formEditMetodo.tipo}
-                          onChange={v => setFormEditMetodo(f => ({ ...f, tipo: v }))}
-                          options={TIPO_METODO_OPTS}
-                          placeholder="Tipo"
-                          showClear={false}
-                        />
-                      </div>
-                      <button onClick={() => guardarEditMetodo(m.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                        style={{ background: 'var(--ahorro)' }}>
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => setEditandoMetodo(null)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    /* ── Fila normal ── */
-                    <div key={m.id} className="flex items-center justify-between px-5 py-3 group">
-                      <div>
-                        <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
-                        <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>
-                      </div>
-                      <div className="flex items-center gap-1 acciones-hover">
-                        <button onClick={() => iniciarEditMetodo(m)} aria-label={`Editar ${m.nombre}`} title="Editar"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                          style={{ color: 'var(--fg-4)' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => setMetodoAEliminar(m)} aria-label={`Eliminar ${m.nombre}`} title="Eliminar"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                          style={{ color: 'var(--fg-4)' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                ))
-            })()}
-            </div>
-          </div>
+          <MetodosPagoSection metodos={metodos ?? []} mostrarForm={mostrarFormMetodo} setMostrarForm={setMostrarFormMetodo} />
 
-          {/* Categorías */}
-          <div id="perfil-categorias" className="card overflow-hidden scroll-mt-24">
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
-              <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Categorías</h2>
-              <button onClick={() => setMostrarFormCat(v => !v)}
-                className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
-                <Plus className="w-3.5 h-3.5" /> Agregar
-              </button>
-            </div>
-            {mostrarFormCat && (
-              <div className="p-4 border-b" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  <div>
-                    <label className="label">Ícono</label>
-                    <input className="input text-sm text-center" value={formCat.icono}
-                      onChange={e => setFormCat(f => ({ ...f, icono: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="label">Nombre</label>
-                    <input className="input text-sm" placeholder="Medicamentos..."
-                      value={formCat.nombre} onChange={e => setFormCat(f => ({ ...f, nombre: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="label">Tipo</label>
-                    <FilterSelect
-                      value={formCat.clasificacion}
-                      onChange={v => setFormCat(f => ({ ...f, clasificacion: v }))}
-                      options={CLASIF_OPTS}
-                      placeholder="Tipo"
-                      showClear={false}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="btn-primary text-xs py-2 px-4" onClick={agregarCategoria}>Guardar</button>
-                  <button className="btn-ghost text-xs" onClick={() => setMostrarFormCat(false)}>Cancelar</button>
-                </div>
-              </div>
-            )}
-            {/* Buscador categorías */}
-            <div className="px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--fg-4)' }} />
-                <input
-                  className="input text-sm pl-8 py-1.5"
-                  placeholder="Buscar categoría..."
-                  value={busquedaCat}
-                  onChange={e => setBusquedaCat(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
-              {(categorias ?? [])
-                .filter(c => c.nombre.toLowerCase().includes(busquedaCat.toLowerCase()))
-                .map(c => (
-                editandoCat === c.id ? (
-                  /* ── Fila en modo edición ── */
-                  <div key={c.id} className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'var(--primary-50)' }}>
-                    <input
-                      className="input text-sm text-center py-1.5 w-12 flex-shrink-0"
-                      value={formEditCat.icono}
-                      onChange={e => setFormEditCat(f => ({ ...f, icono: e.target.value }))}
-                    />
-                    <input
-                      className="input text-sm py-1.5 flex-1"
-                      value={formEditCat.nombre}
-                      onChange={e => setFormEditCat(f => ({ ...f, nombre: e.target.value }))}
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') guardarEditCat(c.id); if (e.key === 'Escape') setEditandoCat(null) }}
-                    />
-                    <div className="w-32 flex-shrink-0">
-                      <FilterSelect
-                        value={formEditCat.clasificacion}
-                        onChange={v => setFormEditCat(f => ({ ...f, clasificacion: v }))}
-                        options={CLASIF_OPTS}
-                        placeholder="Tipo"
-                        showClear={false}
-                      />
-                    </div>
-                    <button onClick={() => guardarEditCat(c.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                      style={{ background: 'var(--ahorro)' }}>
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => setEditandoCat(null)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  /* ── Fila normal ── */
-                  <div key={c.id} className="flex items-center justify-between px-5 py-2.5 group"
-                    style={{ opacity: c.activa ? 1 : 0.4 }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="flex-shrink-0">{c.icono}</span>
-                      <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{c.nombre}</p>
-                      <span className={`badge badge-${c.clasificacion} flex-shrink-0`}>{c.clasificacion}</span>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      {/* Botón editar (ver .acciones-hover) */}
-                      <button onClick={() => iniciarEditCat(c)} aria-label={`Editar ${c.nombre}`} title="Editar"
-                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors acciones-hover"
-                        style={{ color: 'var(--fg-4)' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                      {/* Botón activar/desactivar — siempre visible */}
-                      <button onClick={() => toggleCategoria(c.id, c.activa)}
-                        className="text-xs px-2 py-1 rounded-full font-semibold transition-all"
-                        style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
-                        {c.activa ? 'Desactivar' : 'Activar'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-
+          <CategoriasSection categorias={categorias ?? []} mostrarForm={mostrarFormCat} setMostrarForm={setMostrarFormCat} />
         </div>
       </div>
-      <ConfirmModal
-        open={!!metodoAEliminar}
-        titulo={`¿Eliminar ${metodoAEliminar?.nombre ?? 'este método'}?`}
-        descripcion="Dejará de aparecer al registrar gastos. Los movimientos que ya hiciste con él no se borran."
-        onConfirm={async () => {
-          const id = metodoAEliminar.id
-          setMetodoAEliminar(null)
-          await eliminarMetodo(id)
-        }}
-        onCancel={() => setMetodoAEliminar(null)}
-      />
     </Layout>
   )
 }
