@@ -170,6 +170,18 @@ export const calcularEstadoTarjeta = ({ transaccionesTarjeta = [], diaCorte, hoy
   return { pagoProximo, gastoPeriodoActual, msiPendiente, msiActivos, ultimoCorte, proximoCorte }
 }
 
+// Parte del saldo de una tarjeta que NO se explica con las compras
+// registradas en la app (p. ej. saldo de antes de usar Finni, o compras
+// hechas sin registrar). Si es > 0, el "pago para no generar intereses"
+// calculado puede quedarse corto. Conservador: las compras registradas se
+// suman completas (incluido lo ya pagado), así que nunca exagera la diferencia.
+export const calcularSaldoNoRegistrado = (saldoUtilizado, ciclo) => {
+  if (!ciclo) return 0
+  const explicado = Number(ciclo.pagoProximo ?? 0) + Number(ciclo.gastoPeriodoActual ?? 0) + Number(ciclo.msiPendiente ?? 0)
+  const diferencia = Number(saldoUtilizado ?? 0) - explicado
+  return diferencia > 1 ? Math.round(diferencia * 100) / 100 : 0
+}
+
 // Proyección de fin de mes. Los gastos fijos se toman completos (ya se conocen);
 // lo variable se proyecta con dos correcciones anti-drama:
 // 1. MSI: una compra a N meses pesa solo su mensualidad (monto/N), no el total —

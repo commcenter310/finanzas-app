@@ -30,7 +30,7 @@ Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/uti
 
 ### Global state: two contexts
 
-- **`AuthContext`** — Supabase session + user profile (reglas 50/30/20, umbral_hormiga, etc.). Wraps entire app.
+- **`AuthContext`** — Supabase session + user profile (reglas 50/30/20, umbral_hormiga, etc.). Wraps entire app. The profile load retries (`conReintentos`) and, if it still fails, **keeps the previous profile** and exposes `profileError` — never replace a loaded profile with `null` on a transient error. It is not reloaded on `TOKEN_REFRESHED`. Any UI that writes to `profiles` must not render its form while `profile` is null (an empty form would overwrite nombre/telefono — see `Perfil.jsx`).
 - **`MesContext`** — Active month/year (`mes`, `anio`) used as the primary filter across every page. Wraps only authenticated routes. All hooks consume `useMes()` to scope their queries.
 
 ### Data fetching pattern
@@ -75,6 +75,17 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 `supabase-pagos-atomicos.sql`, `supabase-operaciones-atomicas.sql` and `supabase-permisos.sql` are all applied in production (verified Nov 2026). Every money-moving write goes through an RPC — `registrar/actualizar/eliminar_transaccion_atomica`, `pagar/desmarcar_gasto_fijo_atomico`, `depositar_ahorro_atomico`, `registrar_pago_deuda/credito` — which updates the row and the linked credit-card balance in one DB transaction. There are **no client-side fallbacks**: never write `transacciones` + `creditos.saldo_utilizado` in separate client calls. Creates pass an `operacion_id` (`obtenerOperacionId` in `utils/operaciones.js`) so a retried submit is not duplicated. Error codes raised by the RPCs (`OPERACION_*`, `PAGO_*`) are translated by `mensajeErrorOperacion` / `mensajeErrorPago`.
 
 RPC permissions: in Supabase, `REVOKE ... FROM PUBLIC` does **not** remove EXECUTE from `anon` (Supabase grants it explicitly via default privileges). Every `SECURITY DEFINER` function must `REVOKE ... FROM PUBLIC, anon` and `GRANT EXECUTE ... TO authenticated` (or `service_role` for `update_saldo_credito_admin`). `supabase-permisos.sql` re-applies the grants for existing functions and is safe to re-run.
+
+### Undo (deshacer)
+
+`supabase-deshacer.sql` adds `deshacer_pago_deuda`, `deshacer_pago_credito` and `deshacer_deposito_ahorro`, which revert balance + history row + the generated transaction in one DB transaction. Payment transactions are linked to their row via `transacciones.abono_deuda_id` / `pago_credito_id` (set by `registrar_pago_*`); older payments are matched by amount, date and account name, and if that isn't certain the RPC raises `PAGO_MOVIMIENTO_NO_ENCONTRADO` without changing anything. `useDeudas.registrarPago` returns `pagoId` (looked up by `operacion_id`) so the success toast can offer "Deshacer" even when the payment liquidated the debt.
+
+### UI conventions
+
+- `ErrorBoundary` wraps the app and, keyed by pathname, the routes: a render crash shows "Algo salió mal" instead of a blank screen.
+- Row action buttons use `.acciones-hover` (hidden only on hover-capable pointers, always visible on touch).
+- `useGuardarConAviso()` runs a Supabase mutation and toasts on error; `toast(msg, type, { accion: { etiqueta, onClick } })` adds an action button.
+- Feature sections live in `src/components/<area>/` (e.g. `perfil/MetodosPagoSection`, `dashboard/DashboardOverview`, `dashboard/insights.js`); pages compose them.
 
 ### Design tokens
 

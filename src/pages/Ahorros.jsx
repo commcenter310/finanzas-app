@@ -18,7 +18,7 @@ const barColors = { necesidad: 'var(--necesidad)', deseo: 'var(--deseo)', ahorro
 
 const FORM_DEP_VACIO = { monto: '', metodo_pago_id: '', fecha: fechaLocalISO() }
 
-function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar, saving }) {
+function TarjetaAhorro({ ahorro, metodos, ultimoDeposito, onActualizar, onEliminar, onDepositar, onDeshacerDeposito, saving }) {
   const toast = useToast()
   const [editando, setEditando] = useState(false)
   const [depositando, setDepositando] = useState(false)
@@ -37,14 +37,23 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
     setEditando(false)
   }
 
+  const [confirmDeshacer, setConfirmDeshacer] = useState(false)
+
+  const deshacer = async (transaccionId) => {
+    const { error } = await onDeshacerDeposito(transaccionId)
+    toast(error ? mensajeErrorOperacion(error) : 'Depósito deshecho', error ? 'error' : 'info')
+  }
+
   const handleDepositar = async () => {
     if (!formDep.monto) return
-    const { error } = await onDepositar(ahorro, formDep)
+    const { error, transaccionId } = await onDepositar(ahorro, formDep)
     if (error) {
       toast(mensajeErrorOperacion(error), 'error')
       return
     }
-    toast('Depósito registrado', 'success')
+    toast('Depósito registrado', 'success', transaccionId
+      ? { accion: { etiqueta: 'Deshacer', onClick: () => deshacer(transaccionId) } }
+      : {})
     setFormDep(FORM_DEP_VACIO)
     setDepositando(false)
   }
@@ -81,13 +90,14 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
         <div className="flex gap-1">
           <button onClick={() => { setDepositando(v => !v); setEditando(false) }}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors bg-gray-50 text-gray-400"
-            style={depositando ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' } : {}}>
+            style={depositando ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' } : {}}
+            aria-label={`Depositar a ${ahorro.concepto}`} title="Depositar">
             <PiggyBank className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => { setEditando(true); setDepositando(false) }} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-400">
+          <button aria-label={`Editar ${ahorro.concepto}`} title="Editar" onClick={() => { setEditando(true); setDepositando(false) }} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-400">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => onEliminar(ahorro.id)} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-400">
+          <button aria-label={`Eliminar ${ahorro.concepto}`} title="Eliminar" onClick={() => onEliminar(ahorro.id)} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-400">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -109,6 +119,24 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
           style={{ width: `${pct}%`, backgroundColor: completado ? 'var(--ahorro)' : (barColors[ahorro.clasificacion] ?? 'var(--primary-600)') }} />
       </div>
       <p className="text-xs text-right text-gray-400 mt-1 font-mono">{pct.toFixed(0)}%</p>
+
+      {ultimoDeposito && (
+        <p className="text-xs mt-1" style={{ color: 'var(--fg-3)' }}>
+          Último depósito: <span className="font-mono">{formatMXN(ultimoDeposito.monto)}</span> · {ultimoDeposito.fecha}
+          {' · '}
+          <button type="button" className="font-semibold underline underline-offset-2" style={{ color: 'var(--primary-700)' }}
+            onClick={() => setConfirmDeshacer(true)} disabled={saving}>
+            Deshacer
+          </button>
+        </p>
+      )}
+      <ConfirmModal
+        open={confirmDeshacer}
+        titulo={`¿Deshacer el depósito de ${formatMXN(ultimoDeposito?.monto)}?`}
+        descripcion={`Se restará de "${ahorro.concepto}" y se borrará su movimiento. Si lo pagaste con tarjeta, también se devuelve a su saldo.`}
+        onConfirm={async () => { setConfirmDeshacer(false); await deshacer(ultimoDeposito.id) }}
+        onCancel={() => setConfirmDeshacer(false)}
+      />
 
       {depositando && (
         <div className="mt-3 pt-3 border-t border-gray-100">
@@ -145,7 +173,7 @@ function TarjetaAhorro({ ahorro, metodos, onActualizar, onEliminar, onDepositar,
 }
 
 export default function Ahorros() {
-  const { ahorros, metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar } = useAhorros()
+  const { ahorros, metodos, ultimoDeposito, deshacerDeposito, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar } = useAhorros()
   const toast = useToast()
   const [mostrarForm, setMostrarForm] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
@@ -249,7 +277,7 @@ export default function Ahorros() {
               />
             )
             : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} />)}
+                {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} ultimoDeposito={ultimoDeposito[a.id]} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} onDeshacerDeposito={deshacerDeposito} />)}
               </div>}
 
       </div>

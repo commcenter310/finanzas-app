@@ -154,6 +154,7 @@ export default function Deudas() {
     actualizar,
     abonar,
     abonarCredito,
+    deshacerPago,
     eliminar,
   } = useDeudas()
   const toast = useToast()
@@ -165,6 +166,15 @@ export default function Deudas() {
   const [vista, setVista] = useState('cartera')
   const [metodoEstrategia, setMetodoEstrategia] = useState('snowball')
   const [confirmDelete, setConfirmDelete] = useState(null)
+  // { tipo, pagoId, monto, nombre } del pago que se quiere deshacer
+  const [confirmDeshacer, setConfirmDeshacer] = useState(null)
+
+  const deshacer = async ({ tipo, pagoId }) => {
+    const resultado = await deshacerPago({ tipo, pagoId })
+    if (resultado?.bloqueado) return
+    if (resultado?.error) toast(mensajeErrorPago(resultado.error), 'error')
+    else toast(`Pago de ${formatMXN(resultado.montoRevertido)} deshecho`, 'info')
+  }
   const setF = (key, value) => setForm(current => ({ ...current, [key]: value }))
   const plan = construirPlan(deudas, totalDeuda, totalPagoMensual, snowball, avalanche)
   const listaEstrategia = (metodoEstrategia === 'avalanche' ? avalanche : snowball)
@@ -241,10 +251,15 @@ export default function Deudas() {
       toast(mensajeErrorPago(resultado.error), 'error')
       return
     }
+    // "Deshacer" en el aviso: sirve aunque el pago haya liquidado la deuda
+    // (entonces ya no aparece en la lista ni en su historial)
+    const accion = resultado?.pagoId
+      ? { accion: { etiqueta: 'Deshacer', onClick: () => deshacer({ tipo: resultado.tipo, pagoId: resultado.pagoId }) } }
+      : {}
     if (resultado?.recortado) {
-      toast(`Se registró ${formatMXN(resultado.montoAplicado)} (el saldo era menor al pago capturado)`, 'info')
+      toast(`Se registró ${formatMXN(resultado.montoAplicado)} (el saldo era menor al pago capturado)`, 'info', accion)
     } else {
-      toast('Pago registrado', 'success')
+      toast('Pago registrado', 'success', accion)
     }
     setMontoAbono(current => ({ ...current, [deudaId]: '' }))
   }
@@ -456,10 +471,21 @@ export default function Deudas() {
                           <span>Historial de pagos</span>
                           {historial.length > 0 ? (
                             <div className="commitment-history-list">
-                              {historial.map(pago => (
+                              {historial.map((pago, i) => (
                                 <div key={pago.id} className="commitment-history-item">
                                   <span>{pago.fecha}{pago.notas ? ` · ${pago.notas}` : ''}</span>
                                   <strong>-{formatMXN(pago.monto)}</strong>
+                                  {/* Solo el más reciente se puede deshacer */}
+                                  {i === 0 && (
+                                    <button
+                                      type="button"
+                                      className="text-xs font-semibold underline underline-offset-2"
+                                      style={{ color: 'var(--primary-700)' }}
+                                      onClick={() => setConfirmDeshacer({ tipo: esTarjeta ? 'credito' : 'deuda', pagoId: pago.id, monto: pago.monto, nombre: deuda.nombre })}
+                                    >
+                                      Deshacer
+                                    </button>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -571,6 +597,17 @@ export default function Deudas() {
         </div>
       </Sheet>
 
+      <ConfirmModal
+        open={!!confirmDeshacer}
+        titulo={`¿Deshacer el pago de ${formatMXN(confirmDeshacer?.monto)}?`}
+        descripcion={`Se devolverá al saldo de ${confirmDeshacer?.nombre ?? 'la cuenta'} y se borrará el gasto que generó en Movimientos.`}
+        onConfirm={async () => {
+          const pago = confirmDeshacer
+          setConfirmDeshacer(null)
+          await deshacer(pago)
+        }}
+        onCancel={() => setConfirmDeshacer(null)}
+      />
       <ConfirmModal
         open={!!confirmDelete}
         titulo="¿Eliminar deuda?"

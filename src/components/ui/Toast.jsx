@@ -8,10 +8,13 @@ const ToastCtx = createContext(null)
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
-  const show = useCallback((message, type = 'success') => {
+  // opciones.accion = { etiqueta, onClick }: agrega un botón (p. ej. "Deshacer").
+  // Con acción el aviso dura más (8 s) para dar tiempo a usarla.
+  const show = useCallback((message, type = 'success', opciones = {}) => {
     const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
+    const { accion = null, duracion = accion ? 8000 : 3500 } = opciones
+    setToasts(prev => [...prev, { id, message, type, accion }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duracion)
   }, [])
 
   const dismiss = useCallback((id) => setToasts(prev => prev.filter(t => t.id !== id)), [])
@@ -29,7 +32,7 @@ export function ToastProvider({ children }) {
   )
 }
 
-/** `const toast = useToast()` → `toast('Mensaje', 'success' | 'error' | 'info')` */
+/** `const toast = useToast()` → `toast('Mensaje', 'success' | 'error' | 'info', { accion: { etiqueta, onClick } })` */
 export const useToast = () => useContext(ToastCtx)
 
 /* ── Configuración por tipo ────────────────────────────────────────────────── */
@@ -40,7 +43,7 @@ const CFG = {
 }
 
 /* ── Item individual ───────────────────────────────────────────────────────── */
-function ToastItem({ message, type }) {
+function ToastItem({ message, type, accion, onDismiss }) {
   const [visible, setVisible] = useState(false)
   const { bg, Icon } = CFG[type] ?? CFG.info
 
@@ -65,6 +68,16 @@ function ToastItem({ message, type }) {
     >
       <Icon style={{ width: 15, height: 15, flexShrink: 0 }} />
       {message}
+      {accion && (
+        <button
+          type="button"
+          onClick={() => { onDismiss?.(); accion.onClick() }}
+          className="ml-1 underline underline-offset-2 font-bold whitespace-nowrap"
+          style={{ color: 'inherit' }}
+        >
+          {accion.etiqueta}
+        </button>
+      )}
     </div>
   )
 }

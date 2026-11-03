@@ -2222,6 +2222,12 @@
     font-size: 11px;
   }
 
+  /* La fecha toma el espacio libre: monto y "Deshacer" quedan a la derecha */
+  .commitment-history-item > span:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
   .commitment-history-item strong {
     color: var(--positive-fg);
     font-weight: 800;
@@ -2410,6 +2416,17 @@
 
   .credit-cycle {
     padding: 17px 20px 19px;
+  }
+
+  /* Aviso: parte del saldo no viene de compras registradas en la app */
+  .credit-cycle-note {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: var(--r-md);
+    background: var(--warning-bg);
+    color: var(--warning-fg);
+    font-size: 11px;
+    line-height: 1.45;
   }
 
   .credit-cycle-primary {
