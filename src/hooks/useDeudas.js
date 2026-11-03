@@ -77,6 +77,8 @@ export function useDeudas() {
 
   const invalidateDeudas = () => invalidateQueryCache([
     'deudas:',
+    'tx:',
+    'gastosVariables:',
     'recordatorios:',
     'dash:',
     'plan:',
@@ -86,6 +88,8 @@ export function useDeudas() {
 
   const invalidateCreditos = () => invalidateQueryCache([
     'creditos:',
+    'tx:',
+    'gastosVariables:',
     'deudas:',
     'recordatorios:',
     'dash:',
@@ -138,9 +142,34 @@ export function useDeudas() {
     if (esCredito) invalidateCreditos()
     else invalidateDeudas()
     const resultado = normalizarResultadoRpc(data, monto)
-    if (!resultado.error) liberarOperacionId(operacionesPagoRef.current, key)
-    return resultado
+    if (resultado.error) return resultado
+    liberarOperacionId(operacionesPagoRef.current, key)
+
+    // La RPC no devuelve el id del pago; se busca por su operacion_id para
+    // poder ofrecer "Deshacer" (también si el pago liquidó la deuda y esta
+    // ya no aparece en la lista).
+    const { data: pago } = await supabase
+      .from(esCredito ? 'pagos_credito' : 'abonos_deuda')
+      .select('id')
+      .eq('operacion_id', operacionId)
+      .maybeSingle()
+    return { ...resultado, pagoId: pago?.id ?? null, tipo }
   }
+
+  // Revierte un abono a deuda o pago de tarjeta: saldo, historial y el
+  // movimiento de gasto, en una sola transacción (supabase-deshacer.sql).
+  const deshacerPago = ({ tipo, pagoId }) => ejecutarPagoBloqueado(`deshacer:${tipo}:${pagoId}`, async () => {
+    const esCredito = tipo === 'credito'
+    const { data, error } = await supabase.rpc(
+      esCredito ? 'deshacer_pago_credito' : 'deshacer_pago_deuda',
+      esCredito ? { p_pago_id: pagoId } : { p_abono_id: pagoId }
+    )
+    if (error) return { error }
+    if (esCredito) invalidateCreditos()
+    else invalidateDeudas()
+    const fila = Array.isArray(data) ? data[0] : data
+    return { montoRevertido: Number(fila?.monto_revertido ?? 0) }
+  })
 
   const abonar = (deudaId, monto, notas = '') => ejecutarPagoBloqueado(
     deudaId,
@@ -203,6 +232,7 @@ export function useDeudas() {
     actualizar,
     abonar,
     abonarCredito,
+    deshacerPago,
     eliminar,
   }
 }

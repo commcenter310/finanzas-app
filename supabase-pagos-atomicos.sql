@@ -15,6 +15,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS pagos_credito_operacion_id_uidx
   ON public.pagos_credito (operacion_id)
   WHERE operacion_id IS NOT NULL;
 
+-- Enlace del movimiento de gasto con su abono/pago: permite deshacerlo
+-- exactamente (supabase-deshacer.sql).
+ALTER TABLE public.transacciones
+  ADD COLUMN IF NOT EXISTS abono_deuda_id INTEGER
+  REFERENCES public.abonos_deuda(id) ON DELETE SET NULL;
+ALTER TABLE public.transacciones
+  ADD COLUMN IF NOT EXISTS pago_credito_id INTEGER
+  REFERENCES public.pagos_credito(id) ON DELETE SET NULL;
+
 CREATE OR REPLACE FUNCTION public.registrar_pago_deuda(
   p_deuda_id INTEGER,
   p_monto NUMERIC,
@@ -34,6 +43,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_deuda public.deudas%ROWTYPE;
+  v_abono_id INTEGER;
   v_solicitado NUMERIC(12,2);
   v_aplicado NUMERIC(12,2);
   v_nuevo NUMERIC(12,2);
@@ -94,7 +104,7 @@ BEGIN
     deuda_id, monto, fecha, notas, operacion_id
   ) VALUES (
     p_deuda_id, v_aplicado, CURRENT_DATE, NULLIF(p_notas, ''), p_operacion_id
-  );
+  ) RETURNING id INTO v_abono_id;
 
   UPDATE public.deudas
   SET saldo_actual = v_nuevo,
@@ -102,10 +112,10 @@ BEGIN
   WHERE id = p_deuda_id;
 
   INSERT INTO public.transacciones (
-    user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen
+    user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen, abono_deuda_id
   ) VALUES (
     auth.uid(), 'Pago deuda: ' || v_deuda.nombre, v_aplicado,
-    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda'
+    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda', v_abono_id
   );
 
   RETURN QUERY SELECT
@@ -136,6 +146,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_credito public.creditos%ROWTYPE;
+  v_pago_id INTEGER;
   v_solicitado NUMERIC(12,2);
   v_aplicado NUMERIC(12,2);
   v_nuevo NUMERIC(12,2);
@@ -198,17 +209,17 @@ BEGIN
   ) VALUES (
     p_credito_id, auth.uid(), v_aplicado, CURRENT_DATE,
     NULLIF(p_notas, ''), p_operacion_id
-  );
+  ) RETURNING id INTO v_pago_id;
 
   UPDATE public.creditos
   SET saldo_utilizado = v_nuevo
   WHERE id = p_credito_id;
 
   INSERT INTO public.transacciones (
-    user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen
+    user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen, pago_credito_id
   ) VALUES (
     auth.uid(), 'Pago tarjeta: ' || v_credito.nombre, v_aplicado,
-    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda'
+    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda', v_pago_id
   );
 
   RETURN QUERY SELECT

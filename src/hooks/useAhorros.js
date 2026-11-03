@@ -26,6 +26,21 @@ export function useAhorros() {
 
   const metodos = useMetodosPago()
 
+  // Último depósito de cada meta (para poder deshacerlo). Solo los hechos con
+  // la función atómica quedan ligados a su meta (ahorro_id).
+  const { data: depositos } = useSupabaseQuery(async () => {
+    const { data, error } = await supabase
+      .from('transacciones')
+      .select('id, monto, fecha, ahorro_id')
+      .eq('user_id', uid).eq('origen', 'ahorro').not('ahorro_id', 'is', null)
+      .order('id', { ascending: false })
+      .limit(200)
+    if (error) throw error
+    return data ?? []
+  }, [uid], `ahorros:depositos:${uid}`)
+  const ultimoDeposito = {}
+  for (const d of depositos ?? []) ultimoDeposito[d.ahorro_id] ??= d
+
   const totales = {
     meta:   ahorros?.reduce((s, a) => s + Number(a.monto_meta), 0) ?? 0,
     actual: ahorros?.reduce((s, a) => s + Number(a.monto_actual), 0) ?? 0,
@@ -75,7 +90,7 @@ export function useAhorros() {
     }
     const key = `depositar:${ahorro.id}`
     const operacionId = obtenerOperacionId(operacionesRef.current, key, datosOperacion)
-    const { error } = await supabase.rpc('depositar_ahorro_atomico', {
+    const { data, error } = await supabase.rpc('depositar_ahorro_atomico', {
       p_ahorro_id: ahorro.id,
       p_monto: datosOperacion.monto,
       p_metodo_pago_id: datosOperacion.metodo_pago_id,
@@ -83,12 +98,22 @@ export function useAhorros() {
       p_operacion_id: operacionId,
     })
     setSaving(false)
-    if (!error) {
-      liberarOperacionId(operacionesRef.current, key)
-      invalidateDeposito()
-    }
+    if (error) return { error }
+    liberarOperacionId(operacionesRef.current, key)
+    invalidateDeposito()
+    const fila = Array.isArray(data) ? data[0] : data
+    return { error: null, transaccionId: fila?.transaccion_id ?? null }
+  }
+
+  // Revierte un depósito: resta del ahorro, borra su movimiento y, si se hizo
+  // con tarjeta, devuelve el saldo de la tarjeta (supabase-deshacer.sql).
+  const deshacerDeposito = async (transaccionId) => {
+    setSaving(true)
+    const { error } = await supabase.rpc('deshacer_deposito_ahorro', { p_transaccion_id: transaccionId })
+    setSaving(false)
+    if (!error) invalidateDeposito()
     return { error }
   }
 
-  return { ahorros: ahorros ?? [], metodos, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
+  return { ahorros: ahorros ?? [], metodos, ultimoDeposito, deshacerDeposito, loading, error, refetch, saving, totales, agregar, actualizar, eliminar, depositar }
 }
