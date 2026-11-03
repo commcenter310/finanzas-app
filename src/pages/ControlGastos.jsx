@@ -46,6 +46,7 @@ import { useTransacciones } from '../hooks/useTransacciones'
 import { mensajeErrorOperacion } from '../utils/operaciones'
 import { CLASIF_OPTS, formatMXN, MESES } from '../utils/constantes'
 import { fechaLocalISO } from '../utils/fecha'
+import { esGastoHormiga } from '../utils/calculos'
 
 const FORM_VACIO = {
   descripcion: '',
@@ -250,7 +251,7 @@ export default function ControlGastos() {
     const matchClasif = !filtroClasif || transaccion.clasificacion === filtroClasif
     const matchCategoria = !filtroCategoria || transaccion.categoria_id === Number(filtroCategoria)
     const matchOrigen = !filtroOrigen || (transaccion.origen ?? 'web') === filtroOrigen
-    const matchHormiga = !soloHormiga || (Number(transaccion.monto) <= umbral && transaccion.clasificacion === 'deseo')
+    const matchHormiga = !soloHormiga || esGastoHormiga(transaccion, umbral)
     return matchBusqueda && matchClasif && matchCategoria && matchOrigen && matchHormiga
   }), [transacciones, busqueda, filtroClasif, filtroCategoria, filtroOrigen, soloHormiga, umbral])
 
@@ -263,7 +264,7 @@ export default function ControlGastos() {
       const monto = Number(transaccion.monto)
       const nombre = transaccion.categorias?.nombre ?? 'Sin categoría'
       porCategoria.set(nombre, (porCategoria.get(nombre) ?? 0) + monto)
-      if (transaccion.clasificacion === 'deseo' && monto <= umbral) {
+      if (esGastoHormiga(transaccion, umbral)) {
         hormigaCantidad += 1
         hormigaMonto += monto
       }

@@ -323,7 +323,7 @@ GRANT EXECUTE ON FUNCTION public.update_saldo_credito_admin(UUID, INTEGER, NUMER
 -- ============================================
 -- TABLAS AGREGADAS DESPUÉS DEL SCHEMA ORIGINAL
 -- Reconstruidas a partir del código que las usa
--- (useNominas, usePlanQuincena, usePatrimonio)
+-- (useNominas, usePlanQuincena)
 -- ============================================
 
 -- Nóminas / fuentes de ingreso recurrentes (Perfil → sección Nóminas)
@@ -371,36 +371,6 @@ CREATE TABLE IF NOT EXISTS public.apartados (
 ALTER TABLE public.apartados ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "own" ON public.apartados;
 CREATE POLICY "own" ON public.apartados FOR ALL USING (auth.uid() = user_id);
-
--- Activos (página Patrimonio)
-CREATE TABLE IF NOT EXISTS public.activos (
-  id         SERIAL PRIMARY KEY,
-  user_id    UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  nombre     TEXT NOT NULL,
-  tipo       TEXT NOT NULL CHECK (tipo IN ('inmueble','vehiculo','inversion','cuenta','otro')),
-  monto      NUMERIC(14,2) NOT NULL DEFAULT 0,
-  activo     BOOLEAN DEFAULT true,       -- soft-delete
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE public.activos ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "own" ON public.activos;
-CREATE POLICY "own" ON public.activos FOR ALL USING (auth.uid() = user_id);
-
--- Snapshots mensuales de patrimonio neto (histórico para la gráfica)
-CREATE TABLE IF NOT EXISTS public.patrimonio_snapshots (
-  id              SERIAL PRIMARY KEY,
-  user_id         UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  mes             INTEGER NOT NULL CHECK (mes BETWEEN 1 AND 12),
-  anio            INTEGER NOT NULL,
-  total_activos   NUMERIC(14,2) DEFAULT 0,
-  total_deudas    NUMERIC(14,2) DEFAULT 0,
-  patrimonio_neto NUMERIC(14,2) DEFAULT 0,
-  created_at      TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, mes, anio)             -- requerido por el upsert onConflict del hook
-);
-ALTER TABLE public.patrimonio_snapshots ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "own" ON public.patrimonio_snapshots;
-CREATE POLICY "own" ON public.patrimonio_snapshots FOR ALL USING (auth.uid() = user_id);
 
 -- ============================================
 -- MIGRACIONES SOBRE TABLAS ORIGINALES (idempotentes)
