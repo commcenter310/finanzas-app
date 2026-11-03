@@ -3,7 +3,7 @@ import {
   sumarTransaccionesSinFijos, calcularTotalGastos, calcularSaldoAnterior,
   calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
   calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
-  cortesRecientes, calcularEstadoTarjeta, sumarPorClasificacion,
+  cortesRecientes, calcularEstadoTarjeta, sumarPorClasificacion, calcularSaldoNoRegistrado,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -351,5 +351,24 @@ describe('sumarPorClasificacion', () => {
   })
   it('tolera listas nulas', () => {
     expect(sumarPorClasificacion(null, undefined)).toEqual({ necesidad: 0, deseo: 0, ahorro: 0 })
+  })
+})
+
+describe('calcularSaldoNoRegistrado', () => {
+  it('detecta saldo que no viene de compras registradas (el caso "Vence hoy" con pago $0)', () => {
+    const ciclo = { pagoProximo: 0, gastoPeriodoActual: 0, msiPendiente: 0 }
+    expect(calcularSaldoNoRegistrado(13904.2, ciclo)).toBe(13904.2)
+  })
+  it('resta lo facturado, lo del periodo y los MSI pendientes', () => {
+    const ciclo = { pagoProximo: 539.99, gastoPeriodoActual: 539.99, msiPendiente: 2699.94 }
+    expect(calcularSaldoNoRegistrado(4062, ciclo)).toBe(282.08)
+  })
+  it('es 0 si las compras registradas explican todo el saldo (o más, tras pagos)', () => {
+    expect(calcularSaldoNoRegistrado(500, { pagoProximo: 300, gastoPeriodoActual: 200, msiPendiente: 0 })).toBe(0)
+    expect(calcularSaldoNoRegistrado(100, { pagoProximo: 300, gastoPeriodoActual: 0, msiPendiente: 0 })).toBe(0)
+  })
+  it('ignora diferencias de centavos y tarjetas sin ciclo', () => {
+    expect(calcularSaldoNoRegistrado(500.5, { pagoProximo: 500, gastoPeriodoActual: 0, msiPendiente: 0 })).toBe(0)
+    expect(calcularSaldoNoRegistrado(1000, null)).toBe(0)
   })
 })

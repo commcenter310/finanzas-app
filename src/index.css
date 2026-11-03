@@ -2418,6 +2418,17 @@
     padding: 17px 20px 19px;
   }
 
+  /* Aviso: parte del saldo no viene de compras registradas en la app */
+  .credit-cycle-note {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: var(--r-md);
+    background: var(--warning-bg);
+    color: var(--warning-fg);
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
   .credit-cycle-primary {
     display: flex;
     align-items: flex-end;

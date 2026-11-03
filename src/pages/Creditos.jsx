@@ -31,7 +31,7 @@ import {
   StatusPill,
 } from '../components/commitments/CommitmentUI'
 import { useCreditos } from '../hooks/useCreditos'
-import { calcularEstadoTarjeta, diasHastaDiaDelMes } from '../utils/calculos'
+import { calcularEstadoTarjeta, calcularSaldoNoRegistrado, diasHastaDiaDelMes } from '../utils/calculos'
 import { formatMXN } from '../utils/constantes'
 import { resolverVencimientoProgramado } from '../utils/pagosProgramados'
 
@@ -107,6 +107,8 @@ const fmtRango = (inicio, fin) => {
 }
 
 function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
+  // Saldo que no sale de compras registradas: el pago calculado no lo incluye
+  const saldoNoRegistrado = calcularSaldoNoRegistrado(credito.saldo_utilizado, ciclo)
   const alerta = getAlerta(credito)
   const limite = Number(credito.limite_credito ?? 0)
   const saldo = Number(credito.saldo_utilizado ?? 0)
@@ -196,6 +198,12 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
             </div>
             <p>Facturado al corte del {fmtFechaCorta(ciclo.ultimoCorte)}</p>
           </div>
+          {saldoNoRegistrado > 0 && (
+            <p className="credit-cycle-note" role="note">
+              Tu saldo incluye {formatMXN(saldoNoRegistrado)} que no viene de compras registradas aquí
+              (por ejemplo, de antes de usar Finni). El pago real puede ser mayor: confírmalo en tu estado de cuenta.
+            </p>
+          )}
           <div className="credit-cycle-secondary">
             <div>
               <span>Compras del periodo</span>
