@@ -10,6 +10,7 @@ import { useToast } from '../components/ui/Toast'
 import { Save, Plus, Trash2, Pencil, Check, X, Search, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, ArrowRight } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import ErrorState from '../components/ui/ErrorState'
 import NominasSection from '../components/perfil/NominasSection'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
 import { CLASIF_OPTS } from '../utils/constantes'
@@ -102,7 +103,7 @@ function SetupGuide({ items }) {
 }
 
 export default function Perfil() {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile, profileError, refreshProfile } = useAuth()
   const uid = user?.id
   const toast = useToast()
 
@@ -129,6 +130,7 @@ export default function Perfil() {
   }, [profile])
 
   const guardarBasico = async () => {
+    if (!profile) return   // sin perfil cargado se sobrescribiría con campos vacíos
     if (telefono10.length > 0 && telefono10.length < 10) {
       setMsgBasico('⚠️ El celular debe tener 10 dígitos')
       setTimeout(() => setMsgBasico(''), 3000)
@@ -171,6 +173,7 @@ export default function Perfil() {
   }, [profile])
 
   const guardarRegla = async () => {
+    if (!profile) return
     const n = Number(regla.necesidad), d = Number(regla.deseo), a = Number(regla.ahorro)
     if ([n, d, a].some(v => v < 0 || v > 1)) return setErrorRegla('Cada valor debe estar entre 0% y 100%')
     const total = n + d + a
@@ -349,6 +352,19 @@ export default function Perfil() {
       onClick: () => irA('perfil-regla'),
     },
   ]
+
+
+  // Sin perfil no se muestra el formulario: estaría vacío y guardarlo
+  // borraría nombre, teléfono (el bot dejaría de reconocerte) y reglas.
+  if (!profile) {
+    return (
+      <Layout titulo="Perfil">
+        {profileError
+          ? <ErrorState onRetry={refreshProfile} mensaje="No pudimos cargar tu perfil. Revisa tu conexión e intenta de nuevo." />
+          : <div className="card p-6 text-sm" style={{ color: 'var(--fg-3)' }}>Cargando tu perfil…</div>}
+      </Layout>
+    )
+  }
 
   return (
     <Layout titulo="Perfil">

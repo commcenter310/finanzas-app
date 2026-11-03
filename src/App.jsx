@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { MesProvider } from './context/MesContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './components/ui/Toast'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 import { lazyWithRetry } from './utils/lazyWithRetry'
 import Auth from './pages/Auth'
 
@@ -35,6 +36,7 @@ function PageLoader() {
 
 function ProtectedRoutes() {
   const { user, profile, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) return <PageLoader />
 
@@ -53,24 +55,27 @@ function ProtectedRoutes() {
 
   return (
     <MesProvider>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/"                 element={<Dashboard />} />
-          <Route path="/plan-quincena"    element={<PlanQuincena />} />
-          <Route path="/ingresos"         element={<Ingresos />} />
-          <Route path="/gastos-fijos"     element={<GastosFijos />}     />
-          <Route path="/gastos-variables" element={<GastosVariables />} />
-          <Route path="/control-gastos"   element={<ControlGastos />}   />
-          <Route path="/creditos"         element={<Creditos />}   />
-          <Route path="/deudas"           element={<Deudas />}     />
-          <Route path="/ahorros"          element={<Ahorros />}    />
-          <Route path="/tendencias"       element={<Tendencias />} />
-          <Route path="/proyeccion"       element={<Proyeccion />} />
-          <Route path="/simulador"        element={<SimuladorCredito />} />
-          <Route path="/whatsapp"         element={<WhatsappLog />} />
-          <Route path="/perfil"           element={<Perfil />}     />
-        </Routes>
-      </Suspense>
+      {/* Se reinicia al cambiar de ruta: un fallo en una página no bloquea las demás */}
+      <ErrorBoundary resetKey={location.pathname}>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/"                 element={<Dashboard />} />
+            <Route path="/plan-quincena"    element={<PlanQuincena />} />
+            <Route path="/ingresos"         element={<Ingresos />} />
+            <Route path="/gastos-fijos"     element={<GastosFijos />}     />
+            <Route path="/gastos-variables" element={<GastosVariables />} />
+            <Route path="/control-gastos"   element={<ControlGastos />}   />
+            <Route path="/creditos"         element={<Creditos />}   />
+            <Route path="/deudas"           element={<Deudas />}     />
+            <Route path="/ahorros"          element={<Ahorros />}    />
+            <Route path="/tendencias"       element={<Tendencias />} />
+            <Route path="/proyeccion"       element={<Proyeccion />} />
+            <Route path="/simulador"        element={<SimuladorCredito />} />
+            <Route path="/whatsapp"         element={<WhatsappLog />} />
+            <Route path="/perfil"           element={<Perfil />}     />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </MesProvider>
   )
 }
@@ -78,16 +83,18 @@ function ProtectedRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/*"    element={<ProtectedRoutes />} />
-            </Routes>
-          </ToastProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/*"    element={<ProtectedRoutes />} />
+              </Routes>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }
