@@ -60,7 +60,7 @@ Income has **two distinct concepts** so a payday late in a month can fund the ne
 
 All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule display in Dashboard. Color tokens are `--necesidad`, `--deseo`, `--ahorro` in CSS.
 
-`gastosHormiga` in `useDashboard` only counts transactions classified as `deseo` below the `umbral_hormiga` threshold — a cheap medicine (necesidad) is not an "ant expense", a coffee (deseo) is.
+`gastosHormiga` in `useDashboard` only counts transactions classified as `deseo` below the `umbral_hormiga` threshold, excluding `origen = 'gastos_fijos'` — a cheap medicine (necesidad) is not an "ant expense", a coffee (deseo) is, and a paid subscription (Netflix as a fixed expense) is planned, not impulsive.
 
 ### Créditos ↔ Deudas integration
 

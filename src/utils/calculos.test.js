@@ -104,6 +104,15 @@ describe('calcularGastosHormiga', () => {
     const r = calcularGastosHormiga([{ monto: 50, clasificacion: 'necesidad' }], 100)
     expect(r.count).toBe(0)
   })
+  it('una suscripción pagada como gasto fijo no es hormiga', () => {
+    const r = calcularGastosHormiga([
+      { monto: 99, clasificacion: 'deseo', origen: 'gastos_fijos' }, // Netflix: NO
+      { monto: 60, clasificacion: 'deseo', origen: 'web' },          // café: SÍ
+      { monto: 45, clasificacion: 'deseo', origen: 'whatsapp' },     // antojo: SÍ
+    ], 100)
+    expect(r.count).toBe(2)
+    expect(r.total).toBe(105)
+  })
 })
 
 describe('calcularIngresoEsperado', () => {

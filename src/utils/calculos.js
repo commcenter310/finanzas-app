@@ -50,12 +50,19 @@ export const calcularPorAsignar = ({ totalIngresos, totalGastos, saldoAnterior }
   return sinDatos ? null : saldoArrastrado + totalIngresos - totalGastos
 }
 
-// Gastos hormiga: solo cuentan los de clasificación 'deseo' bajo el umbral.
-// Una medicina de $50 (necesidad) NO es hormiga; un café de $50 (deseo) SÍ.
+// Gastos hormiga: gastos chicos e impulsivos. Solo cuentan los 'deseo' bajo
+// el umbral que el usuario registró él mismo:
+// - Una medicina de $50 (necesidad) NO es hormiga; un café de $50 (deseo) SÍ.
+// - Un gasto fijo pagado (Netflix $99) NO es hormiga: es planeado y se
+//   controla en Gastos fijos.
+// Única definición: la usan el Dashboard y Movimientos (resumen y filtro).
+export const esGastoHormiga = (t, umbral) =>
+  Number(t.monto) <= umbral
+  && t.clasificacion === 'deseo'
+  && t.origen !== 'gastos_fijos'
+
 export const calcularGastosHormiga = (transacciones, umbral) => {
-  const tx = (transacciones ?? []).filter(
-    t => Number(t.monto) <= umbral && t.clasificacion === 'deseo'
-  )
+  const tx = (transacciones ?? []).filter(t => esGastoHormiga(t, umbral))
   return {
     count: tx.length,
     total: tx.reduce((s, t) => s + Number(t.monto), 0),
