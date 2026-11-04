@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
 import { soloDiezDigitos, telefonoAWhatsApp } from '../utils/telefono'
-import { Wallet, User, MessageSquare, CreditCard, TrendingUp, Plus, Trash2, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { User, MessageSquare, CreditCard, TrendingUp, Plus, Trash2, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import FilterSelect from '../components/ui/FilterSelect'
+import BrandMark from '../components/layout/BrandMark'
 
 const FREC_OPTS = [
   { value: 'quincenal', label: 'Quincenal (cada 15 días)' },
@@ -117,15 +118,9 @@ export default function Bienvenida() {
       <div className="w-full max-w-xl">
 
         {/* Brand */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-[14px] flex items-center justify-center"
-            style={{ background: 'var(--grad-primary)', boxShadow: 'var(--shadow-primary)' }}>
-            <Wallet className="w-5 h-5 text-white" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="font-bold leading-none" style={{ color: 'var(--fg-1)' }}>Finni Apoyo</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>Configuremos tu cuenta</p>
-          </div>
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <BrandMark />
+          <p className="text-xs" style={{ color: 'var(--fg-3)' }}>Configuremos tu cuenta</p>
         </div>
 
         {/* Progreso */}

@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import { AlertTriangle, Home, RotateCw } from 'lucide-react'
+import BrandMark from '../layout/BrandMark'
 
 // Si una pantalla truena al dibujarse (dato inesperado, chunk que no cargó…),
 // React desmonta todo y la app queda en blanco. Este límite atrapa el error y
@@ -27,6 +28,7 @@ export default class ErrorBoundary extends Component {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-app)' }}>
         <div className="error-state card p-6" role="alert" style={{ maxWidth: 420 }}>
+          <BrandMark compact />
           <div className="error-state__icon">
             <AlertTriangle className="w-6 h-6" />
           </div>

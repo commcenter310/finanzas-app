@@ -5,6 +5,7 @@ import { MesProvider } from './context/MesContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './components/ui/Toast'
 import ErrorBoundary from './components/ui/ErrorBoundary'
+import BrandMark from './components/layout/BrandMark'
 import { lazyWithRetry } from './utils/lazyWithRetry'
 import Auth from './pages/Auth'
 
@@ -28,8 +29,8 @@ const Bienvenida      = lazyWithRetry(() => import('./pages/Bienvenida'))
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-primary-700 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Cargando">
+      <BrandMark compact className="brand-loader" />
     </div>
   )
 }

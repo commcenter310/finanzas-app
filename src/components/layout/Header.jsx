@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useMes } from '../../context/MesContext'
 import { MESES } from '../../utils/constantes'
 import ReminderBell from './ReminderBell'
+import BrandMark from './BrandMark'
 
 const PAGE_CONTEXT = {
   Dashboard: 'Tu panorama financiero',
@@ -42,7 +43,8 @@ export default function Header({ titulo, onMenuClick }) {
         >
           <Menu className="w-5 h-5" strokeWidth={2} />
         </button>
-        <span className="header-title-rule" aria-hidden="true" />
+        <BrandMark compact className="lg:hidden" />
+        <span className="header-title-rule hidden lg:block" aria-hidden="true" />
         <div className="min-w-0">
           <p className="header-kicker">Finni / {PAGE_CONTEXT[titulo] ?? 'Control personal'}</p>
           <h1 className="header-title">{titulo}</h1>
