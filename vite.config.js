@@ -26,7 +26,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Finni Apoyo — Control Personal',
         short_name: 'Finni',
@@ -34,8 +34,9 @@ export default defineConfig({
         lang: 'es-MX',
         start_url: '/',
         display: 'standalone',
-        background_color: '#F6F4F1',
-        theme_color: '#23221F',
+        // Colores de la app (fondo claro de Finni y marino del logo)
+        background_color: '#EEF3FA',
+        theme_color: '#0F172A',
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -46,6 +47,8 @@ export default defineConfig({
         // Precachea el shell de la app (JS/CSS/HTML) para abrir al instante.
         // Los datos siguen viniendo de Supabase por red (nunca se cachean aquí).
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // La imagen para compartir el enlace solo la piden WhatsApp/redes, no la app
+        globIgnores: ['**/og-image.png'],
         navigateFallback: '/index.html',
         // El webhook del bot vive en /api — jamás debe servirlo el service worker
         navigateFallbackDenylist: [/^\/api\//],
