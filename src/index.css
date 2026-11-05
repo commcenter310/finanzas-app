@@ -204,8 +204,12 @@
     .month-switcher-label { min-width: 128px; }
   }
 
+  .header-title-corto { display: none; }
+
   @media (max-width: 520px) {
     .header-kicker { display: none; }
+    .header-title-largo { display: none; }
+    .header-title-corto { display: inline; }
     .header-title { font-size: 16px; margin-top: 0; }
     .header-title-rule { height: 26px; }
     .app-header { gap: 7px; }
@@ -213,6 +217,15 @@
     .header-actions { gap: 5px; }
     .month-switcher { gap: 0; }
     .month-switcher-label { min-width: 62px; font-size: 11px; }
+  }
+
+  /* Teléfonos angostos (≤380 px): en meses pasados aparece "Hoy" y el título
+     quedaba en ~73 px; se compactan título y selector de mes */
+  @media (max-width: 380px) {
+    .header-title { font-size: 15px; letter-spacing: -0.01em; }
+    .month-switcher-label { min-width: 0; padding: 0 2px; }
+    .today-button { padding: 0 5px; font-size: 11px; }
+    .header-identity, .header-actions { gap: 3px; }
   }
 
   .icon-button {

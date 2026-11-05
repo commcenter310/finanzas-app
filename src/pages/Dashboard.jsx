@@ -10,6 +10,8 @@ import EmptyState from '../components/ui/EmptyState'
 import { lazyWithRetry } from '../utils/lazyWithRetry'
 import DashboardOverview, { OverviewSkeleton } from '../components/dashboard/DashboardOverview'
 import { buildDashboardInsights } from '../components/dashboard/insights'
+import { calcularIngresoPendiente } from '../utils/calculos'
+import { plural } from '../utils/texto'
 
 const DashboardCharts = lazyWithRetry(() => import('../components/dashboard/DashboardCharts'))
 
@@ -180,8 +182,8 @@ export default function Dashboard() {
             {/* Ingreso registrado vs esperado */}
             {ingresoEsperado != null && ingresoEsperado > 0 && (() => {
               const pct = Math.min((totalIngresos / ingresoEsperado) * 100, 100)
-              const completo = totalIngresos >= ingresoEsperado - 0.5
-              const faltante = Math.max(0, ingresoEsperado - totalIngresos)
+              const faltante = calcularIngresoPendiente(ingresoEsperado, totalIngresos)
+              const completo = faltante === 0
               return (
                 <div className="mb-4">
                   <div className="flex flex-wrap justify-between gap-x-2 text-sm mb-1.5">
@@ -202,7 +204,7 @@ export default function Dashboard() {
                         transition: 'width var(--dur-slow) var(--ease-out)',
                       }} />
                   </div>
-                  {!completo && faltante > 0.5 && (
+                  {!completo && (
                     <p className="text-xs mt-1.5" style={{ color: 'var(--fg-3)' }}>
                       Faltan {formatMXN(faltante)} por registrar según tu nómina.{' '}
                       <Link to="/ingresos" className="font-semibold" style={{ color: 'var(--primary-600)' }}>
@@ -407,7 +409,7 @@ export default function Dashboard() {
                   Gastos Hormiga del Mes
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
-                  Transacciones ≤ {formatMXN(gastosHormiga.umbral)} · {gastosHormiga.count} movimientos pequeños
+                  Transacciones ≤ {formatMXN(gastosHormiga.umbral)} · {plural(gastosHormiga.count, 'movimiento pequeño', 'movimientos pequeños')}
                 </p>
               </div>
             </div>

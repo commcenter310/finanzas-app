@@ -45,6 +45,7 @@ import {
 import { useGastosVariables } from '../hooks/useGastosVariables'
 import { formatMXN } from '../utils/constantes'
 import { CRITERIOS_ORDEN, ordenarCategorias } from '../utils/ordenarCategorias'
+import { plural } from '../utils/texto'
 import FilterSelect from '../components/ui/FilterSelect'
 import {
   chartAxisProps,
@@ -214,7 +215,7 @@ export default function GastosVariables() {
   useEffect(() => {
     if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
       prevAutoCopRef.current = autoCopiadosCount
-      toast(`${autoCopiadosCount} presupuestos copiados del mes anterior`, 'success')
+      toast(`${plural(autoCopiadosCount, 'presupuesto copiado', 'presupuestos copiados')} del mes anterior`, 'success')
     }
   }, [autoCopiadosCount, toast])
 
@@ -267,7 +268,7 @@ export default function GastosVariables() {
   const handleCopiar = async () => {
     const { copiados, error } = await copiarDelMesAnterior()
     if (error) return toast('No se pudieron copiar los límites. Intenta de nuevo.', 'error')
-    toast(copiados > 0 ? `${copiados} límites copiados` : 'El mes anterior no tiene límites', copiados > 0 ? 'success' : 'info')
+    toast(copiados > 0 ? plural(copiados, 'límite copiado', 'límites copiados') : 'El mes anterior no tiene límites', copiados > 0 ? 'success' : 'info')
   }
 
   let signal
@@ -302,7 +303,7 @@ export default function GastosVariables() {
       <SpendingSignal
         icon={Target}
         label="Cobertura pendiente"
-        title={`${resumen.sinLimite.length} categorías sin límite`}
+        title={`${plural(resumen.sinLimite.length, 'categoría', 'categorías')} sin límite`}
         description={`${formatMXN(resumen.gastoSinLimite)} gastados fuera del presupuesto configurado.`}
         tone="warning"
       />
@@ -333,7 +334,7 @@ export default function GastosVariables() {
         <SpendingOverview
           eyebrow={estadoPeriodo}
           title="Tu margen para decidir"
-          description={`${resumen.conLimite.length} categorías con presupuesto activo`}
+          description={`${plural(resumen.conLimite.length, 'categoría', 'categorías')} con presupuesto activo`}
           amountLabel={resumen.disponible < 0 ? 'Presupuesto excedido' : 'Disponible en límites'}
           amount={formatMXN(Math.abs(resumen.disponible))}
           progress={resumen.porcentaje}
@@ -354,7 +355,7 @@ export default function GastosVariables() {
         <SectionHeader
           eyebrow="Límites mensuales"
           title="Presupuesto por categoría"
-          description={`${filtradas.length} categorías visibles`}
+          description={plural(filtradas.length, 'categoría visible', 'categorías visibles')}
           action={(
             <div className="budget-list-controls">
               <SegmentedControl

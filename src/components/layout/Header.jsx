@@ -22,6 +22,15 @@ const PAGE_CONTEXT = {
   Perfil: 'Tu configuración financiera',
 }
 
+// En teléfonos el encabezado tiene ~100 px para el título (menú, selector de
+// mes y campana ocupan el resto): los títulos largos usan su nombre corto,
+// el mismo de la barra inferior.
+const TITULO_CORTO = {
+  'Plan de Quincena': 'Plan',
+  'Proyección 12 Meses': 'Proyección',
+  'Simulador de Crédito': 'Simulador',
+}
+
 export default function Header({ titulo, onMenuClick }) {
   const { mes, anio, setMes, setAnio, irMesAnterior, irMesSiguiente } = useMes()
   const hoy = new Date()
@@ -43,11 +52,19 @@ export default function Header({ titulo, onMenuClick }) {
         >
           <Menu className="w-5 h-5" strokeWidth={2} />
         </button>
-        <BrandMark compact className="lg:hidden" />
+        {/* En teléfonos no cabe junto al título; se muestra en tablets */}
+        <BrandMark compact className="hidden sm:block lg:hidden" />
         <span className="header-title-rule hidden lg:block" aria-hidden="true" />
         <div className="min-w-0">
           <p className="header-kicker">Finni / {PAGE_CONTEXT[titulo] ?? 'Control personal'}</p>
-          <h1 className="header-title">{titulo}</h1>
+          <h1 className="header-title">
+            {TITULO_CORTO[titulo] ? (
+              <>
+                <span className="header-title-largo">{titulo}</span>
+                <span className="header-title-corto">{TITULO_CORTO[titulo]}</span>
+              </>
+            ) : titulo}
+          </h1>
         </div>
       </div>
 

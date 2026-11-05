@@ -10,6 +10,7 @@ import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { fechaLocalISO } from '../utils/fecha'
+import { plural } from '../utils/texto'
 import { mensajeErrorOperacion } from '../utils/operaciones'
 
 const FORM_VACIO = { concepto: '', monto_previsto: '', clasificacion: 'necesidad', es_recurrente: false, dia_cobro: '', categoria_id: '', metodo_pago_id: '' }
@@ -23,7 +24,7 @@ export default function GastosFijos() {
   useEffect(() => {
     if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
       prevAutoCopRef.current = autoCopiadosCount
-      toast(`✅ ${autoCopiadosCount} gastos recurrentes cargados para este mes`, 'success')
+      toast(`✅ ${plural(autoCopiadosCount, 'gasto recurrente cargado', 'gastos recurrentes cargados')} para este mes`, 'success')
     }
   }, [autoCopiadosCount, toast])
 
