@@ -85,6 +85,16 @@ export const calcularIngresoEsperado = (nominas, mes) => {
   return total
 }
 
+// Ingreso que falta por registrar respecto a lo esperado por nómina.
+// Diferencias menores a $50 o al 1% de lo esperado se consideran registradas:
+// son redondeos (p. ej. una quincena que llega $7 distinta) y no pendientes.
+export const calcularIngresoPendiente = (esperado, registrado) => {
+  if (esperado == null || esperado <= 0) return 0
+  const falta = esperado - (registrado ?? 0)
+  const tolerancia = Math.max(50, esperado * 0.01)
+  return falta > tolerancia ? Math.round(falta * 100) / 100 : 0
+}
+
 // Días reales hasta la próxima ocurrencia de un día del mes (ej. "día 30 de pago").
 // Usa el calendario real: meses de 28/29/30/31 días. Si el día objetivo no existe
 // en el mes (ej. día 31 en junio), se recorre al último día de ese mes.

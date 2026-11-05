@@ -47,6 +47,7 @@ import { mensajeErrorOperacion } from '../utils/operaciones'
 import { CLASIF_OPTS, formatMXN, MESES } from '../utils/constantes'
 import { fechaLocalISO } from '../utils/fecha'
 import { esGastoHormiga } from '../utils/calculos'
+import { plural } from '../utils/texto'
 
 const FORM_VACIO = {
   descripcion: '',
@@ -346,7 +347,7 @@ export default function ControlGastos() {
             <SpendingSignal
               icon={CircleDollarSign}
               label="Fuga detectada"
-              title={`${resumen.hormigaCantidad} gastos hormiga`}
+              title={plural(resumen.hormigaCantidad, 'gasto hormiga', 'gastos hormiga')}
               description={`${formatMXN(resumen.hormigaMonto)} en compras de hasta ${formatMXN(umbral)}.`}
               tone="warning"
               action={(
@@ -371,7 +372,7 @@ export default function ControlGastos() {
         <SectionHeader
           eyebrow="Bitácora mensual"
           title="Movimientos"
-          description={`${filtradas.length} de ${transacciones.length} registros visibles`}
+          description={`${filtradas.length} de ${plural(transacciones.length, 'registro visible', 'registros visibles')}`}
         />
 
         <section className="spending-ledger">

@@ -4,6 +4,7 @@ import {
   calcularSaldoArrastrado, calcularPorAsignar, calcularGastosHormiga,
   calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
   cortesRecientes, calcularEstadoTarjeta, sumarPorClasificacion, calcularSaldoNoRegistrado,
+  calcularIngresoPendiente,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -370,5 +371,25 @@ describe('calcularSaldoNoRegistrado', () => {
   it('ignora diferencias de centavos y tarjetas sin ciclo', () => {
     expect(calcularSaldoNoRegistrado(500.5, { pagoProximo: 500, gastoPeriodoActual: 0, msiPendiente: 0 })).toBe(0)
     expect(calcularSaldoNoRegistrado(1000, null)).toBe(0)
+  })
+})
+
+describe('calcularIngresoPendiente', () => {
+  it('ignora diferencias de redondeo (el caso de $7.42 sobre $21,360)', () => {
+    expect(calcularIngresoPendiente(21360, 21352.58)).toBe(0)
+  })
+  it('reporta lo que realmente falta', () => {
+    expect(calcularIngresoPendiente(21360, 10680)).toBe(10680)
+    expect(calcularIngresoPendiente(21360, 0)).toBe(21360)
+  })
+  it('usa como tolerancia $50 o el 1%, lo que sea mayor', () => {
+    expect(calcularIngresoPendiente(2000, 1951)).toBe(0)      // falta $49: dentro de la tolerancia de $50
+    expect(calcularIngresoPendiente(2000, 1949)).toBe(51)     // falta $51: ya es pendiente
+    expect(calcularIngresoPendiente(100000, 99100)).toBe(0)   // falta $900 < 1% ($1,000)
+    expect(calcularIngresoPendiente(100000, 98900)).toBe(1100)
+  })
+  it('sin nómina o con ingreso de más, no hay pendiente', () => {
+    expect(calcularIngresoPendiente(null, 0)).toBe(0)
+    expect(calcularIngresoPendiente(5000, 6000)).toBe(0)
   })
 })

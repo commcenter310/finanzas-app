@@ -1,5 +1,7 @@
 import { AlertTriangle, CalendarClock, PiggyBank, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react'
 import { formatMXN } from '../../utils/constantes'
+import { calcularIngresoPendiente } from '../../utils/calculos'
+import { plural } from '../../utils/texto'
 
 // Consejos ("insights") del Dashboard a partir de los números del mes.
 // Devuelve tarjetas ordenadas por prioridad; las muestra DashboardOverview.
@@ -18,7 +20,7 @@ export function buildDashboardInsights({
   const insights = []
   const disponibleReal = porAsignar == null ? null : porAsignar - totalApartado
   const saldoProyectado = proyeccion?.saldoProyectado
-  const ingresoFaltante = ingresoEsperado != null ? Math.max(0, ingresoEsperado - totalIngresos) : 0
+  const ingresoFaltante = calcularIngresoPendiente(ingresoEsperado, totalIngresos)
   const totalFijosPendientes = fijosPendientes.reduce((s, g) => s + Number(g.monto_previsto ?? 0), 0)
   const topCategoria = categoriasEnRiesgo[0]
   const objetivoAhorro = totalIngresos > 0 ? totalIngresos * reglas.regla_ahorro : 0
@@ -72,7 +74,7 @@ export function buildDashboardInsights({
     })
   }
 
-  if (ingresoFaltante > 0.5) {
+  if (ingresoFaltante > 0) {
     insights.push({
       kind: 'info',
       icon: TrendingUp,
@@ -102,7 +104,7 @@ export function buildDashboardInsights({
       icon: Sparkles,
       title: 'Gastos pequenos acumulados',
       value: formatMXN(gastosHormiga.total),
-      body: `${gastosHormiga.count} movimientos menores a ${formatMXN(gastosHormiga.umbral)} ya pesan en el mes.`,
+      body: `${plural(gastosHormiga.count, 'movimiento menor', 'movimientos menores')} a ${formatMXN(gastosHormiga.umbral)} ya pesan en el mes.`,
       to: '/control-gastos',
       action: 'Filtrar gastos',
     })
