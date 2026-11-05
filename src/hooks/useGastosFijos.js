@@ -63,7 +63,7 @@ export function useGastosFijos() {
     const { error } = await supabase.from('gastos_fijos').insert({ ...datos, user_id: user.id, mes, anio })
     setSaving(false)
     if (!error) {
-      refetch()
+      refetch({ silent: true })   // sin skeleton: evita el "flashazo" tras guardar
       invalidateGastosFijos()
     }
     return { error }
@@ -74,7 +74,7 @@ export function useGastosFijos() {
     const { error } = await supabase.from('gastos_fijos').update(datos).eq('id', id)
     setSaving(false)
     if (!error) {
-      refetch()
+      refetch({ silent: true })   // sin skeleton: evita el "flashazo" tras guardar
       invalidateGastosFijos()
     }
     return { error }
@@ -112,7 +112,7 @@ export function useGastosFijos() {
 
     setSaving(false)
     if (!error) {
-      refetch()
+      refetch({ silent: true })   // sin skeleton: evita el "flashazo" tras guardar
       invalidatePagoGastoFijo()
     }
     return { error }
@@ -121,7 +121,7 @@ export function useGastosFijos() {
   const eliminar = async (id) => {
     const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
     if (!error) {
-      refetch()
+      refetch({ silent: true })   // sin skeleton: evita el "flashazo" tras guardar
       invalidateGastosFijos()
     }
     return { error }
@@ -141,7 +141,7 @@ export function useGastosFijos() {
     const nuevos = recurrentes.map(r => ({ ...r, user_id: user.id, mes, anio, pagado: false, monto_actual: 0 }))
     const { error } = await supabase.from('gastos_fijos').insert(nuevos)
     if (error) return { copiados: 0, error }
-    refetch()
+    refetch({ silent: true })
     invalidateGastosFijos()
     return { copiados: recurrentes.length }
   }

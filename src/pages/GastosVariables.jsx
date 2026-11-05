@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
+  ArrowUpDown,
   BarChart3,
   Check,
   Copy,
@@ -43,6 +44,8 @@ import {
 } from '../components/spending/SpendingUI'
 import { useGastosVariables } from '../hooks/useGastosVariables'
 import { formatMXN } from '../utils/constantes'
+import { CRITERIOS_ORDEN, ordenarCategorias } from '../utils/ordenarCategorias'
+import FilterSelect from '../components/ui/FilterSelect'
 import {
   chartAxisProps,
   chartAxisTick,
@@ -55,6 +58,23 @@ const BAR_COLORS = {
   deseo: 'var(--deseo)',
   ahorro: 'var(--ahorro)',
 }
+const ORDEN_OPTIONS = [
+  { value: 'alfabetico', label: 'Alfabético (A–Z)' },
+  { value: 'gasto', label: 'Mayor gasto' },
+  { value: 'uso', label: '% del límite usado' },
+]
+const ORDEN_KEY = 'finni-presupuesto-orden'
+
+// Orden elegido, recordado en este dispositivo (el almacenamiento puede no estar disponible)
+const leerOrden = () => {
+  try {
+    const guardado = localStorage.getItem(ORDEN_KEY)
+    return CRITERIOS_ORDEN.includes(guardado) ? guardado : 'alfabetico'
+  } catch {
+    return 'alfabetico'
+  }
+}
+
 const FILTER_OPTIONS = [
   { value: 'todas', label: 'Todas', icon: Layers3 },
   { value: 'necesidad', label: 'Necesidad', icon: ShieldCheck },
@@ -63,6 +83,7 @@ const FILTER_OPTIONS = [
 ]
 
 function BudgetCategoryRow({ categoria, onActualizar }) {
+  const toast = useToast()
   const [editando, setEditando] = useState(false)
   const [nuevoLimite, setNuevoLimite] = useState(categoria.limite)
   const [guardando, setGuardando] = useState(false)
@@ -73,8 +94,14 @@ function BudgetCategoryRow({ categoria, onActualizar }) {
 
   const guardarLimite = async () => {
     setGuardando(true)
-    await onActualizar(categoria.id, Math.max(0, Number(nuevoLimite) || 0))
+    // Espera a que llegue el dato nuevo (recarga silenciosa) antes de cerrar:
+    // así no se ve ni el valor viejo ni la lista recargándose
+    const { error } = await onActualizar(categoria.id, Math.max(0, Number(nuevoLimite) || 0))
     setGuardando(false)
+    if (error) {
+      toast('No se pudo guardar el límite. Intenta de nuevo.', 'error')
+      return
+    }
     setEditando(false)
   }
 
@@ -177,6 +204,11 @@ export default function GastosVariables() {
   } = useGastosVariables()
   const toast = useToast()
   const [filtro, setFiltro] = useState('todas')
+  const [orden, setOrdenState] = useState(leerOrden)
+  const setOrden = (valor) => {
+    setOrdenState(valor)
+    try { localStorage.setItem(ORDEN_KEY, valor) } catch { /* sin almacenamiento: solo esta sesión */ }
+  }
   const prevAutoCopRef = useRef(0)
 
   useEffect(() => {
@@ -211,9 +243,11 @@ export default function GastosVariables() {
     }
   }, [categorias])
 
-  const filtradas = filtro === 'todas'
-    ? categorias
-    : categorias.filter(categoria => categoria.clasificacion === filtro)
+  // Filtro por clasificación + orden elegido (alfabético por defecto)
+  const filtradas = ordenarCategorias(
+    filtro === 'todas' ? categorias : categorias.filter(categoria => categoria.clasificacion === filtro),
+    orden
+  )
 
   const datosGrafico = resumen.conLimite
     .map(categoria => ({
@@ -231,7 +265,8 @@ export default function GastosVariables() {
   const proyeccionLabel = esMesPasado ? 'Cierre real' : 'Proyección'
 
   const handleCopiar = async () => {
-    const { copiados } = await copiarDelMesAnterior()
+    const { copiados, error } = await copiarDelMesAnterior()
+    if (error) return toast('No se pudieron copiar los límites. Intenta de nuevo.', 'error')
     toast(copiados > 0 ? `${copiados} límites copiados` : 'El mes anterior no tiene límites', copiados > 0 ? 'success' : 'info')
   }
 
@@ -321,12 +356,24 @@ export default function GastosVariables() {
           title="Presupuesto por categoría"
           description={`${filtradas.length} categorías visibles`}
           action={(
-            <SegmentedControl
-              ariaLabel="Filtrar presupuesto por clasificación"
-              value={filtro}
-              options={FILTER_OPTIONS}
-              onChange={setFiltro}
-            />
+            <div className="budget-list-controls">
+              <SegmentedControl
+                ariaLabel="Filtrar presupuesto por clasificación"
+                value={filtro}
+                options={FILTER_OPTIONS}
+                onChange={setFiltro}
+              />
+              <div className="budget-sort" aria-label="Ordenar categorías">
+                <ArrowUpDown aria-hidden="true" />
+                <FilterSelect
+                  value={orden}
+                  onChange={valor => setOrden(valor || 'alfabetico')}
+                  options={ORDEN_OPTIONS}
+                  placeholder="Ordenar"
+                  showClear={false}
+                />
+              </div>
+            </div>
           )}
         />
 

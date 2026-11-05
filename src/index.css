@@ -1823,6 +1823,28 @@
 
   .commitment-section-action { flex: 0 0 auto; }
 
+  /* Presupuesto: filtro por clasificación + selector de orden */
+  .budget-list-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .budget-sort {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 190px;
+  }
+  .budget-sort > svg {
+    width: 15px;
+    height: 15px;
+    color: var(--fg-3);
+    flex-shrink: 0;
+  }
+  .budget-sort > :last-child { flex: 1; }
+
   .commitment-segments {
     display: inline-flex;
     align-items: center;
@@ -2483,6 +2505,8 @@
     .commitment-section-header { align-items: stretch; flex-direction: column; gap: 12px; }
     .commitment-section-action { width: 100%; }
     .commitment-segments { width: 100%; }
+    .budget-list-controls { justify-content: stretch; }
+    .budget-sort { width: 100%; }
     .commitment-segments button { flex: 1; min-width: 0; padding: 0 7px; }
     .commitment-debt-main { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: 17px 15px; }
     .commitment-debt-balance > div:first-child { margin-bottom: 7px; }

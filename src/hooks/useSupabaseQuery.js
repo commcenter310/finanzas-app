@@ -68,7 +68,11 @@ export function useSupabaseQuery(queryFn, deps = [], cacheKey = null) {
     })
   }, [cacheKey, fetch])
 
-  const refetch = useCallback(() => fetch(), [fetch])
+  // refetch({ silent: true }) actualiza en segundo plano, sin pasar por loading:
+  // úsalo tras guardar algo, o la página cambiaría su contenido por el
+  // skeleton un instante (el "flashazo"). Sin argumentos muestra la carga.
+  // (Si se pasa como onClick llega un evento: su .silent es undefined → normal.)
+  const refetch = useCallback((opciones) => fetch({ silent: Boolean(opciones?.silent) }), [fetch])
 
   return { data, loading, error, refetch }
 }

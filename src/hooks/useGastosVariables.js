@@ -47,29 +47,33 @@ export function useGastosVariables() {
     return agrupado
   }, [user?.id, mes, anio], `gastosVariables:gastos:${user?.id}:${mes}:${anio}`)
 
-  const invalidatePresupuestos = () => {
-    refetchPresu()
+  // Recarga silenciosa: con loading la lista entera se cambiaba por el skeleton
+  const invalidatePresupuestos = async () => {
     invalidateQueryCache(['gastosVariables:', 'dash:'])
+    await refetchPresu({ silent: true })
   }
 
   const actualizarPresupuesto = async (categoria_id, monto_limite) => {
-    await supabase.from('presupuestos').upsert({
+    const { error } = await supabase.from('presupuestos').upsert({
       user_id: user.id, categoria_id, monto_limite, mes, anio
     }, { onConflict: 'user_id,categoria_id,mes,anio' })
-    invalidatePresupuestos()
+    if (!error) await invalidatePresupuestos()
+    return { error }
   }
 
   const copiarDelMesAnterior = async () => {
     const prev = mesAnterior(mes, anio)
-    const { data: anterior } = await supabase
+    const { data: anterior, error: errorLectura } = await supabase
       .from('presupuestos').select('categoria_id, monto_limite')
       .eq('user_id', user.id).eq('mes', prev.mes).eq('anio', prev.anio)
+    if (errorLectura) return { copiados: 0, error: errorLectura }
     if (!anterior?.length) return { copiados: 0 }
-    await supabase.from('presupuestos').upsert(
+    const { error } = await supabase.from('presupuestos').upsert(
       anterior.map(p => ({ ...p, mes, anio, user_id: user.id })),
       { onConflict: 'user_id,categoria_id,mes,anio' }
     )
-    invalidatePresupuestos()
+    if (error) return { copiados: 0, error }
+    await invalidatePresupuestos()
     return { copiados: anterior.length }
   }
 
