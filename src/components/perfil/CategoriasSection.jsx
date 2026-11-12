@@ -3,6 +3,7 @@ import { Plus, Search, Check, X, Pencil } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { invalidateQueryCache } from '../../hooks/useSupabaseQuery'
+import { useToast } from '../ui/Toast'
 import { useGuardarConAviso } from '../../hooks/useGuardarConAviso'
 import { CLASIF_OPTS } from '../../utils/constantes'
 import FilterSelect from '../ui/FilterSelect'
@@ -11,6 +12,7 @@ import FilterSelect from '../ui/FilterSelect'
 export default function CategoriasSection({ categorias, mostrarForm: mostrarFormCat, setMostrarForm: setMostrarFormCat }) {
   const { user } = useAuth()
   const guardar = useGuardarConAviso()
+  const toast = useToast()
 
   const invalidateCategorias = () => invalidateQueryCache([
     'categorias:',
@@ -31,8 +33,12 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
   const [formEditCat, setFormEditCat] = useState({})
 
   const agregarCategoria = async () => {
-    if (!formCat.nombre) return
-    if (!await guardar(supabase.from('categorias').insert({ ...formCat, user_id: user.id, tipo_gasto: 'variable' }))) return
+    const nombre = formCat.nombre.trim()
+    if (!nombre) return toast('Escribe el nombre de la categoría.', 'error')
+    if (!await guardar(
+      supabase.from('categorias').insert({ ...formCat, nombre, user_id: user.id, tipo_gasto: 'variable' }),
+      undefined, 'Ya tienes una categoría con ese nombre.'
+    )) return
     setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
     setMostrarFormCat(false)
     invalidateCategorias()
@@ -44,8 +50,12 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
   }
 
   const guardarEditCat = async (id) => {
-    if (!formEditCat.nombre) return
-    if (!await guardar(supabase.from('categorias').update(formEditCat).eq('id', id))) return
+    const nombre = String(formEditCat.nombre ?? '').trim()
+    if (!nombre) return toast('La categoría necesita un nombre.', 'error')
+    if (!await guardar(
+      supabase.from('categorias').update({ ...formEditCat, nombre }).eq('id', id),
+      undefined, 'Ya tienes una categoría con ese nombre.'
+    )) return
     setEditandoCat(null)
     invalidateCategorias()
   }

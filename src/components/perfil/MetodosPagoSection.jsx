@@ -3,6 +3,7 @@ import { Plus, Search, Check, X, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { invalidateQueryCache } from '../../hooks/useSupabaseQuery'
+import { useToast } from '../ui/Toast'
 import { useGuardarConAviso } from '../../hooks/useGuardarConAviso'
 import FilterSelect from '../ui/FilterSelect'
 import ConfirmModal from '../ui/ConfirmModal'
@@ -19,6 +20,7 @@ const TIPO_METODO_OPTS = [
 export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMetodo, setMostrarForm: setMostrarFormMetodo }) {
   const { user } = useAuth()
   const guardar = useGuardarConAviso()
+  const toast = useToast()
 
   const invalidateMetodos = () => invalidateQueryCache([
     'metodos:',
@@ -37,9 +39,13 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
   const [formEditMetodo, setFormEditMetodo] = useState({})
 
   const agregarMetodo = async () => {
-    if (!formMetodo.nombre) return
+    const nombre = formMetodo.nombre.trim()
+    if (!nombre) return toast('Escribe el nombre del método de pago.', 'error')
     setSavingMetodo(true)
-    const ok = await guardar(supabase.from('metodos_pago').insert({ ...formMetodo, user_id: user.id }))
+    const ok = await guardar(
+      supabase.from('metodos_pago').insert({ ...formMetodo, nombre, user_id: user.id }),
+      undefined, 'Ya tienes un método de pago con ese nombre.'
+    )
     setSavingMetodo(false)
     if (!ok) return
     setFormMetodo({ nombre: '', tipo: 'debito' })
@@ -53,8 +59,12 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
   }
 
   const guardarEditMetodo = async (id) => {
-    if (!formEditMetodo.nombre) return
-    if (!await guardar(supabase.from('metodos_pago').update(formEditMetodo).eq('id', id))) return
+    const nombre = String(formEditMetodo.nombre ?? '').trim()
+    if (!nombre) return toast('El método de pago necesita un nombre.', 'error')
+    if (!await guardar(
+      supabase.from('metodos_pago').update({ ...formEditMetodo, nombre }).eq('id', id),
+      undefined, 'Ya tienes un método de pago con ese nombre.'
+    )) return
     setEditandoMetodo(null)
     invalidateMetodos()
   }
