@@ -6,6 +6,7 @@ import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { useCategorias, useMetodosPago } from './useCatalogos'
 import { fechaLocalISO, mesAnterior } from '../utils/fecha'
 import { liberarOperacionId, obtenerOperacionId } from '../utils/operaciones'
+import { totalesGastosFijos } from '../utils/calculos'
 
 export function useGastosFijos() {
   const { user } = useAuth()
@@ -32,11 +33,7 @@ export function useGastosFijos() {
   const categorias = useCategorias()
   const metodos = useMetodosPago()
 
-  const totales = {
-    previsto: gastos?.reduce((s, g) => s + Number(g.monto_previsto), 0) ?? 0,
-    actual:   gastos?.reduce((s, g) => s + Number(g.monto_actual), 0) ?? 0,
-    pagados:  gastos?.filter(g => g.pagado).length ?? 0,
-  }
+  const totales = totalesGastosFijos(gastos)
 
   const invalidateGastosFijos = () => invalidateQueryCache([
     'dash:',
@@ -118,12 +115,20 @@ export function useGastosFijos() {
     return { error }
   }
 
+  // Si el gasto ya estaba pagado, primero se desmarca (RPC): eso borra su
+  // movimiento en Control de Gastos y devuelve el cargo a la tarjeta. Borrar
+  // solo la fila dejaba ese movimiento huérfano contando como gasto.
   const eliminar = async (id) => {
-    const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
-    if (!error) {
-      refetch({ silent: true })   // sin skeleton: evita el "flashazo" tras guardar
-      invalidateGastosFijos()
+    const gasto = gastos?.find(g => g.id === id)
+    if (gasto?.pagado) {
+      const { error: errorDesmarcar } = await supabase.rpc('desmarcar_gasto_fijo_atomico', { p_gasto_id: id })
+      if (errorDesmarcar) return { error: errorDesmarcar }
     }
+    const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
+    // Aunque el borrado falle, el desmarcado ya cambió datos: refrescar siempre
+    refetch({ silent: true })
+    if (gasto?.pagado) invalidatePagoGastoFijo()
+    else if (!error) invalidateGastosFijos()
     return { error }
   }
 

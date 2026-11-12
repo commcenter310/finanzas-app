@@ -138,7 +138,7 @@ export function usePlanQuincena() {
 
   const apartarTodo = async () => {
     const pendientes = compromisos.filter(c => !c.apartadoRow)
-    if (pendientes.length === 0) return
+    if (pendientes.length === 0) return { error: null }
     setSaving(true)
     const hoy = fechaLocalISO()
     const filas = pendientes.map(c => ({

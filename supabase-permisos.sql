@@ -11,10 +11,10 @@
 BEGIN;
 
 -- Pagos de deudas y tarjetas (supabase-pagos-atomicos.sql)
-REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
+REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID, DATE) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;
 
 -- Ajuste de saldo de tarjeta desde la app (solo afecta tarjetas del propio usuario)
 REVOKE ALL ON FUNCTION public.update_saldo_credito(INTEGER, NUMERIC) FROM PUBLIC, anon;

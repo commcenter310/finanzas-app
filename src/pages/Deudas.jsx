@@ -208,7 +208,10 @@ export default function Deudas() {
   }
 
   const handleGuardar = async () => {
-    if (!form.nombre || !form.saldo_actual) return
+    if (!form.nombre.trim() || !(Number(form.saldo_actual) > 0)) {
+      toast('Escribe el nombre de la deuda y cuánto debes hoy.', 'error')
+      return
+    }
     if (form.frecuencia_pago === 'quincenal' && form.fecha_proximo_pago && !esFechaQuincenalValida(form.fecha_proximo_pago)) {
       toast('Para una deuda quincenal, el próximo pago debe caer el día 15 o 30.', 'error')
       return
@@ -217,13 +220,7 @@ export default function Deudas() {
     if (editandoId) {
       resultado = await actualizar(editandoId, form)
     } else {
-      resultado = await agregar({
-        ...form,
-        saldo_original: form.saldo_original || form.saldo_actual,
-        saldo_actual: Number(form.saldo_actual),
-        pago_mensual: Number(form.pago_mensual) || null,
-        tasa_interes: Number(form.tasa_interes) || null,
-      })
+      resultado = await agregar(form)
     }
     if (resultado?.error) {
       const faltaMigracion = String(resultado.error.message ?? '').includes('frecuencia_pago')

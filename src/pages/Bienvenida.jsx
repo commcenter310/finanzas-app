@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { vincularMetodoTarjeta } from '../utils/metodosTarjeta'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
@@ -51,21 +52,6 @@ export default function Bienvenida() {
     paso === 1 ? telefonoValido :
     true
 
-  // Vincula (o crea) el método de pago de una tarjeta.
-  // metodos_pago tiene UNIQUE(user_id, nombre): si el método ya existe
-  // (los default incluyen NU, Stori, etc.), solo se le cuelga el credito_id.
-  const vincularMetodoTarjeta = async (nombreTarjeta, creditoId) => {
-    const { data: existente } = await supabase.from('metodos_pago')
-      .select('id').eq('user_id', user.id).eq('nombre', nombreTarjeta).maybeSingle()
-    if (existente) {
-      await supabase.from('metodos_pago')
-        .update({ credito_id: creditoId, tipo: 'credito', activo: true }).eq('id', existente.id)
-    } else {
-      await supabase.from('metodos_pago')
-        .insert({ user_id: user.id, nombre: nombreTarjeta, tipo: 'credito', credito_id: creditoId })
-    }
-  }
-
   const finalizar = async (omitir = false) => {
     setGuardando(true)
     setErrorMsg('')
@@ -81,7 +67,7 @@ export default function Bienvenida() {
             fecha_pago: t.fecha_pago ? Number(t.fecha_pago) : null,
           }).select('id').single()
           if (error) throw error
-          await vincularMetodoTarjeta(t.nombre, credito.id)
+          await vincularMetodoTarjeta(user.id, t.nombre, credito.id)
         }
 
         // 2. Nómina principal

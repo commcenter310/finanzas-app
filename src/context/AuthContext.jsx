@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearQueryCache } from '../hooks/useSupabaseQuery'
 import { conReintentos } from '../utils/reintentos'
+import { LLEGO_POR_RECUPERACION } from '../utils/urlInicial'
 
 const AuthContext = createContext(null)
 
@@ -14,6 +15,10 @@ export function AuthProvider({ children }) {
   // vacío que, al guardarse, borraría nombre y teléfono.
   const [profileError, setProfileError] = useState(null)
   const [loading, setLoading] = useState(true)
+  // true cuando se entró con el enlace de "olvidé mi contraseña": la app pide
+  // una contraseña nueva antes de mostrar nada más. Arranca desde la URL porque
+  // el evento PASSWORD_RECOVERY puede dispararse antes de que haya quien lo escuche.
+  const [recuperando, setRecuperando] = useState(LLEGO_POR_RECUPERACION)
   const userIdRef = useRef(null)
 
   // Carga el perfil con reintentos. Si todos fallan se CONSERVA el perfil que
@@ -70,6 +75,8 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // La renovación del token (≈ cada hora) no cambia el perfil: no recargarlo
       if (event === 'TOKEN_REFRESHED') { setUser(session?.user ?? null); return }
+      if (event === 'PASSWORD_RECOVERY') setRecuperando(true)
+      if (event === 'SIGNED_OUT') setRecuperando(false)
       // Supabase recomienda no llamar a la API dentro de este callback (puede
       // bloquearse esperando el mismo candado de sesión): se difiere un tick.
       setTimeout(() => {
@@ -88,9 +95,17 @@ export function AuthProvider({ children }) {
     return supabase.auth.signOut()
   }
 
+  // Cambia la contraseña del usuario con sesión (también cierra el flujo de recuperación)
+  const cambiarPassword = async (password) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (!error) setRecuperando(false)
+    return { error }
+  }
+
   return (
     <AuthContext.Provider value={{
       user, profile, profileError, loading, signOut,
+      recuperando, cambiarPassword,
       refreshProfile: () => fetchProfile(user?.id),
     }}>
       {children}

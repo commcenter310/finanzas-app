@@ -1,19 +1,27 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react'
 import BrandMark from '../components/layout/BrandMark'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import { PASSWORD_MIN, traducirErrorAuth } from '../utils/erroresAuth'
+import { LLEGO_CON_ENLACE_INVALIDO } from '../utils/urlInicial'
+
+// Enlace del correo (confirmación o recuperación) vencido o ya usado
+const ERROR_DE_ENLACE = LLEGO_CON_ENLACE_INVALIDO ? 'El enlace expiró o ya se usó. Solicita uno nuevo.' : ''
 
 export default function Auth() {
   const navigate = useNavigate()
+  const { user, loading: cargandoSesion } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [modo, setModo] = useState('login')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(ERROR_DE_ENLACE)
   const [info, setInfo] = useState('')
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (evento) => {
+    evento?.preventDefault()
     setError(''); setInfo('')
 
     if (modo === 'reset') {
@@ -23,11 +31,14 @@ export default function Auth() {
         redirectTo: `${window.location.origin}/`,
       })
       setLoading(false)
-      if (err) return setError(err.message)
+      if (err) return setError(traducirErrorAuth(err))
       return setInfo('Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.')
     }
 
     if (!email || !password) return setError('Completa todos los campos')
+    if (modo === 'registro' && password.length < PASSWORD_MIN) {
+      return setError(`La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`)
+    }
     setLoading(true)
 
     const { error: err } = modo === 'login'
@@ -35,7 +46,7 @@ export default function Auth() {
       : await supabase.auth.signUp({ email, password })
 
     if (err) {
-      setError(err.message)
+      setError(traducirErrorAuth(err))
     } else if (modo === 'login') {
       navigate('/')
     } else {
@@ -55,6 +66,9 @@ export default function Auth() {
     : modo === 'registro'
       ? 'Crea tu espacio personal en Finni.'
       : 'Te enviaremos un enlace seguro a tu correo.'
+
+  // Con sesión abierta no tiene sentido mostrar el login
+  if (!cargandoSesion && user) return <Navigate to="/" replace />
 
   return (
     <div className="auth-shell">
@@ -93,60 +107,67 @@ export default function Auth() {
             <p>{subtitle}</p>
           </div>
 
-          <div className="auth-form-fields">
+          {/* <form>: Enter envía, y los gestores de contraseñas lo reconocen */}
+          <form className="auth-form-fields" onSubmit={handleSubmit} noValidate>
             <div>
-              <label className="label">Email</label>
+              <label className="label" htmlFor="auth-email">Email</label>
               <input
+                id="auth-email"
                 type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
                 className="input"
                 placeholder="correo@ejemplo.com"
                 value={email}
                 onChange={event => setEmail(event.target.value)}
-                onKeyDown={event => event.key === 'Enter' && handleSubmit()}
               />
             </div>
 
             {modo !== 'reset' && (
               <div>
-                <label className="label">Contraseña</label>
+                <label className="label" htmlFor="auth-password">Contraseña</label>
                 <input
+                  id="auth-password"
                   type="password"
+                  name="password"
+                  autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
                   className="input"
-                  placeholder="••••••••"
+                  placeholder={modo === 'registro' ? `Mínimo ${PASSWORD_MIN} caracteres` : '••••••••'}
                   value={password}
                   onChange={event => setPassword(event.target.value)}
-                  onKeyDown={event => event.key === 'Enter' && handleSubmit()}
                 />
               </div>
             )}
 
-            {error && <p className="auth-message is-error">{error}</p>}
-            {info && <p className="auth-message is-success">{info}</p>}
+            {error && <p className="auth-message is-error" role="alert">{error}</p>}
+            {info && <p className="auth-message is-success" role="status">{info}</p>}
 
-            <button className="btn-primary auth-submit" onClick={handleSubmit} disabled={loading}>
+            <button type="submit" className="btn-primary auth-submit" disabled={loading}>
               <span>{loading ? 'Cargando...' : modo === 'login' ? 'Entrar a Finni' : modo === 'registro' ? 'Crear cuenta' : 'Enviar enlace'}</span>
               {!loading && <ArrowRight />}
             </button>
 
             {modo === 'login' && (
               <button
+                type="button"
                 className="auth-text-button"
                 onClick={() => { setModo('reset'); setError(''); setInfo('') }}
               >
                 ¿Olvidaste tu contraseña?
               </button>
             )}
-          </div>
+          </form>
 
           <div className="auth-form-footer">
             {modo === 'reset' ? (
-              <button onClick={() => { setModo('login'); setError(''); setInfo('') }}>
+              <button type="button" onClick={() => { setModo('login'); setError(''); setInfo('') }}>
                 <ArrowLeft /> Volver al inicio de sesión
               </button>
             ) : (
               <p>
                 {modo === 'login' ? '¿Primera vez en Finni?' : '¿Ya tienes cuenta?'}{' '}
-                <button onClick={() => { setModo(modo === 'login' ? 'registro' : 'login'); setError(''); setInfo('') }}>
+                <button type="button" onClick={() => { setModo(modo === 'login' ? 'registro' : 'login'); setError(''); setInfo('') }}>
                   {modo === 'login' ? 'Crea tu cuenta' : 'Inicia sesión'}
                 </button>
               </p>

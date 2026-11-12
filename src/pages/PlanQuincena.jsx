@@ -11,6 +11,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
+import { plural } from '../utils/texto'
 import { useToast } from '../components/ui/Toast'
 import ProyeccionView from '../components/plan/ProyeccionView'
 
@@ -45,24 +46,37 @@ export default function PlanQuincena() {
   const pendientes = compromisos.filter(c => !c.apartadoRow)
   const totalItems = compromisos.length
 
+  const FALLO = 'No se pudo guardar el cambio. Revisa tu conexión e intenta de nuevo.'
+
   const handleApartar = async (item) => {
     const { error } = await apartar(item)
-    if (!error) toast(`Apartaste ${formatMXN(item.montoSugerido)} para ${item.concepto}`, 'success')
+    if (error) toast(FALLO, 'error')
+    else toast(`Apartaste ${formatMXN(item.montoSugerido)} para ${item.concepto}`, 'success')
   }
 
   const handleApartarTodo = async () => {
     if (pendientes.length === 0) return
     const { error } = await apartarTodo()
-    if (!error) toast(`Apartaste ${pendientes.length} compromiso(s)`, 'success')
+    if (error) toast(FALLO, 'error')
+    else toast(`Apartaste ${plural(pendientes.length, 'compromiso', 'compromisos')}`, 'success')
   }
 
   const guardarEdicion = async (apartadoId) => {
-    if (editValor) await editarMonto(apartadoId, editValor)
+    if (editValor !== '') {
+      if (!(Number(editValor) > 0)) return toast('El monto apartado debe ser mayor a cero.', 'error')
+      const { error } = await editarMonto(apartadoId, editValor)
+      if (error) return toast(FALLO, 'error')   // se deja abierto para reintentar
+    }
     setEditId(null); setEditValor('')
   }
 
   const handleAgregarManual = async () => {
-    if (!formManual.concepto || !formManual.monto) return
+    // Con una meta de ahorro elegida, el concepto sale de la meta
+    const conMeta = formManual.tipo === 'ahorro' && formManual.origen_id
+    if ((!conMeta && !formManual.concepto.trim()) || !(Number(formManual.monto) > 0)) {
+      toast('Escribe el concepto y un monto mayor a cero.', 'error')
+      return
+    }
     let concepto = formManual.concepto
     let origen_id = null
     if (formManual.tipo === 'ahorro' && formManual.origen_id) {
@@ -70,10 +84,9 @@ export default function PlanQuincena() {
       if (meta) { concepto = `Ahorro: ${meta.concepto}`; origen_id = meta.id }
     }
     const { error } = await agregarManual({ concepto, monto: formManual.monto, tipo: formManual.tipo, origen_id })
-    if (!error) {
-      toast('Apartado agregado ✓', 'success')
-      setFormManual(FORM_MANUAL); setMostrarManual(false)
-    }
+    if (error) return toast(FALLO, 'error')
+    toast('Apartado agregado ✓', 'success')
+    setFormManual(FORM_MANUAL); setMostrarManual(false)
   }
 
   if (error && !loading && compromisos.length === 0) {
@@ -342,7 +355,12 @@ export default function PlanQuincena() {
         open={!!confirmQuitar}
         titulo="¿Quitar este apartado?"
         descripcion="El monto volverá a tu disponible y el compromiso quedará pendiente de apartar."
-        onConfirm={() => { quitarApartado(confirmQuitar); setConfirmQuitar(null); toast('Apartado quitado', 'info') }}
+        onConfirm={async () => {
+          const id = confirmQuitar
+          setConfirmQuitar(null)
+          const { error } = await quitarApartado(id)
+          toast(error ? FALLO : 'Apartado quitado', error ? 'error' : 'info')
+        }}
         onCancel={() => setConfirmQuitar(null)}
       />
     </Layout>
