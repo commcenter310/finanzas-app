@@ -1,3 +1,4 @@
+import './utils/urlInicial'   // primero: lee la URL antes de que Supabase la limpie
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

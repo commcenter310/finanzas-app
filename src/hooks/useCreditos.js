@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { vincularMetodoTarjeta } from '../utils/metodosTarjeta'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
@@ -69,8 +70,14 @@ export function useCreditos() {
 
   const eliminar = async (id) => {
     const { error } = await supabase.from('creditos').update({ activo: false }).eq('id', id)
-    if (!error) invalidateCreditos()
-    return { error }
+    if (error) return { error }
+    // Su método de pago se desvincula y desactiva: si siguiera en las listas,
+    // todo gasto registrado con él fallaría ("la tarjeta ya no está disponible").
+    await supabase.from('metodos_pago').update({ credito_id: null, activo: false })
+      .eq('credito_id', id).eq('user_id', user.id)
+    invalidateCreditos()
+    invalidateMetodosCredito()
+    return { error: null }
   }
 
   const vincularMetodo = async (creditoId, metodoId) => {
@@ -84,5 +91,13 @@ export function useCreditos() {
     return { error }
   }
 
-  return { creditos: creditos ?? [], metodos, comprasTarjeta: comprasTarjeta ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo }
+  // Tarjeta nueva sin método elegido: se crea (o reutiliza) uno con su nombre,
+  // para que se pueda usar de inmediato al registrar gastos.
+  const crearMetodoParaTarjeta = async (creditoId, nombre) => {
+    const { error } = await vincularMetodoTarjeta(user.id, nombre, creditoId)
+    invalidateMetodosCredito()
+    return { error }
+  }
+
+  return { creditos: creditos ?? [], metodos, comprasTarjeta: comprasTarjeta ?? [], loading, error, refetch, saving, agregar, actualizar, eliminar, vincularMetodo, crearMetodoParaTarjeta }
 }

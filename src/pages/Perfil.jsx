@@ -7,17 +7,18 @@ import { supabase } from '../lib/supabase'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery'
 import { useNominasLista } from '../hooks/useCatalogos'
 import { useToast } from '../components/ui/Toast'
-import { Save, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings } from 'lucide-react'
+import { Save, User, MessageSquare, TrendingUp, CreditCard, BarChart3, Settings, KeyRound } from 'lucide-react'
 import ErrorState from '../components/ui/ErrorState'
 import NominasSection from '../components/perfil/NominasSection'
 import MetodosPagoSection from '../components/perfil/MetodosPagoSection'
 import CategoriasSection from '../components/perfil/CategoriasSection'
 import SetupGuide from '../components/perfil/SetupGuide'
+import PasswordForm from '../components/auth/PasswordForm'
 import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
 
 export default function Perfil() {
-  const { user, profile, profileError, refreshProfile } = useAuth()
+  const { user, profile, profileError, refreshProfile, cambiarPassword } = useAuth()
   const uid = user?.id
   const toast = useToast()
   const guardar = useGuardarConAviso()
@@ -335,6 +336,19 @@ export default function Perfil() {
           <MetodosPagoSection metodos={metodos ?? []} mostrarForm={mostrarFormMetodo} setMostrarForm={setMostrarFormMetodo} />
 
           <CategoriasSection categorias={categorias ?? []} mostrarForm={mostrarFormCat} setMostrarForm={setMostrarFormCat} />
+        </div>
+
+        {/* ── Seguridad ── */}
+        <div id="perfil-seguridad" className="card p-5 scroll-mt-24">
+          <h2 className="font-bold mb-1 flex items-center gap-2" style={{ color: 'var(--fg-1)', fontSize: 15 }}>
+            <KeyRound className="w-4 h-4" style={{ color: 'var(--fg-3)' }} /> Seguridad
+          </h2>
+          <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>
+            Cambia la contraseña con la que entras a Finni. Tu sesión en este dispositivo sigue abierta.
+          </p>
+          <div style={{ maxWidth: 360 }}>
+            <PasswordForm onGuardar={cambiarPassword} onListo={() => toast('Contraseña actualizada', 'success')} />
+          </div>
         </div>
       </div>
     </Layout>

@@ -5,6 +5,22 @@ import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
 import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
 
+// Convierte el formulario en la fila de la tabla: montos como número (un ''
+// en una columna numérica da error 400) y, sin monto esperado, se usa el recibido.
+export const filaIngreso = (datos) => {
+  const recibido = Number(datos.monto_actual) || 0
+  const esperado = datos.monto_presupuesto === '' || datos.monto_presupuesto == null
+    ? recibido
+    : Number(datos.monto_presupuesto) || 0
+  return {
+    concepto:          String(datos.concepto ?? '').trim(),
+    monto_actual:      recibido,
+    monto_presupuesto: esperado,
+    fecha_recepcion:   datos.fecha_recepcion || null,
+    notas:             String(datos.notas ?? '').trim() || null,
+  }
+}
+
 export function useIngresos() {
   const { user } = useAuth()
   const { mes, anio } = useMes()
@@ -44,11 +60,8 @@ export function useIngresos() {
     const [anioFecha, mesFecha] = fecha.split('-').map(Number)
     const mesAplicar  = datos.mes  != null ? datos.mes  : mesFecha
     const anioAplicar = datos.anio != null ? datos.anio : anioFecha
-    const campos = { ...datos }
-    delete campos.mes
-    delete campos.anio
     const { error } = await supabase.from('ingresos').insert({
-      ...campos,
+      ...filaIngreso(datos),
       user_id: user.id,
       fecha_recepcion: fecha,
       mes: mesAplicar,
@@ -62,11 +75,11 @@ export function useIngresos() {
   const actualizar = async (id, datos) => {
     setSaving(true)
     // Extraer y forzar mes/anio como enteros explícitamente
-    const { mes: mesForm, anio: anioForm, ...campos } = datos
+    const { mes: mesForm, anio: anioForm } = datos
     const fecha = datos.fecha_recepcion
     const [anioFecha, mesFecha] = fecha ? fecha.split('-').map(Number) : [anioForm, mesForm]
     const updates = {
-      ...campos,
+      ...filaIngreso(datos),
       mes:  mesForm  != null ? Number(mesForm)  : mesFecha,
       anio: anioForm != null ? Number(anioForm) : anioFecha,
     }

@@ -245,6 +245,7 @@ export default function Creditos() {
     refetch,
     saving,
     agregar,
+    crearMetodoParaTarjeta,
     actualizar,
     eliminar,
     vincularMetodo,
@@ -337,9 +338,15 @@ export default function Creditos() {
   }
 
   const handleGuardar = async () => {
-    if (!form.nombre) return
+    const nombre = form.nombre.trim()
+    if (!nombre) return toast('Escribe el nombre de la tarjeta.', 'error')
+    const diaInvalido = valor => valor !== '' && valor != null
+      && !(Number.isInteger(Number(valor)) && Number(valor) >= 1 && Number(valor) <= 31)
+    if (diaInvalido(form.fecha_corte) || diaInvalido(form.fecha_pago)) {
+      return toast('El día de corte y el de pago deben ser números del 1 al 31.', 'error')
+    }
     const datos = {
-      nombre: form.nombre,
+      nombre,
       fecha_corte: form.fecha_corte ? Number(form.fecha_corte) : null,
       fecha_pago: form.fecha_pago ? Number(form.fecha_pago) : null,
       mejor_fecha_inicio: null,
@@ -356,10 +363,13 @@ export default function Creditos() {
     }
     const creditoId = editando ?? data?.id
     if (creditoId) {
-      const { error: errorVinculo } = await vincularMetodo(
-        creditoId,
-        form.metodo_vinculado_id ? Number(form.metodo_vinculado_id) : null
-      )
+      // Tarjeta nueva sin método elegido → se le crea uno con su nombre
+      const { error: errorVinculo } = !editando && !form.metodo_vinculado_id
+        ? await crearMetodoParaTarjeta(creditoId, nombre)
+        : await vincularMetodo(
+          creditoId,
+          form.metodo_vinculado_id ? Number(form.metodo_vinculado_id) : null
+        )
       if (errorVinculo) toast('La tarjeta se guardó, pero no se pudo vincular el método de pago.', 'error')
     }
     cerrarForm()
@@ -519,7 +529,7 @@ export default function Creditos() {
           <div className="commitment-form-field is-wide">
             <label className="label">Método de pago vinculado</label>
             <select className="input" value={form.metodo_vinculado_id} onChange={event => setF('metodo_vinculado_id', event.target.value)}>
-              <option value="">Sin vincular</option>
+              <option value="">{editando ? 'Sin vincular' : 'Crear uno con el nombre de la tarjeta'}</option>
               {metodos.filter(metodo => metodo.tipo === 'credito').map(metodo => (
                 <option key={metodo.id} value={metodo.id}>{metodo.nombre}</option>
               ))}

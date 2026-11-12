@@ -24,11 +24,17 @@ ALTER TABLE public.transacciones
   ADD COLUMN IF NOT EXISTS pago_credito_id INTEGER
   REFERENCES public.pagos_credito(id) ON DELETE SET NULL;
 
+-- p_fecha: fecha LOCAL del pago que manda la app. El servidor corre en UTC:
+-- con la fecha del servidor, un pago hecho en México después de las 5 pm
+-- quedaba fechado al día siguiente. Se elimina la firma anterior (sin
+-- p_fecha) para que PostgREST no vea dos funciones con el mismo nombre.
+DROP FUNCTION IF EXISTS public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID);
 CREATE OR REPLACE FUNCTION public.registrar_pago_deuda(
   p_deuda_id INTEGER,
   p_monto NUMERIC,
   p_notas TEXT,
-  p_operacion_id UUID
+  p_operacion_id UUID,
+  p_fecha DATE DEFAULT NULL
 )
 RETURNS TABLE (
   monto_aplicado NUMERIC,
@@ -103,7 +109,7 @@ BEGIN
   INSERT INTO public.abonos_deuda (
     deuda_id, monto, fecha, notas, operacion_id
   ) VALUES (
-    p_deuda_id, v_aplicado, CURRENT_DATE, NULLIF(p_notas, ''), p_operacion_id
+    p_deuda_id, v_aplicado, COALESCE(p_fecha, CURRENT_DATE), NULLIF(p_notas, ''), p_operacion_id
   ) RETURNING id INTO v_abono_id;
 
   UPDATE public.deudas
@@ -115,7 +121,7 @@ BEGIN
     user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen, abono_deuda_id
   ) VALUES (
     auth.uid(), 'Pago deuda: ' || v_deuda.nombre, v_aplicado,
-    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda', v_abono_id
+    'necesidad', v_categoria_id, COALESCE(p_fecha, CURRENT_DATE), 'deuda', v_abono_id
   );
 
   RETURN QUERY SELECT
@@ -127,11 +133,17 @@ BEGIN
 END;
 $$;
 
+-- p_fecha: fecha LOCAL del pago que manda la app. El servidor corre en UTC:
+-- con la fecha del servidor, un pago hecho en México después de las 5 pm
+-- quedaba fechado al día siguiente. Se elimina la firma anterior (sin
+-- p_fecha) para que PostgREST no vea dos funciones con el mismo nombre.
+DROP FUNCTION IF EXISTS public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID);
 CREATE OR REPLACE FUNCTION public.registrar_pago_credito(
   p_credito_id INTEGER,
   p_monto NUMERIC,
   p_notas TEXT,
-  p_operacion_id UUID
+  p_operacion_id UUID,
+  p_fecha DATE DEFAULT NULL
 )
 RETURNS TABLE (
   monto_aplicado NUMERIC,
@@ -207,7 +219,7 @@ BEGIN
   INSERT INTO public.pagos_credito (
     credito_id, user_id, monto, fecha, notas, operacion_id
   ) VALUES (
-    p_credito_id, auth.uid(), v_aplicado, CURRENT_DATE,
+    p_credito_id, auth.uid(), v_aplicado, COALESCE(p_fecha, CURRENT_DATE),
     NULLIF(p_notas, ''), p_operacion_id
   ) RETURNING id INTO v_pago_id;
 
@@ -219,7 +231,7 @@ BEGIN
     user_id, descripcion, monto, clasificacion, categoria_id, fecha, origen, pago_credito_id
   ) VALUES (
     auth.uid(), 'Pago tarjeta: ' || v_credito.nombre, v_aplicado,
-    'necesidad', v_categoria_id, CURRENT_DATE, 'deuda', v_pago_id
+    'necesidad', v_categoria_id, COALESCE(p_fecha, CURRENT_DATE), 'deuda', v_pago_id
   );
 
   RETURN QUERY SELECT
@@ -231,7 +243,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID) TO authenticated;
+REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID, DATE) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;

@@ -5,6 +5,8 @@ import {
   calcularIngresoEsperado, calcularProyeccion, diasHastaDiaDelMes,
   cortesRecientes, calcularEstadoTarjeta, sumarPorClasificacion, calcularSaldoNoRegistrado,
   calcularIngresoPendiente,
+  urgenciaGastoFijo,
+  totalesGastosFijos,
 } from './calculos'
 
 describe('sumarTransaccionesSinFijos', () => {
@@ -391,5 +393,49 @@ describe('calcularIngresoPendiente', () => {
   it('sin nómina o con ingreso de más, no hay pendiente', () => {
     expect(calcularIngresoPendiente(null, 0)).toBe(0)
     expect(calcularIngresoPendiente(5000, 6000)).toBe(0)
+  })
+})
+
+describe('urgenciaGastoFijo', () => {
+  const hoy = new Date(2026, 10, 12) // 12 nov 2026
+  const actual = { esMesActual: true, esMesPasado: false, diasDelMes: 30 }
+  const pasado = { esMesActual: false, esMesPasado: true, diasDelMes: 31 }
+  const futuro = { esMesActual: false, esMesPasado: false, diasDelMes: 31 }
+
+  it('en el mes en curso depende del día de cobro', () => {
+    expect(urgenciaGastoFijo({ dia_cobro: 5 }, actual, hoy)).toBe('vencido')
+    expect(urgenciaGastoFijo({ dia_cobro: 12 }, actual, hoy)).toBe('proximo')
+    expect(urgenciaGastoFijo({ dia_cobro: 15 }, actual, hoy)).toBe('proximo')
+    expect(urgenciaGastoFijo({ dia_cobro: 16 }, actual, hoy)).toBe('normal')
+  })
+
+  it('un mes futuro no tiene vencidos y uno pasado los tiene todos', () => {
+    expect(urgenciaGastoFijo({ dia_cobro: 5 }, futuro, hoy)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: 28 }, pasado, hoy)).toBe('vencido')
+  })
+
+  it('pagado o sin día de cobro nunca es urgente', () => {
+    expect(urgenciaGastoFijo({ dia_cobro: 5, pagado: true }, pasado, hoy)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: null }, actual, hoy)).toBe('normal')
+  })
+
+  it('ajusta el día de cobro a los días del mes', () => {
+    const ultimo = new Date(2026, 10, 30)
+    expect(urgenciaGastoFijo({ dia_cobro: 31 }, actual, ultimo)).toBe('proximo')
+  })
+})
+
+describe('totalesGastosFijos', () => {
+  it('"por pagar" suma lo previsto de los pendientes, no previsto − pagado', () => {
+    const t = totalesGastosFijos([
+      { monto_previsto: 500, monto_actual: 620, pagado: true },  // llegó más caro
+      { monto_previsto: 300, monto_actual: 0, pagado: false },
+      { monto_previsto: '200', monto_actual: 0, pagado: false },
+    ])
+    expect(t).toEqual({ previsto: 1000, actual: 620, porPagar: 500, pagados: 1 })
+  })
+
+  it('sin datos devuelve ceros', () => {
+    expect(totalesGastosFijos(null)).toEqual({ previsto: 0, actual: 0, porPagar: 0, pagados: 0 })
   })
 })

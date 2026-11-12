@@ -9,7 +9,9 @@ import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
-import { fechaLocalISO } from '../utils/fecha'
+import { contextoMes, fechaLocalISO } from '../utils/fecha'
+import { urgenciaGastoFijo } from '../utils/calculos'
+import { useMes } from '../context/MesContext'
 import { plural } from '../utils/texto'
 import { mensajeErrorOperacion } from '../utils/operaciones'
 
@@ -19,7 +21,8 @@ export default function GastosFijos() {
   const { gastos, categorias, metodos, loading, error, refetch, saving, totales, agregar, actualizar, togglePagado, eliminar, autoCopiadosCount } = useGastosFijos()
   const toast = useToast()
   const prevAutoCopRef = useRef(0)
-  const hoyDia = new Date().getDate()
+  const { mes, anio } = useMes()
+  const contexto = contextoMes(mes, anio)
 
   useEffect(() => {
     if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
@@ -98,8 +101,16 @@ export default function GastosFijos() {
   }
 
   const handleGuardar = async () => {
-    if (!form.concepto || !form.monto_previsto) return
-    const datos = { ...form, dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
+    const dia = form.dia_cobro === '' ? null : Number(form.dia_cobro)
+    if (!form.concepto.trim() || !(Number(form.monto_previsto) > 0)) {
+      toast('Escribe el concepto y un monto mayor a cero.', 'error')
+      return
+    }
+    if (dia != null && !(Number.isInteger(dia) && dia >= 1 && dia <= 31)) {
+      toast('El día de cobro debe ser un número del 1 al 31.', 'error')
+      return
+    }
+    const datos = { ...form, concepto: form.concepto.trim(), monto_previsto: Number(form.monto_previsto), dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
     // Método de pago: solo mandar la columna cuando es relevante
     delete datos.metodo_pago_id
     if (form.metodo_pago_id) datos.metodo_pago_id = Number(form.metodo_pago_id)
@@ -119,13 +130,8 @@ export default function GastosFijos() {
   const total   = gastos.length
   const pctPagado = total > 0 ? (pagados / total) * 100 : 0
 
-  // Clasifica urgencia de cada gasto
-  const urgencia = (g) => {
-    if (g.pagado || !g.dia_cobro) return 'normal'
-    if (g.dia_cobro < hoyDia) return 'vencido'
-    if (g.dia_cobro - hoyDia <= 3) return 'proximo'
-    return 'normal'
-  }
+  // Urgencia de cada gasto según el mes que se está viendo (no solo el día de hoy)
+  const urgencia = (g) => urgenciaGastoFijo(g, contexto)
 
   if (error && !loading && gastos.length === 0) {
     return (
@@ -144,7 +150,7 @@ export default function GastosFijos() {
           <div className="card p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Por pagar</p>
             <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>
-              {formatMXN(totales.previsto - totales.actual)}
+              {formatMXN(totales.porPagar)}
             </p>
           </div>
           <div className="card p-4">
@@ -328,11 +334,11 @@ export default function GastosFijos() {
                       </div>
                     </div>
                     <div className="flex gap-1 ml-2 flex-shrink-0">
-                      <button onClick={() => abrirEditar(g)}
+                      <button onClick={() => abrirEditar(g)} aria-label={`Editar ${g.concepto}`} title="Editar"
                         className="w-7 h-7 rounded-lg hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-300 transition-all">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(g.id)}
+                      <button onClick={() => setConfirmDelete(g.id)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar"
                         className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -347,8 +353,13 @@ export default function GastosFijos() {
                         {formatMXN(g.monto_previsto)}
                       </p>
                     </div>
-                    {g.pagado && g.fecha_pago && (
-                      <p className="text-xs text-gray-400 font-mono">Pagado {g.fecha_pago}</p>
+                    {g.pagado && (
+                      <div className="text-right text-xs text-gray-400 font-mono">
+                        {Number(g.monto_actual) > 0 && Number(g.monto_actual) !== Number(g.monto_previsto) && (
+                          <p>Pagaste {formatMXN(g.monto_actual)}</p>
+                        )}
+                        {g.fecha_pago && <p>Pagado {g.fecha_pago}</p>}
+                      </div>
                     )}
                   </div>
 
@@ -378,12 +389,15 @@ export default function GastosFijos() {
       <ConfirmModal
         open={!!confirmDelete}
         titulo="¿Eliminar gasto fijo?"
-        descripcion="Esta acción no se puede deshacer."
+        descripcion={gastos.find(g => g.id === confirmDelete)?.pagado
+          ? 'Ya está marcado como pagado: también se quitará su movimiento de Control de Gastos. Esta acción no se puede deshacer.'
+          : 'Esta acción no se puede deshacer.'}
         onConfirm={async () => {
           const id = confirmDelete
           setConfirmDelete(null)
           const { error } = await eliminar(id)
-          if (error) toast('No se pudo eliminar. Intenta de nuevo.', 'error')
+          if (error) toast(mensajeErrorOperacion(error), 'error')
+          else toast('Gasto fijo eliminado', 'info')
         }}
         onCancel={() => setConfirmDelete(null)}
       />

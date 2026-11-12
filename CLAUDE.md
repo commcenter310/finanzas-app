@@ -31,6 +31,7 @@ Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/uti
 ### Global state: two contexts
 
 - **`AuthContext`** — Supabase session + user profile (reglas 50/30/20, umbral_hormiga, etc.). Wraps entire app. The profile load retries (`conReintentos`) and, if it still fails, **keeps the previous profile** and exposes `profileError` — never replace a loaded profile with `null` on a transient error. It is not reloaded on `TOKEN_REFRESHED`. Any UI that writes to `profiles` must not render its form while `profile` is null (an empty form would overwrite nombre/telefono — see `Perfil.jsx`).
+  Auth also owns the password flows: `cambiarPassword` (used by the "Seguridad" card in `Perfil.jsx` via `components/auth/PasswordForm`) and `recuperando`, which is true after arriving from a "forgot password" link (`PASSWORD_RECOVERY` event, or `LLEGO_POR_RECUPERACION` from `utils/urlInicial.js`, which `main.jsx` imports first so the URL is read before Supabase clears it). While `recuperando`, `ProtectedRoutes` renders `pages/NuevaPassword` instead of the app. Auth errors shown to the user go through `traducirErrorAuth` (`utils/erroresAuth.js`) — never show `error.message` from Supabase (it is in English).
 - **`MesContext`** — Active month/year (`mes`, `anio`) used as the primary filter across every page. Wraps only authenticated routes. All hooks consume `useMes()` to scope their queries.
 
 ### Data fetching pattern
@@ -76,9 +77,19 @@ All spending is tagged `necesidad | deseo | ahorro` — drives the 50/30/20 rule
 
 RPC permissions: in Supabase, `REVOKE ... FROM PUBLIC` does **not** remove EXECUTE from `anon` (Supabase grants it explicitly via default privileges). Every `SECURITY DEFINER` function must `REVOKE ... FROM PUBLIC, anon` and `GRANT EXECUTE ... TO authenticated` (or `service_role` for `update_saldo_credito_admin`). `supabase-permisos.sql` re-applies the grants for existing functions and is safe to re-run.
 
+`supabase-rendimiento-seguridad.sql` (Nov 2026): indexes on `user_id`/date/FK columns, RLS policies rewritten as `(SELECT auth.uid())` and scoped `TO authenticated`, trigger functions (`handle_new_user`, `crear_datos_default`) with fixed `search_path` and no EXECUTE for API roles — sections 1–3 are applied in production. Section 4 changes `registrar_pago_deuda/credito` to take `p_fecha DATE DEFAULT NULL` (the DB server runs in UTC, so `CURRENT_DATE` dates an evening payment as the next day); the client must only send `p_fecha: fechaLocalISO()` once that section is applied in production — check with `SELECT pg_get_function_identity_arguments(oid) FROM pg_proc WHERE proname = 'registrar_pago_deuda'`.
+
 ### Undo (deshacer)
 
 `supabase-deshacer.sql` adds `deshacer_pago_deuda`, `deshacer_pago_credito` and `deshacer_deposito_ahorro`, which revert balance + history row + the generated transaction in one DB transaction. Payment transactions are linked to their row via `transacciones.abono_deuda_id` / `pago_credito_id` (set by `registrar_pago_*`); older payments are matched by amount, date and account name, and if that isn't certain the RPC raises `PAGO_MOVIMIENTO_NO_ENCONTRADO` without changing anything. `useDeudas.registrarPago` returns `pagoId` (looked up by `operacion_id`) so the success toast can offer "Deshacer" even when the payment liquidated the debt.
+
+### Forms → table rows
+
+Form state holds strings; a `''` sent to a `DATE`/`NUMERIC` column makes PostgREST answer 400. Hooks normalize before writing: `filaDeuda` (`useDeudas`), `filaIngreso` (`useIngresos`) — optional empty fields become `null`, amounts become numbers. Validation failures must toast a reason (never a silent `return`).
+
+Deleting a paid `gastos_fijos` row first calls `desmarcar_gasto_fijo_atomico` (removes its `origen='gastos_fijos'` transaction and the card charge); deleting only the row would orphan that transaction. Deleting a credit card (soft delete, `activo=false`) also unlinks and deactivates its payment method; creating one without choosing a method creates/links one named after the card (`utils/metodosTarjeta.js`, shared with onboarding).
+
+Fixed-expense urgency and totals are pure functions in `calculos.js` (`urgenciaGastoFijo`, `totalesGastosFijos`): "vencido" depends on the month being viewed, and "Por pagar" is the sum of `monto_previsto` of unpaid rows (not previsto − pagado).
 
 ### UI conventions
 

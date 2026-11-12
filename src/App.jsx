@@ -26,6 +26,7 @@ const WhatsappLog     = lazyWithRetry(() => import('./pages/WhatsappLog'))
 const SimuladorCredito = lazyWithRetry(() => import('./pages/SimuladorCredito'))
 const Proyeccion      = lazyWithRetry(() => import('./pages/Proyeccion'))
 const Bienvenida      = lazyWithRetry(() => import('./pages/Bienvenida'))
+const NuevaPassword   = lazyWithRetry(() => import('./pages/NuevaPassword'))
 
 function PageLoader() {
   return (
@@ -36,12 +37,21 @@ function PageLoader() {
 }
 
 function ProtectedRoutes() {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, recuperando } = useAuth()
   const location = useLocation()
 
   if (loading) return <PageLoader />
 
   if (!user) return <Navigate to="/auth" />
+
+  // Entró con el enlace de recuperación → primero elige contraseña nueva
+  if (recuperando) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <NuevaPassword />
+      </Suspense>
+    )
+  }
 
   // Usuario nuevo → wizard de bienvenida (pantalla completa, sin sidebar).
   // Comparación estricta con false: si la columna onboarding_completado aún

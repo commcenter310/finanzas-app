@@ -29,7 +29,10 @@ function TarjetaAhorro({ ahorro, metodos, ultimoDeposito, onActualizar, onElimin
   const completado = ahorro.monto_actual >= ahorro.monto_meta && ahorro.monto_meta > 0
 
   const guardar = async () => {
-    const { error } = await onActualizar(ahorro.id, { ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) })
+    if (!String(form.concepto ?? '').trim()) return toast('La meta necesita un nombre.', 'error')
+    if (!(Number(form.monto_meta) > 0)) return toast('La meta debe ser un monto mayor a cero.', 'error')
+    if (Number(form.monto_actual) < 0) return toast('Lo ahorrado no puede ser negativo.', 'error')
+    const { error } = await onActualizar(ahorro.id, { ...form, concepto: form.concepto.trim(), monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) })
     if (error) {
       toast('No se pudo guardar la meta. Intenta de nuevo.', 'error')
       return
@@ -181,9 +184,9 @@ export default function Ahorros() {
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleAgregar = async () => {
-    if (!form.concepto) return
-    if (!form.monto_meta || Number(form.monto_meta) <= 0) return
-    const { error } = await agregar({ ...form, monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) || 0 })
+    if (!form.concepto.trim()) return toast('Escribe para qué es la meta de ahorro.', 'error')
+    if (!(Number(form.monto_meta) > 0)) return toast('La meta debe ser un monto mayor a cero.', 'error')
+    const { error } = await agregar({ ...form, concepto: form.concepto.trim(), monto_meta: Number(form.monto_meta), monto_actual: Number(form.monto_actual) || 0 })
     if (error) {
       toast('No se pudo crear la meta. Intenta de nuevo.', 'error')
       return
