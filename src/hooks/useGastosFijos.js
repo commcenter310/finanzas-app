@@ -115,20 +115,15 @@ export function useGastosFijos() {
     return { error }
   }
 
-  // Si el gasto ya estaba pagado, primero se desmarca (RPC): eso borra su
-  // movimiento en Control de Gastos y devuelve el cargo a la tarjeta. Borrar
-  // solo la fila dejaba ese movimiento huérfano contando como gasto.
+  // Antes de borrar siempre se desmarca (RPC): si estaba pagado, eso borra su
+  // movimiento en Control de Gastos y devuelve el cargo a la tarjeta; si no lo
+  // estaba, no hace nada. Se pregunta a la base de datos y no a la lista en
+  // pantalla, que puede estar desactualizada (pagado desde otro dispositivo).
   const eliminar = async (id) => {
-    const gasto = gastos?.find(g => g.id === id)
-    if (gasto?.pagado) {
-      const { error: errorDesmarcar } = await supabase.rpc('desmarcar_gasto_fijo_atomico', { p_gasto_id: id })
-      if (errorDesmarcar) return { error: errorDesmarcar }
-    }
-    const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
-    // Aunque el borrado falle, el desmarcado ya cambió datos: refrescar siempre
+    let { error } = await supabase.rpc('desmarcar_gasto_fijo_atomico', { p_gasto_id: id })
+    if (!error) ({ error } = await supabase.from('gastos_fijos').delete().eq('id', id))
     refetch({ silent: true })
-    if (gasto?.pagado) invalidatePagoGastoFijo()
-    else if (!error) invalidateGastosFijos()
+    invalidatePagoGastoFijo()
     return { error }
   }
 

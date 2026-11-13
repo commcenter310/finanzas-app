@@ -13,6 +13,8 @@ import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { plural } from '../utils/texto'
 import { useToast } from '../components/ui/Toast'
+import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
+import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import ProyeccionView from '../components/plan/ProyeccionView'
 
 const TIPO_META = {
@@ -23,10 +25,12 @@ const TIPO_META = {
 }
 
 const FORM_MANUAL = { concepto: '', monto: '', tipo: 'ahorro', origen_id: '' }
+const AVISO_FALLO = { error: 'No se pudo guardar el cambio. Revisa tu conexión e intenta de nuevo.' }
 
 export default function PlanQuincena() {
   const { mes, anio } = useMes()
   const toast = useToast()
+  const guardar = useGuardarConAviso()
   const {
     modo, setModo, esMes, rango, loading, error, recargar, saving,
     ingresoEsperado, ingresoRecibido, usandoEstimado,
@@ -46,26 +50,21 @@ export default function PlanQuincena() {
   const pendientes = compromisos.filter(c => !c.apartadoRow)
   const totalItems = compromisos.length
 
-  const FALLO = 'No se pudo guardar el cambio. Revisa tu conexión e intenta de nuevo.'
-
   const handleApartar = async (item) => {
-    const { error } = await apartar(item)
-    if (error) toast(FALLO, 'error')
-    else toast(`Apartaste ${formatMXN(item.montoSugerido)} para ${item.concepto}`, 'success')
+    if (!await guardar(apartar(item), AVISO_FALLO)) return
+    toast(`Apartaste ${formatMXN(item.montoSugerido)} para ${item.concepto}`, 'success')
   }
 
   const handleApartarTodo = async () => {
     if (pendientes.length === 0) return
-    const { error } = await apartarTodo()
-    if (error) toast(FALLO, 'error')
-    else toast(`Apartaste ${plural(pendientes.length, 'compromiso', 'compromisos')}`, 'success')
+    if (!await guardar(apartarTodo(), AVISO_FALLO)) return
+    toast(`Apartaste ${plural(pendientes.length, 'compromiso', 'compromisos')}`, 'success')
   }
 
   const guardarEdicion = async (apartadoId) => {
     if (editValor !== '') {
-      if (!(Number(editValor) > 0)) return toast('El monto apartado debe ser mayor a cero.', 'error')
-      const { error } = await editarMonto(apartadoId, editValor)
-      if (error) return toast(FALLO, 'error')   // se deja abierto para reintentar
+      if (!esMontoPositivo(editValor)) return toast('El monto apartado debe ser mayor a cero.', 'error')
+      if (!await guardar(editarMonto(apartadoId, editValor), AVISO_FALLO)) return   // se deja abierto para reintentar
     }
     setEditId(null); setEditValor('')
   }
@@ -73,7 +72,7 @@ export default function PlanQuincena() {
   const handleAgregarManual = async () => {
     // Con una meta de ahorro elegida, el concepto sale de la meta
     const conMeta = formManual.tipo === 'ahorro' && formManual.origen_id
-    if ((!conMeta && !formManual.concepto.trim()) || !(Number(formManual.monto) > 0)) {
+    if ((!conMeta && !textoLimpio(formManual.concepto)) || !esMontoPositivo(formManual.monto)) {
       toast('Escribe el concepto y un monto mayor a cero.', 'error')
       return
     }
@@ -83,8 +82,7 @@ export default function PlanQuincena() {
       const meta = metasAhorro.find(m => m.id === Number(formManual.origen_id))
       if (meta) { concepto = `Ahorro: ${meta.concepto}`; origen_id = meta.id }
     }
-    const { error } = await agregarManual({ concepto, monto: formManual.monto, tipo: formManual.tipo, origen_id })
-    if (error) return toast(FALLO, 'error')
+    if (!await guardar(agregarManual({ concepto, monto: formManual.monto, tipo: formManual.tipo, origen_id }), AVISO_FALLO)) return
     toast('Apartado agregado ✓', 'success')
     setFormManual(FORM_MANUAL); setMostrarManual(false)
   }
@@ -358,8 +356,7 @@ export default function PlanQuincena() {
         onConfirm={async () => {
           const id = confirmQuitar
           setConfirmQuitar(null)
-          const { error } = await quitarApartado(id)
-          toast(error ? FALLO : 'Apartado quitado', error ? 'error' : 'info')
+          if (await guardar(quitarApartado(id), AVISO_FALLO)) toast('Apartado quitado', 'info')
         }}
         onCancel={() => setConfirmQuitar(null)}
       />

@@ -25,6 +25,7 @@ import DatePicker from '../components/ui/DatePicker'
 import EmptyState from '../components/ui/EmptyState'
 import ErrorState from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
+import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import {
   CommitmentHero,
   CommitmentNav,
@@ -208,7 +209,7 @@ export default function Deudas() {
   }
 
   const handleGuardar = async () => {
-    if (!form.nombre.trim() || !(Number(form.saldo_actual) > 0)) {
+    if (!textoLimpio(form.nombre) || !esMontoPositivo(form.saldo_actual)) {
       toast('Escribe el nombre de la deuda y cuánto debes hoy.', 'error')
       return
     }

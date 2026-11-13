@@ -239,12 +239,14 @@ export const calcularProyeccion = ({
 // en un mes pasado todo lo pendiente está vencido; en uno futuro nada lo está;
 // en el mes en curso depende del día de cobro (ajustado a los días del mes:
 // un cobro "día 31" en febrero vence el último día).
-export const urgenciaGastoFijo = (gasto, { esMesActual, esMesPasado, diasDelMes }, hoy = new Date()) => {
+// `contexto` es el de contextoMes(mes, anio): en el mes en curso,
+// diasTranscurridos es el día de hoy.
+export const urgenciaGastoFijo = (gasto, { esMesActual, esMesPasado, diasDelMes, diasTranscurridos }) => {
   if (gasto.pagado || !gasto.dia_cobro) return 'normal'
   if (esMesPasado) return 'vencido'
   if (!esMesActual) return 'normal'
   const dia = Math.min(Number(gasto.dia_cobro), diasDelMes)
-  const faltan = dia - hoy.getDate()
+  const faltan = dia - diasTranscurridos
   if (faltan < 0) return 'vencido'
   return faltan <= 3 ? 'proximo' : 'normal'
 }
@@ -252,7 +254,7 @@ export const urgenciaGastoFijo = (gasto, { esMesActual, esMesPasado, diasDelMes 
 // Totales de la pantalla de gastos fijos. "Por pagar" suma lo previsto de los
 // que faltan (no previsto − pagado: si un recibo llegó más caro o más barato,
 // esa diferencia no es deuda pendiente).
-export const totalesGastosFijos = (gastos = []) => {
+export const totalesGastosFijos = (gastos) => {
   const lista = gastos ?? []
   const pendientes = lista.filter(g => !g.pagado)
   return {

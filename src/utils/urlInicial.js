@@ -4,8 +4,26 @@
 // Los enlaces de los correos de Supabase regresan a la app así:
 //   recuperación  →  /#access_token=…&type=recovery
 //   enlace vencido →  /#error=access_denied&error_code=otp_expired&…
-const url = typeof window !== 'undefined' ? `${window.location.hash}&${window.location.search}` : ''
+export const leerUrlInicial = (hash = '', search = '') => {
+  const url = `${hash}&${search}`
+  return {
+    recuperacion: /[#&?]access_token=/.test(url) && /[#&?]type=recovery(&|$)/.test(url),
+    enlaceInvalido: /[#&?]error(_code)?=/.test(url),
+  }
+}
 
-export const LLEGO_POR_RECUPERACION = /[#&?]access_token=/.test(url) && /[#&?]type=recovery(&|$)/.test(url)
+// ¿La URL todavía trae el token del enlace? Supabase lo quita al iniciar la
+// sesión; si sigue ahí, el enlace no sirvió (vencido, manipulado…).
+export const urlConservaToken = (hash = '') => /[#&]access_token=/.test(hash)
 
-export const LLEGO_CON_ENLACE_INVALIDO = /[#&?]error(_code)?=/.test(url)
+const inicial = typeof window !== 'undefined'
+  ? leerUrlInicial(window.location.hash, window.location.search)
+  : leerUrlInicial()
+
+export const LLEGO_POR_RECUPERACION = inicial.recuperacion
+
+// El aviso de "enlace vencido" se muestra una sola vez: Auth lo olvida en
+// cuanto el usuario intenta otra cosa, para que no reaparezca al volver.
+let enlaceInvalidoPendiente = inicial.enlaceInvalido
+export const hayEnlaceInvalido = () => enlaceInvalidoPendiente
+export const olvidarEnlaceInvalido = () => { enlaceInvalidoPendiente = false }

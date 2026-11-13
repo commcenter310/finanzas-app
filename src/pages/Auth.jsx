@@ -5,10 +5,7 @@ import BrandMark from '../components/layout/BrandMark'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { PASSWORD_MIN, traducirErrorAuth } from '../utils/erroresAuth'
-import { LLEGO_CON_ENLACE_INVALIDO } from '../utils/urlInicial'
-
-// Enlace del correo (confirmación o recuperación) vencido o ya usado
-const ERROR_DE_ENLACE = LLEGO_CON_ENLACE_INVALIDO ? 'El enlace expiró o ya se usó. Solicita uno nuevo.' : ''
+import { hayEnlaceInvalido, olvidarEnlaceInvalido } from '../utils/urlInicial'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -17,11 +14,13 @@ export default function Auth() {
   const [password, setPassword] = useState('')
   const [modo, setModo] = useState('login')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(ERROR_DE_ENLACE)
+  // Enlace del correo (confirmación o recuperación) vencido o ya usado
+  const [error, setError] = useState(hayEnlaceInvalido() ? 'El enlace expiró o ya se usó. Solicita uno nuevo.' : '')
   const [info, setInfo] = useState('')
 
   const handleSubmit = async (evento) => {
-    evento?.preventDefault()
+    evento.preventDefault()
+    olvidarEnlaceInvalido()
     setError(''); setInfo('')
 
     if (modo === 'reset') {

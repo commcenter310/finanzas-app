@@ -33,6 +33,7 @@ import {
 import { useCreditos } from '../hooks/useCreditos'
 import { calcularEstadoTarjeta, calcularSaldoNoRegistrado, diasHastaDiaDelMes } from '../utils/calculos'
 import { formatMXN } from '../utils/constantes'
+import { esDiaDelMesOpcional, textoLimpio } from '../utils/validaciones'
 import { resolverVencimientoProgramado } from '../utils/pagosProgramados'
 
 const FORM_VACIO = {
@@ -338,11 +339,9 @@ export default function Creditos() {
   }
 
   const handleGuardar = async () => {
-    const nombre = form.nombre.trim()
+    const nombre = textoLimpio(form.nombre)
     if (!nombre) return toast('Escribe el nombre de la tarjeta.', 'error')
-    const diaInvalido = valor => valor !== '' && valor != null
-      && !(Number.isInteger(Number(valor)) && Number(valor) >= 1 && Number(valor) <= 31)
-    if (diaInvalido(form.fecha_corte) || diaInvalido(form.fecha_pago)) {
+    if (!esDiaDelMesOpcional(form.fecha_corte) || !esDiaDelMesOpcional(form.fecha_pago)) {
       return toast('El día de corte y el de pago deben ser números del 1 al 31.', 'error')
     }
     const datos = {

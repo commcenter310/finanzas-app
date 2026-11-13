@@ -767,6 +767,11 @@
   }
 
   /* ---- Field label ---- */
+  /* Celda de tabla: más angosta en celular para que la fila quepa sin scroll */
+  .celda {
+    @apply px-2.5 py-3 sm:px-4;
+  }
+
   .label {
     display: block;
     font-family: var(--font-sans);
