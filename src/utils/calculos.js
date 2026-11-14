@@ -1,6 +1,6 @@
 // Lógica de cálculo de dinero, extraída como funciones puras para poder testearla.
 // Aquí viven los cálculos que históricamente han tenido bugs de doble conteo.
-import { calcNomina, parseMesesPrima } from './constantes'
+import { calcNomina, parseMesesPrima } from './constantes.js'
 
 // Suma de transacciones EXCLUYENDO las auto-generadas por gastos fijos.
 // Los gastos fijos ya se cuentan por su lado; sin este filtro se duplicarían.
