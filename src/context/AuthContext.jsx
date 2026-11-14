@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearQueryCache } from '../hooks/useSupabaseQuery'
 import { conReintentos } from '../utils/reintentos'
-import { LLEGO_POR_RECUPERACION } from '../utils/urlInicial'
+import { LLEGO_POR_RECUPERACION, urlConservaToken } from '../utils/urlInicial'
 
 const AuthContext = createContext(null)
 
@@ -34,7 +34,10 @@ export function AuthProvider({ children }) {
       console.error('No se pudo cargar el perfil:', error.message)
       setProfileError(error.message || 'No se pudo cargar tu perfil')
     } else {
-      setProfile(data)
+      // Si no cambió nada se conserva el mismo objeto: quien siembra un
+      // formulario desde `profile` (Perfil) no pierde lo que el usuario
+      // estaba escribiendo por una recarga que trae lo mismo.
+      setProfile(previo => (previo && JSON.stringify(previo) === JSON.stringify(data) ? previo : data))
       setProfileError(null)
     }
     setLoading(false)
@@ -65,18 +68,24 @@ export function AuthProvider({ children }) {
         // quedar en limbo (spinner infinito) ni repetir el error en cada carga.
         if (error) {
           supabase.auth.signOut({ scope: 'local' })
+          setRecuperando(false)
           aplicarSesion(null)
           return
         }
+        // La URL decía "recuperación", pero solo cuenta si Supabase abrió la
+        // sesión con ese enlace (y entonces ya quitó el token de la URL).
+        if (!session || urlConservaToken(window.location.hash)) setRecuperando(false)
         aplicarSesion(session)
       })
-      .catch(() => aplicarSesion(null))
+      .catch(() => { setRecuperando(false); aplicarSesion(null) })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // La renovación del token (≈ cada hora) no cambia el perfil: no recargarlo
       if (event === 'TOKEN_REFRESHED') { setUser(session?.user ?? null); return }
       if (event === 'PASSWORD_RECOVERY') setRecuperando(true)
-      if (event === 'SIGNED_OUT') setRecuperando(false)
+      // USER_UPDATED también llega a las demás pestañas cuando la contraseña
+      // se cambió en otra: ahí también termina la recuperación.
+      if (event === 'SIGNED_OUT' || event === 'USER_UPDATED') setRecuperando(false)
       // Supabase recomienda no llamar a la API dentro de este callback (puede
       // bloquearse esperando el mismo candado de sesión): se difiere un tick.
       setTimeout(() => {
@@ -90,10 +99,14 @@ export function AuthProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const signOut = () => {
+  // 'global' cierra todas las sesiones del usuario; 'local', solo la de este
+  // navegador. (Sin parámetros libres: signOut se usa directo como onClick.)
+  const cerrarSesion = (scope) => {
     clearQueryCache()
-    return supabase.auth.signOut()
+    return supabase.auth.signOut({ scope })
   }
+  const signOut = () => cerrarSesion('global')
+  const signOutLocal = () => cerrarSesion('local')
 
   // Cambia la contraseña del usuario con sesión (también cierra el flujo de recuperación)
   const cambiarPassword = async (password) => {
@@ -104,7 +117,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, profile, profileError, loading, signOut,
+      user, profile, profileError, loading, signOut, signOutLocal,
       recuperando, cambiarPassword,
       refreshProfile: () => fetchProfile(user?.id),
     }}>

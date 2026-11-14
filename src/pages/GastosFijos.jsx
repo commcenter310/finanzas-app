@@ -11,6 +11,7 @@ import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { contextoMes, fechaLocalISO } from '../utils/fecha'
 import { urgenciaGastoFijo } from '../utils/calculos'
+import { esDiaDelMesOpcional, esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import { useMes } from '../context/MesContext'
 import { plural } from '../utils/texto'
 import { mensajeErrorOperacion } from '../utils/operaciones'
@@ -101,16 +102,15 @@ export default function GastosFijos() {
   }
 
   const handleGuardar = async () => {
-    const dia = form.dia_cobro === '' ? null : Number(form.dia_cobro)
-    if (!form.concepto.trim() || !(Number(form.monto_previsto) > 0)) {
+    if (!textoLimpio(form.concepto) || !esMontoPositivo(form.monto_previsto)) {
       toast('Escribe el concepto y un monto mayor a cero.', 'error')
       return
     }
-    if (dia != null && !(Number.isInteger(dia) && dia >= 1 && dia <= 31)) {
+    if (!esDiaDelMesOpcional(form.dia_cobro)) {
       toast('El día de cobro debe ser un número del 1 al 31.', 'error')
       return
     }
-    const datos = { ...form, concepto: form.concepto.trim(), monto_previsto: Number(form.monto_previsto), dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
+    const datos = { ...form, concepto: textoLimpio(form.concepto), monto_previsto: Number(form.monto_previsto), dia_cobro: form.dia_cobro ? Number(form.dia_cobro) : null, categoria_id: form.categoria_id ? Number(form.categoria_id) : null }
     // Método de pago: solo mandar la columna cuando es relevante
     delete datos.metodo_pago_id
     if (form.metodo_pago_id) datos.metodo_pago_id = Number(form.metodo_pago_id)
@@ -338,7 +338,7 @@ export default function GastosFijos() {
                         className="w-7 h-7 rounded-lg hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-300 transition-all">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(g.id)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar"
+                      <button onClick={() => setConfirmDelete(g)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar"
                         className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -389,11 +389,11 @@ export default function GastosFijos() {
       <ConfirmModal
         open={!!confirmDelete}
         titulo="¿Eliminar gasto fijo?"
-        descripcion={gastos.find(g => g.id === confirmDelete)?.pagado
+        descripcion={confirmDelete?.pagado
           ? 'Ya está marcado como pagado: también se quitará su movimiento de Control de Gastos. Esta acción no se puede deshacer.'
           : 'Esta acción no se puede deshacer.'}
         onConfirm={async () => {
-          const id = confirmDelete
+          const { id } = confirmDelete
           setConfirmDelete(null)
           const { error } = await eliminar(id)
           if (error) toast(mensajeErrorOperacion(error), 'error')

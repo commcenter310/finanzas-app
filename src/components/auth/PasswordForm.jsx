@@ -5,7 +5,7 @@ import { PASSWORD_MIN, traducirErrorAuth, validarPasswordNueva } from '../../uti
 // Formulario "contraseña nueva + confirmación". Lo usan Configuración
 // (cambiar contraseña) y la pantalla de recuperación.
 // onGuardar(password) debe devolver { error } (como supabase.auth.updateUser).
-export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contraseña', onListo }) {
+export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contraseña' }) {
   const [nueva, setNueva] = useState('')
   const [confirmacion, setConfirmacion] = useState('')
   const [visible, setVisible] = useState(false)
@@ -25,7 +25,6 @@ export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contrase
     if (fallo) return setError(traducirErrorAuth(fallo))
     setNueva(''); setConfirmacion('')
     setOk(true)
-    onListo?.()
   }
 
   const tipo = visible ? 'text' : 'password'

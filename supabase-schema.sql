@@ -186,20 +186,22 @@ ALTER TABLE public.abonos_deuda    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ahorros         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_log    ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "own" ON public.profiles       FOR ALL USING (auth.uid() = id);
-CREATE POLICY "own" ON public.categorias      FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.metodos_pago    FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.creditos        FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.ingresos        FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.gastos_fijos    FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.presupuestos    FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.transacciones   FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.deudas          FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.abonos_deuda    FOR ALL
-  USING (deuda_id IN (SELECT id FROM public.deudas WHERE user_id = auth.uid()));
-CREATE POLICY "own" ON public.ahorros         FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "own" ON public.whatsapp_log    FOR SELECT
-  USING (telefono IN (SELECT telefono FROM public.profiles WHERE id = auth.uid()));
+-- (SELECT auth.uid()) hace que Postgres calcule el usuario una vez por consulta
+-- y no una vez por fila; TO authenticated limita la política a usuarios con sesión.
+CREATE POLICY "own" ON public.profiles       FOR ALL TO authenticated USING ((SELECT auth.uid()) = id);
+CREATE POLICY "own" ON public.categorias      FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.metodos_pago    FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.creditos        FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.ingresos        FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.gastos_fijos    FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.presupuestos    FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.transacciones   FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.deudas          FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.abonos_deuda    FOR ALL TO authenticated
+  USING (deuda_id IN (SELECT id FROM public.deudas WHERE user_id = (SELECT auth.uid())));
+CREATE POLICY "own" ON public.ahorros         FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "own" ON public.whatsapp_log    FOR SELECT TO authenticated
+  USING (telefono IN (SELECT telefono FROM public.profiles WHERE id = (SELECT auth.uid())));
 
 -- ============================================
 -- TRIGGERS: auto-crear perfil + datos default al registrarse
@@ -211,7 +213,7 @@ BEGIN
   INSERT INTO public.profiles (id) VALUES (NEW.id);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -250,12 +252,16 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_profile_created ON public.profiles;
 CREATE TRIGGER on_profile_created
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.crear_datos_default();
+
+-- Son disparadores: no se llaman desde la app, así que nadie las invoca por la API
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.crear_datos_default() FROM PUBLIC, anon, authenticated;
 
 
 -- ============================================
@@ -289,7 +295,7 @@ CREATE TABLE IF NOT EXISTS public.pagos_credito (
 );
 ALTER TABLE public.pagos_credito ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own" ON public.pagos_credito
-  FOR ALL USING (auth.uid() = user_id);
+  FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
 
 -- RPC atómica para ajustar saldo_utilizado sin race conditions.
 -- SECURITY DEFINER brinca el RLS, así que el WHERE debe validar que el
@@ -351,7 +357,7 @@ CREATE TABLE IF NOT EXISTS public.nominas (
 );
 ALTER TABLE public.nominas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "own" ON public.nominas;
-CREATE POLICY "own" ON public.nominas FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "own" ON public.nominas FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
 
 -- Apartados del Plan de Quincena (dinero reservado para compromisos)
 CREATE TABLE IF NOT EXISTS public.apartados (
@@ -370,7 +376,7 @@ CREATE TABLE IF NOT EXISTS public.apartados (
 );
 ALTER TABLE public.apartados ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "own" ON public.apartados;
-CREATE POLICY "own" ON public.apartados FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "own" ON public.apartados FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id);
 
 -- ============================================
 -- MIGRACIONES SOBRE TABLAS ORIGINALES (idempotentes)
@@ -1271,11 +1277,10 @@ GRANT EXECUTE ON FUNCTION public.deshacer_pago_credito(INTEGER) TO authenticated
 GRANT EXECUTE ON FUNCTION public.deshacer_deposito_ahorro(INTEGER) TO authenticated;
 
 -- ============================================
--- ÍNDICES, POLÍTICAS RLS OPTIMIZADAS Y PERMISOS DE DISPARADORES
--- Migración aislada para instalaciones existentes: supabase-rendimiento-seguridad.sql
+-- ÍNDICES
+-- (Para una base que ya existía: supabase-rendimiento-seguridad.sql)
 -- ============================================
 
--- ── 1. Índices ───────────────────────────────────────────────────────────────
 -- Las tablas solo tenían su llave primaria: cada consulta de la app
 -- (por usuario + mes/fecha) recorría la tabla completa.
 CREATE INDEX IF NOT EXISTS transacciones_user_fecha_idx   ON public.transacciones (user_id, fecha DESC);
@@ -1301,34 +1306,3 @@ CREATE INDEX IF NOT EXISTS ahorros_user_idx               ON public.ahorros (use
 CREATE INDEX IF NOT EXISTS nominas_user_idx               ON public.nominas (user_id);
 CREATE INDEX IF NOT EXISTS metodos_pago_credito_idx       ON public.metodos_pago (credito_id)       WHERE credito_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS whatsapp_log_transaccion_idx   ON public.whatsapp_log (transaccion_id)   WHERE transaccion_id IS NOT NULL;
-
--- ── 2. Políticas RLS ─────────────────────────────────────────────────────────
--- auth.uid() se evaluaba una vez POR FILA; con (SELECT auth.uid()) Postgres lo
--- calcula una sola vez por consulta. La regla es la misma: cada quien ve solo
--- lo suyo. Además se limitan a usuarios con sesión (antes aplicaban a todos
--- los roles, aunque sin sesión no devolvían nada).
-ALTER POLICY "own" ON public.profiles TO authenticated USING ((SELECT auth.uid()) = id);
-ALTER POLICY "own" ON public.categorias TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.metodos_pago TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.creditos TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.ingresos TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.gastos_fijos TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.presupuestos TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.transacciones TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.deudas TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.ahorros TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.pagos_credito TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.nominas TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.apartados TO authenticated USING ((SELECT auth.uid()) = user_id);
-ALTER POLICY "own" ON public.abonos_deuda TO authenticated
-  USING (deuda_id IN (SELECT id FROM public.deudas WHERE user_id = (SELECT auth.uid())));
-ALTER POLICY "own" ON public.whatsapp_log TO authenticated
-  USING (telefono IN (SELECT telefono FROM public.profiles WHERE id = (SELECT auth.uid())));
-
--- ── 3. Funciones de alta de usuario ──────────────────────────────────────────
--- Son disparadores (no se llaman desde la app): se fija su search_path y se
--- quita el permiso de invocarlas por la API.
-ALTER FUNCTION public.handle_new_user() SET search_path = public;
-ALTER FUNCTION public.crear_datos_default() SET search_path = public;
-REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.crear_datos_default() FROM PUBLIC, anon, authenticated;

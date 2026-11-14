@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { vincularMetodoTarjeta } from '../utils/metodosTarjeta'
+import { vincularMetodoTarjeta } from '../lib/metodosTarjeta'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
@@ -69,15 +69,15 @@ export function useCreditos() {
   }
 
   const eliminar = async (id) => {
-    const { error } = await supabase.from('creditos').update({ activo: false }).eq('id', id)
-    if (error) return { error }
-    // Su método de pago se desvincula y desactiva: si siguiera en las listas,
-    // todo gasto registrado con él fallaría ("la tarjeta ya no está disponible").
-    await supabase.from('metodos_pago').update({ credito_id: null, activo: false })
+    // Primero su método de pago (se desvincula y desactiva): si siguiera en
+    // las listas, todo gasto registrado con él fallaría ("la tarjeta ya no
+    // está disponible"). En este orden, si el segundo paso falla la tarjeta
+    // sigue visible y se puede reintentar.
+    let { error } = await supabase.from('metodos_pago').update({ credito_id: null, activo: false })
       .eq('credito_id', id).eq('user_id', user.id)
-    invalidateCreditos()
-    invalidateMetodosCredito()
-    return { error: null }
+    if (!error) ({ error } = await supabase.from('creditos').update({ activo: false }).eq('id', id))
+    invalidateMetodosCredito()   // incluye las claves de créditos
+    return { error }
   }
 
   const vincularMetodo = async (creditoId, metodoId) => {

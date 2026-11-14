@@ -44,7 +44,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
     setSavingMetodo(true)
     const ok = await guardar(
       supabase.from('metodos_pago').insert({ ...formMetodo, nombre, user_id: user.id }),
-      undefined, 'Ya tienes un método de pago con ese nombre.'
+      { duplicado: 'Ya tienes un método de pago con ese nombre.' }
     )
     setSavingMetodo(false)
     if (!ok) return
@@ -63,7 +63,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
     if (!nombre) return toast('El método de pago necesita un nombre.', 'error')
     if (!await guardar(
       supabase.from('metodos_pago').update({ ...formEditMetodo, nombre }).eq('id', id),
-      undefined, 'Ya tienes un método de pago con ese nombre.'
+      { duplicado: 'Ya tienes un método de pago con ese nombre.' }
     )) return
     setEditandoMetodo(null)
     invalidateMetodos()
@@ -72,7 +72,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
   const [metodoAEliminar, setMetodoAEliminar] = useState(null)
 
   const eliminarMetodo = async (id) => {
-    if (!await guardar(supabase.from('metodos_pago').update({ activo: false }).eq('id', id), 'No se pudo eliminar. Intenta de nuevo.')) return
+    if (!await guardar(supabase.from('metodos_pago').update({ activo: false }).eq('id', id), { error: 'No se pudo eliminar. Intenta de nuevo.' })) return
     invalidateMetodos()
   }
 

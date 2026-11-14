@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 // Se muestra al entrar con el enlace de "¿Olvidaste tu contraseña?": antes
 // ese enlace iniciaba sesión pero nunca dejaba elegir una contraseña nueva.
 export default function NuevaPassword() {
-  const { cambiarPassword, signOut } = useAuth()
+  const { cambiarPassword, signOutLocal } = useAuth()
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-app)' }}>
       <div className="card p-6 w-full" style={{ maxWidth: 420 }}>
@@ -15,7 +15,7 @@ export default function NuevaPassword() {
           Con ella entrarás a Finni a partir de ahora.
         </p>
         <PasswordForm onGuardar={cambiarPassword} textoBoton="Guardar y entrar" />
-        <button type="button" onClick={signOut} className="btn-ghost text-sm mt-3">Cancelar y salir</button>
+        <button type="button" onClick={signOutLocal} className="btn-ghost text-sm mt-3">Cancelar y salir</button>
       </div>
     </div>
   )

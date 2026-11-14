@@ -41,6 +41,12 @@ export const mesAplicacionIngreso = (fechaISO) => {
   return dia >= 25 ? mesSiguiente(mes, anio) : { mes, anio }
 }
 
+// { mes, anio } de una fecha 'AAAA-MM-DD' (null si viene vacía o incompleta)
+export const mesDeFechaISO = (fechaISO) => {
+  const [anio, mes] = String(fechaISO ?? '').split('-').map(Number)
+  return mes && anio ? { mes, anio } : null
+}
+
 // Los últimos `n` meses terminando en el de `hoy` (el más antiguo primero).
 // Se parte del día 1 para no desbordar: 31-oct − 1 mes con setMonth da 1-oct.
 export const ultimosMeses = (n, hoy = new Date()) =>

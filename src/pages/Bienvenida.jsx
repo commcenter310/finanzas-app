@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { vincularMetodoTarjeta } from '../utils/metodosTarjeta'
+import { vincularMetodoTarjeta } from '../lib/metodosTarjeta'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { formatMXN } from '../utils/constantes'
@@ -67,7 +67,8 @@ export default function Bienvenida() {
             fecha_pago: t.fecha_pago ? Number(t.fecha_pago) : null,
           }).select('id').single()
           if (error) throw error
-          await vincularMetodoTarjeta(user.id, t.nombre, credito.id)
+          const { error: errorMetodo } = await vincularMetodoTarjeta(user.id, t.nombre, credito.id)
+          if (errorMetodo) throw errorMetodo
         }
 
         // 2. Nómina principal

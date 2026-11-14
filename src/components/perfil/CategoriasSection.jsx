@@ -37,7 +37,7 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
     if (!nombre) return toast('Escribe el nombre de la categoría.', 'error')
     if (!await guardar(
       supabase.from('categorias').insert({ ...formCat, nombre, user_id: user.id, tipo_gasto: 'variable' }),
-      undefined, 'Ya tienes una categoría con ese nombre.'
+      { duplicado: 'Ya tienes una categoría con ese nombre.' }
     )) return
     setFormCat({ nombre: '', clasificacion: 'deseo', icono: '📦' })
     setMostrarFormCat(false)
@@ -54,7 +54,7 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
     if (!nombre) return toast('La categoría necesita un nombre.', 'error')
     if (!await guardar(
       supabase.from('categorias').update({ ...formEditCat, nombre }).eq('id', id),
-      undefined, 'Ya tienes una categoría con ese nombre.'
+      { duplicado: 'Ya tienes una categoría con ese nombre.' }
     )) return
     setEditandoCat(null)
     invalidateCategorias()

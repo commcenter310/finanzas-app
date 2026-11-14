@@ -347,7 +347,7 @@ export default function Perfil() {
             Cambia la contraseña con la que entras a Finni. Tu sesión en este dispositivo sigue abierta.
           </p>
           <div style={{ maxWidth: 360 }}>
-            <PasswordForm onGuardar={cambiarPassword} onListo={() => toast('Contraseña actualizada', 'success')} />
+            <PasswordForm onGuardar={cambiarPassword} />
           </div>
         </div>
       </div>

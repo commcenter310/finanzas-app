@@ -3,23 +3,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useMes } from '../context/MesContext'
 import { invalidateQueryCache, useSupabaseQuery } from './useSupabaseQuery'
-import { fechaLocalISO, finMesISO, inicioMesISO } from '../utils/fecha'
-
-// Convierte el formulario en la fila de la tabla: montos como número (un ''
-// en una columna numérica da error 400) y, sin monto esperado, se usa el recibido.
-export const filaIngreso = (datos) => {
-  const recibido = Number(datos.monto_actual) || 0
-  const esperado = datos.monto_presupuesto === '' || datos.monto_presupuesto == null
-    ? recibido
-    : Number(datos.monto_presupuesto) || 0
-  return {
-    concepto:          String(datos.concepto ?? '').trim(),
-    monto_actual:      recibido,
-    monto_presupuesto: esperado,
-    fecha_recepcion:   datos.fecha_recepcion || null,
-    notas:             String(datos.notas ?? '').trim() || null,
-  }
-}
+import { finMesISO, inicioMesISO } from '../utils/fecha'
+import { filaIngreso } from '../utils/ingresos'
 
 export function useIngresos() {
   const { user } = useAuth()
@@ -52,21 +37,10 @@ export function useIngresos() {
 
   const invalidateIngresos = () => invalidateQueryCache(['ingresos:', 'dash:', 'plan:', 'tendencias:'])
 
+  // `datos` es el formulario (utils/ingresos.js); filaIngreso lo convierte en fila
   const agregar = async (datos) => {
     setSaving(true)
-    const hoy = fechaLocalISO()
-    const fecha = datos.fecha_recepcion || hoy
-    // Derivar mes/anio de la fecha solo como fallback; respetar lo que venga del form
-    const [anioFecha, mesFecha] = fecha.split('-').map(Number)
-    const mesAplicar  = datos.mes  != null ? datos.mes  : mesFecha
-    const anioAplicar = datos.anio != null ? datos.anio : anioFecha
-    const { error } = await supabase.from('ingresos').insert({
-      ...filaIngreso(datos),
-      user_id: user.id,
-      fecha_recepcion: fecha,
-      mes: mesAplicar,
-      anio: anioAplicar,
-    })
+    const { error } = await supabase.from('ingresos').insert({ ...filaIngreso(datos), user_id: user.id })
     setSaving(false)
     if (!error) invalidateIngresos()
     return { error }
@@ -74,20 +48,7 @@ export function useIngresos() {
 
   const actualizar = async (id, datos) => {
     setSaving(true)
-    // Extraer y forzar mes/anio como enteros explícitamente
-    const { mes: mesForm, anio: anioForm } = datos
-    const fecha = datos.fecha_recepcion
-    const [anioFecha, mesFecha] = fecha ? fecha.split('-').map(Number) : [anioForm, mesForm]
-    const updates = {
-      ...filaIngreso(datos),
-      mes:  mesForm  != null ? Number(mesForm)  : mesFecha,
-      anio: anioForm != null ? Number(anioForm) : anioFecha,
-    }
-    const { error } = await supabase
-      .from('ingresos')
-      .update(updates)
-      .eq('id', id)
-      .select()
+    const { error } = await supabase.from('ingresos').update(filaIngreso(datos)).eq('id', id)
     setSaving(false)
     if (!error) invalidateIngresos()
     return { error }

@@ -8,6 +8,7 @@ import {
   urgenciaGastoFijo,
   totalesGastosFijos,
 } from './calculos'
+import { contextoMes } from './fecha'
 
 describe('sumarTransaccionesSinFijos', () => {
   it('excluye las transacciones con origen gastos_fijos (evita doble conteo)', () => {
@@ -398,30 +399,30 @@ describe('calcularIngresoPendiente', () => {
 
 describe('urgenciaGastoFijo', () => {
   const hoy = new Date(2026, 10, 12) // 12 nov 2026
-  const actual = { esMesActual: true, esMesPasado: false, diasDelMes: 30 }
-  const pasado = { esMesActual: false, esMesPasado: true, diasDelMes: 31 }
-  const futuro = { esMesActual: false, esMesPasado: false, diasDelMes: 31 }
+  const actual = contextoMes(11, 2026, hoy)
+  const pasado = contextoMes(10, 2026, hoy)
+  const futuro = contextoMes(12, 2026, hoy)
 
   it('en el mes en curso depende del día de cobro', () => {
-    expect(urgenciaGastoFijo({ dia_cobro: 5 }, actual, hoy)).toBe('vencido')
-    expect(urgenciaGastoFijo({ dia_cobro: 12 }, actual, hoy)).toBe('proximo')
-    expect(urgenciaGastoFijo({ dia_cobro: 15 }, actual, hoy)).toBe('proximo')
-    expect(urgenciaGastoFijo({ dia_cobro: 16 }, actual, hoy)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: 5 }, actual)).toBe('vencido')
+    expect(urgenciaGastoFijo({ dia_cobro: 12 }, actual)).toBe('proximo')
+    expect(urgenciaGastoFijo({ dia_cobro: 15 }, actual)).toBe('proximo')
+    expect(urgenciaGastoFijo({ dia_cobro: 16 }, actual)).toBe('normal')
   })
 
   it('un mes futuro no tiene vencidos y uno pasado los tiene todos', () => {
-    expect(urgenciaGastoFijo({ dia_cobro: 5 }, futuro, hoy)).toBe('normal')
-    expect(urgenciaGastoFijo({ dia_cobro: 28 }, pasado, hoy)).toBe('vencido')
+    expect(urgenciaGastoFijo({ dia_cobro: 5 }, futuro)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: 28 }, pasado)).toBe('vencido')
   })
 
   it('pagado o sin día de cobro nunca es urgente', () => {
-    expect(urgenciaGastoFijo({ dia_cobro: 5, pagado: true }, pasado, hoy)).toBe('normal')
-    expect(urgenciaGastoFijo({ dia_cobro: null }, actual, hoy)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: 5, pagado: true }, pasado)).toBe('normal')
+    expect(urgenciaGastoFijo({ dia_cobro: null }, actual)).toBe('normal')
   })
 
   it('ajusta el día de cobro a los días del mes', () => {
-    const ultimo = new Date(2026, 10, 30)
-    expect(urgenciaGastoFijo({ dia_cobro: 31 }, actual, ultimo)).toBe('proximo')
+    const ultimoDia = contextoMes(11, 2026, new Date(2026, 10, 30))
+    expect(urgenciaGastoFijo({ dia_cobro: 31 }, ultimoDia)).toBe('proximo')
   })
 })
 

@@ -1,5 +1,9 @@
 -- Pagos de deudas y tarjetas: atomicidad e idempotencia.
--- Ejecutar una sola vez en Supabase > SQL Editor.
+-- Supabase > SQL Editor. Se puede ejecutar las veces que sea: no toca datos.
+-- Todo va en una transacción: la firma anterior de las funciones se elimina y
+-- la nueva se crea en el mismo paso, sin dejar a la app sin función.
+
+BEGIN;
 
 ALTER TABLE public.abonos_deuda
   ADD COLUMN IF NOT EXISTS operacion_id UUID;
@@ -247,3 +251,5 @@ REVOKE ALL ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID,
 REVOKE ALL ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.registrar_pago_deuda(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.registrar_pago_credito(INTEGER, NUMERIC, TEXT, UUID, DATE) TO authenticated;
+
+COMMIT;
