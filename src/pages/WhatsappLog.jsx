@@ -1,5 +1,6 @@
 import Layout from '../components/layout/Layout'
 import { useWhatsappLog } from '../hooks/useWhatsappLog'
+import { useAuth } from '../context/AuthContext'
 import { CheckCircle, XCircle, MessageSquare } from 'lucide-react'
 import { formatMXN } from '../utils/constantes'
 import { Link } from 'react-router-dom'
@@ -7,6 +8,7 @@ import EmptyState from '../components/ui/EmptyState'
 
 export default function WhatsappLog() {
   const { logs, loading } = useWhatsappLog()
+  const { profile } = useAuth()
 
   const procesados = logs.filter(l => l.procesado).length
   const errores = logs.filter(l => !l.procesado).length
@@ -31,16 +33,30 @@ export default function WhatsappLog() {
           </div>
         </div>
 
+        {/* El bot solo atiende (y el historial solo se ve con) números verificados */}
+        {profile && !profile.whatsapp_verificado && (
+          <div className="card p-4 border text-sm" style={{ borderColor: 'var(--warning-fg)', color: 'var(--fg-2)' }}>
+            <strong>Tu número aún no está verificado.</strong>{' '}
+            {profile.telefono
+              ? 'Mándale un mensaje al bot: te responderá un código. '
+              : 'Guarda tu número de WhatsApp y después mándale un mensaje al bot. '}
+            <Link to="/perfil" className="underline font-semibold">Verificar en Perfil</Link>
+          </div>
+        )}
+
         {/* Info de uso */}
         <div className="card p-4 bg-primary-50 border-primary-200 border">
           <h3 className="font-bold text-primary-900 mb-2">Cómo usar el bot de WhatsApp</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm text-primary-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-primary-800">
             {[
-              ['Registrar gasto', '"350 gasolina costco" o "89 starbucks bbva"'],
-              ['Gasto con tarjeta', '"120 tacos liverpool"'],
-              ['Ver resumen', '"cómo voy" o "resumen del mes"'],
-              ['Ver deudas', '"mis deudas" o "cuánto debo"'],
-              ['Ver créditos', '"mis créditos" o "fecha de corte"'],
+              ['Registrar gasto', '"89 café nu" o "ayer 200 gasolina"'],
+              ['Compra a meses', '"3000 tele nu a 12 meses"'],
+              ['Ingreso', '"recibí 5000 nómina"'],
+              ['Pagar un gasto fijo', '"pagué la luz"'],
+              ['Abonar a deuda o tarjeta', '"aboné 500 a nu"'],
+              ['Corregir el último', '"era 95" o "deshacer"'],
+              ['Consultar', '"resumen", "pendientes", "mis deudas", "tarjetas"'],
+              ['Nota de voz', 'también puedes dictarle el gasto'],
             ].map(([label, ejemplo]) => (
               <div key={label}>
                 <span className="font-semibold">{label}:</span>{' '}

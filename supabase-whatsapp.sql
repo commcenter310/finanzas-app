@@ -207,4 +207,12 @@ $$;
 REVOKE ALL ON FUNCTION public.verificar_whatsapp(TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.verificar_whatsapp(TEXT) TO authenticated;
 
+-- El historial de mensajes solo se puede leer con el número ya verificado:
+-- antes bastaba escribir un número ajeno en el perfil para ver sus mensajes.
+ALTER POLICY "own" ON public.whatsapp_log TO authenticated
+  USING (telefono IN (
+    SELECT telefono FROM public.profiles
+    WHERE id = (SELECT auth.uid()) AND whatsapp_verificado
+  ));
+
 COMMIT;

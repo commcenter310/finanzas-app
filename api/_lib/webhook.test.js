@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const procesarMensaje = vi.hoisted(() => vi.fn())
-vi.mock('./_lib/whatsapp.js', () => ({ procesarMensaje }))
+vi.mock('./whatsapp.js', () => ({ procesarMensaje }))
 
 const SECRETO = 'secreto-de-prueba'
 const firmar = (cuerpo, secreto = SECRETO) => `sha256=${crypto.createHmac('sha256', secreto).update(cuerpo).digest('hex')}`
@@ -12,7 +12,7 @@ async function cargar(env = {}) {
   vi.resetModules()
   vi.unstubAllEnvs()
   for (const [k, v] of Object.entries({ WHATSAPP_APP_SECRET: SECRETO, WHATSAPP_VERIFY_TOKEN: 'verifica', ...env })) vi.stubEnv(k, v)
-  return import('./webhook.js')
+  return import('../webhook.js')
 }
 
 function pedir(handler, { method = 'POST', cuerpo = '', headers = {}, query = {} } = {}) {

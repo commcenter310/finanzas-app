@@ -14,6 +14,7 @@ import MetodosPagoSection from '../components/perfil/MetodosPagoSection'
 import CategoriasSection from '../components/perfil/CategoriasSection'
 import SetupGuide from '../components/perfil/SetupGuide'
 import PasswordForm from '../components/auth/PasswordForm'
+import VerificarWhatsapp from '../components/perfil/VerificarWhatsapp'
 import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
 import { telefonoA10, telefonoAWhatsApp, soloDiezDigitos } from '../utils/telefono'
 
@@ -224,6 +225,13 @@ export default function Perfil() {
                   <input className="input font-mono text-sm" placeholder="6675078043" inputMode="numeric"
                     value={telefono10} onChange={e => setTelefono10(soloDiezDigitos(e.target.value))} />
                 </div>
+              </div>
+              <div className="col-span-2 -mt-1.5">
+                <VerificarWhatsapp
+                  profile={profile}
+                  pendienteDeGuardar={telefono10 !== telefonoA10(profile.telefono)}
+                  onVerificado={refreshProfile}
+                />
               </div>
             </div>
             <div className="mb-4">
