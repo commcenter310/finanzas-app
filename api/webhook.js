@@ -1,10 +1,13 @@
 import crypto from 'node:crypto'
-import { processMessage } from './lib/whatsapp.js'
-import { envFlag, maskTelefono } from './lib/env.js'
+import { procesarMensaje } from './_lib/whatsapp.js'
+import { envFlag, maskTelefono } from './_lib/env.js'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
-const REQUIRE_SIGNATURE = envFlag('WHATSAPP_REQUIRE_SIGNATURE')
+// La firma de Meta es obligatoria: sin ella cualquiera que conozca esta URL
+// podría registrar o borrar gastos haciéndose pasar por un número.
+// Solo para pruebas locales se puede apagar con WHATSAPP_REQUIRE_SIGNATURE=false.
+const EXIGIR_FIRMA = envFlag('WHATSAPP_REQUIRE_SIGNATURE', true)
 
 // bodyParser desactivado: la firma HMAC se calcula sobre el body crudo.
 export const config = { api: { bodyParser: false } }
@@ -15,13 +18,42 @@ async function readRawBody(req) {
   return Buffer.concat(chunks)
 }
 
-function verifySignature(rawBody, signatureHeader) {
-  if (!signatureHeader?.startsWith('sha256=')) return false
-  const expected = crypto.createHmac('sha256', APP_SECRET).update(rawBody).digest()
+export function firmaValida(rawBody, signatureHeader, secreto) {
+  if (!secreto || !signatureHeader?.startsWith('sha256=')) return false
+  const expected = crypto.createHmac('sha256', secreto).update(rawBody).digest()
   let received
   try { received = Buffer.from(signatureHeader.slice(7), 'hex') } catch { return false }
   if (expected.length !== received.length) return false
   return crypto.timingSafeEqual(expected, received)
+}
+
+// Mensaje de Meta → lo que entiende el bot. null = nada que atender.
+export function leerMensaje(message) {
+  if (!message?.from) return null
+  const base = { telefono: message.from, wamid: message.id ?? null }
+  if (message.type === 'text') {
+    const texto = String(message.text?.body ?? '').trim()
+    return texto ? { ...base, tipo: 'texto', texto } : null
+  }
+  if (message.type === 'interactive') {
+    const r = message.interactive?.button_reply ?? message.interactive?.list_reply
+    return r?.id ? { ...base, tipo: 'opcion', opcionId: String(r.id), texto: String(r.title ?? '') } : null
+  }
+  if (message.type === 'button') {
+    const texto = String(message.button?.text ?? '').trim()
+    return texto ? { ...base, tipo: 'texto', texto } : null
+  }
+  if (message.type === 'audio' && message.audio?.id) return { ...base, tipo: 'audio', mediaId: message.audio.id }
+  return { ...base, tipo: 'otro' }
+}
+
+// Un webhook puede traer varios mensajes (y avisos de entrega, que no lo son)
+export function mensajesDe(body) {
+  return (body?.entry ?? [])
+    .flatMap(entry => entry?.changes ?? [])
+    .flatMap(change => change?.value?.messages ?? [])
+    .map(leerMensaje)
+    .filter(Boolean)
 }
 
 export default async function handler(req, res) {
@@ -30,7 +62,7 @@ export default async function handler(req, res) {
     const token     = req.query['hub.verify_token']
     const challenge = req.query['hub.challenge']
 
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    if (mode === 'subscribe' && VERIFY_TOKEN && token === VERIFY_TOKEN) {
       console.log('Webhook verificado por Meta')
       return res.status(200).send(challenge)
     }
@@ -40,16 +72,17 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const rawBody = await readRawBody(req)
 
-    if (APP_SECRET) {
-      if (!verifySignature(rawBody, req.headers['x-hub-signature-256'])) {
+    if (EXIGIR_FIRMA) {
+      if (!APP_SECRET) {
+        console.error('Falta WHATSAPP_APP_SECRET: el bot no atiende mensajes hasta configurarlo en Vercel')
+        return res.status(503).json({ error: 'Webhook signature secret not configured' })
+      }
+      if (!firmaValida(rawBody, req.headers['x-hub-signature-256'], APP_SECRET)) {
         console.warn('Firma invalida: payload rechazado')
         return res.status(401).json({ error: 'Invalid signature' })
       }
     } else {
-      console.warn('WHATSAPP_APP_SECRET no configurado: webhook sin verificacion de firma')
-      if (REQUIRE_SIGNATURE) {
-        return res.status(500).json({ error: 'Webhook signature secret not configured' })
-      }
+      console.warn('Webhook SIN verificacion de firma (WHATSAPP_REQUIRE_SIGNATURE=false)')
     }
 
     let body
@@ -60,25 +93,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid JSON' })
     }
 
-    try {
-      const entry   = body?.entry?.[0]
-      const change  = entry?.changes?.[0]
-      const message = change?.value?.messages?.[0]
-
-      if (message && message.type === 'text') {
-        const telefono = message.from
-        const texto    = message.text.body.trim()
-
+    // Se responde 200 aunque un mensaje falle: si no, Meta reintenta el lote
+    // completo. Cada mensaje maneja y registra su propio error.
+    for (const mensaje of mensajesDe(body)) {
+      try {
         // Sin el texto: contiene montos y conceptos de gasto del usuario
-        console.log('Mensaje recibido de:', maskTelefono(telefono), '| largo:', texto.length)
-
-        if (texto) {
-          await processMessage(telefono, texto)
-          console.log('processMessage completado')
-        }
+        console.log('Mensaje recibido de:', maskTelefono(mensaje.telefono), '| tipo:', mensaje.tipo)
+        await procesarMensaje(mensaje)
+      } catch (error) {
+        console.error('Error procesando mensaje WhatsApp:', error)
       }
-    } catch (error) {
-      console.error('Error procesando mensaje WhatsApp:', error)
     }
 
     return res.status(200).send('OK')

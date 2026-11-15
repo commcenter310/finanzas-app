@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import DatePicker from '../ui/DatePicker'
 import { MESES } from '../../utils/constantes'
 import { mesAnterior, mesAplicacionIngreso, mesDeFechaISO, mesSiguiente } from '../../utils/fecha'
@@ -34,6 +35,9 @@ function MesPicker({ mes, anio, base, onChange }) {
 // Campos de un ingreso. Lo usan el alta y la edición en la página Ingresos;
 // el estado (`form`, ver utils/ingresos.js) y los botones son de quien lo usa.
 export default function IngresoForm({ form, setForm }) {
+  // El mes al que aplica se deduce de la fecha; el selector solo aparece si
+  // el usuario pide cambiarlo.
+  const [eligiendoMes, setEligiendoMes] = useState(false)
   const set = (campo) => (evento) => setForm(f => ({ ...f, [campo]: evento.target.value }))
 
   // Al cambiar la fecha se vuelve a sugerir el mes de aplicación (día ≥ 25 →
@@ -63,19 +67,25 @@ export default function IngresoForm({ form, setForm }) {
         <label className="label">Fecha en que llegó <span className="text-negative">*</span></label>
         <DatePicker className="w-full" value={form.fecha_recepcion} onChange={cambiarFecha} />
       </div>
-      <div className="col-span-2">
-        <label className="label">¿A qué mes aplica?</label>
-        <MesPicker mes={form.mes} anio={form.anio} base={baseMesPicker(form)}
-          onChange={({ mes, anio }) => setForm(f => ({ ...f, mes, anio }))} />
-        {aplicaEnOtroMes && (
-          <p className="text-xs mt-1.5" style={{ color: 'var(--primary)' }}>
-            💡 Recibido en {MESES[recibidoEn.mes - 1]}, contará en el balance de {MESES[form.mes - 1]} {form.anio}
-          </p>
-        )}
-      </div>
-      <div className="col-span-2">
+      <div className="col-span-2 lg:col-span-4">
         <label className="label">Notas <span className="text-fg-4 font-normal">(opcional)</span></label>
         <input className="input text-sm" placeholder="Ej: incluye bono" maxLength={200} value={form.notas} onChange={set('notas')} />
+      </div>
+      <div className="col-span-2 lg:col-span-4">
+        {eligiendoMes ? (
+          <div style={{ maxWidth: 360 }}>
+            <label className="label">¿En qué mes cuenta?</label>
+            <MesPicker mes={form.mes} anio={form.anio} base={baseMesPicker(form)}
+              onChange={({ mes, anio }) => setForm(f => ({ ...f, mes, anio }))} />
+          </div>
+        ) : (
+          <p className="text-xs" style={{ color: aplicaEnOtroMes ? 'var(--primary)' : 'var(--fg-4)' }}>
+            {aplicaEnOtroMes && `💡 Recibido en ${MESES[recibidoEn.mes - 1]}, contará en el balance de ${MESES[form.mes - 1]} ${form.anio}. `}
+            <button type="button" className="underline" onClick={() => setEligiendoMes(true)}>
+              {aplicaEnOtroMes ? 'Cambiar' : '¿Cuenta para otro mes?'}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   )

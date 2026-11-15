@@ -1306,3 +1306,9 @@ CREATE INDEX IF NOT EXISTS ahorros_user_idx               ON public.ahorros (use
 CREATE INDEX IF NOT EXISTS nominas_user_idx               ON public.nominas (user_id);
 CREATE INDEX IF NOT EXISTS metodos_pago_credito_idx       ON public.metodos_pago (credito_id)       WHERE credito_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS whatsapp_log_transaccion_idx   ON public.whatsapp_log (transaccion_id)   WHERE transaccion_id IS NOT NULL;
+
+-- ============================================
+-- BOT DE WHATSAPP
+-- Escrituras atómicas del bot, mensajes sin duplicar y verificación del
+-- número: ver supabase-whatsapp.sql (se ejecuta después de este archivo).
+-- ============================================
