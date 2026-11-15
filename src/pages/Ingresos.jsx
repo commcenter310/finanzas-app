@@ -10,7 +10,7 @@ import EmptyState   from '../components/ui/EmptyState'
 import IngresoForm  from '../components/ingresos/IngresoForm'
 import { useToast } from '../components/ui/Toast'
 import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
-import { mesDeFechaISO } from '../utils/fecha'
+import { fechaCorta, mesDeFechaISO } from '../utils/fecha'
 import { formDesdeIngreso, formNuevoIngreso, problemaIngreso } from '../utils/ingresos'
 
 const AVISO_GUARDAR = { error: 'No se pudo guardar el ingreso. Intenta de nuevo.' }
@@ -28,7 +28,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
     const ok = await guardarConAviso(onUpdate(ingreso.id, form), AVISO_GUARDAR)
     setGuardando(false)
     if (!ok) return
-    toast('Ingreso actualizado ✓', 'success')
+    toast('Ingreso actualizado', 'success')
     setForm(null)
   }
 
@@ -36,7 +36,7 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   // también se puedan cambiar fecha, monto esperado y notas.
   if (form) {
     return (
-      <tr className="bg-primary-50">
+      <tr className="bg-[var(--surface-2)]">
         <td colSpan={7} className="celda">
           {/* w-0 + min-w-full: llena la celda sin ensanchar la tabla (si no,
               en celular la tabla crece y aparece scroll horizontal) */}
@@ -61,30 +61,27 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
   return (
     <tr className="hover:bg-gray-50 group">
       <td className="celda">
-        <p className="font-medium text-gray-800">{ingreso.concepto}</p>
+        <p className="font-medium text-sm text-gray-800">{ingreso.concepto}</p>
         {/* En celular la fecha no tiene columna propia: va bajo el concepto */}
         {ingreso.fecha_recepcion && (
-          <p className="text-xs mt-0.5 font-mono sm:hidden" style={{ color: 'var(--fg-4)' }}>{ingreso.fecha_recepcion}</p>
+          <p className="text-[13px] mt-0.5 sm:hidden" style={{ color: 'var(--fg-3)' }}>{fechaCorta(ingreso.fecha_recepcion)}</p>
         )}
         {ingreso.notas && (
-          <p className="text-xs mt-0.5 truncate max-w-[220px]" style={{ color: 'var(--fg-4)' }} title={ingreso.notas}>
-            📝 {ingreso.notas}
+          <p className="text-[13px] mt-0.5 truncate max-w-[220px]" style={{ color: 'var(--fg-3)' }} title={ingreso.notas}>
+            {ingreso.notas}
           </p>
         )}
       </td>
-      <td className="celda font-mono text-gray-500 text-sm hidden sm:table-cell">{formatMXN(ingreso.monto_presupuesto)}</td>
-      <td className="celda font-mono font-bold text-positive">{formatMXN(ingreso.monto_actual)}</td>
+      <td className="celda tabular text-gray-500 text-sm hidden sm:table-cell">{formatMXN(ingreso.monto_presupuesto)}</td>
+      <td className="celda tabular text-sm font-medium text-gray-800">{formatMXN(ingreso.monto_actual)}</td>
       <td className="celda hidden sm:table-cell">
-        <span className={`text-sm font-mono ${diff >= 0 ? 'text-positive' : 'text-negative'}`}>
-          {diff >= 0 ? '+' : ''}{formatMXN(diff)}
+        <span className={`text-sm tabular ${diff >= 0 ? 'text-gray-500' : 'text-negative'}`}>
+          {diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${formatMXN(diff)}`}
         </span>
       </td>
-      <td className="celda text-gray-400 text-sm hidden sm:table-cell">{ingreso.fecha_recepcion ?? '—'}</td>
+      <td className="celda text-gray-500 text-sm hidden sm:table-cell">{ingreso.fecha_recepcion ? fechaCorta(ingreso.fecha_recepcion) : '—'}</td>
       <td className="celda">
-        <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
-          style={{ background: 'var(--primary-soft-bg)', color: 'var(--primary-soft-fg)' }}
-        >
+        <span className="text-sm whitespace-nowrap text-gray-500">
           {/* En celular, mes abreviado: la fila completa cabe sin scroll horizontal */}
           <span className="sm:hidden">{mesAplica.slice(0, 3)} {String(ingreso.anio).slice(2)}</span>
           <span className="hidden sm:inline">{mesAplica} {ingreso.anio}</span>
@@ -93,11 +90,11 @@ function FilaIngreso({ ingreso, onUpdate, onDelete }) {
       <td className="celda text-right">
         <div className="flex items-center justify-end gap-1 acciones-hover">
           <button onClick={() => setForm(formDesdeIngreso(ingreso))} aria-label={`Editar ${ingreso.concepto}`} title="Editar"
-            className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-primary-50 hover:text-primary-700">
+            className="icon-button icon-button-sm">
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => onDelete(ingreso.id)} aria-label={`Eliminar ${ingreso.concepto}`} title="Eliminar"
-            className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-red-50 hover:text-red-500">
+            className="icon-button icon-button-sm">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -125,8 +122,8 @@ export default function Ingresos() {
     // cae en otro mes, avisar dónde quedó para que no parezca que se perdió.
     const recibidoEn = mesDeFechaISO(form.fecha_recepcion)
     toast(recibidoEn.mes === mes && recibidoEn.anio === anio
-      ? 'Ingreso guardado ✓'
-      : `Ingreso guardado ✓ Lo verás en ${MESES[recibidoEn.mes - 1]} ${recibidoEn.anio}, por su fecha.`, 'success')
+      ? 'Ingreso guardado'
+      : `Ingreso guardado. Lo verás en ${MESES[recibidoEn.mes - 1]} ${recibidoEn.anio}, por su fecha.`, 'success')
     setForm(null)
   }
 
@@ -143,24 +140,24 @@ export default function Ingresos() {
       <div className="space-y-4">
 
         {/* Tarjetas resumen */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
+        <div className="stat-strip grid grid-cols-1 sm:grid-cols-3">
           {[
-            { label: 'Presupuestado', value: totales.presupuesto, color: 'text-fg-2' },
-            { label: 'Recibido',      value: totales.actual,      color: 'text-positive' },
-            { label: 'Diferencia',    value: totales.actual - totales.presupuesto,
-              color: (totales.actual - totales.presupuesto) >= 0 ? 'text-positive' : 'text-negative' },
+            { label: 'Recibido',   value: totales.actual,      color: '' },
+            { label: 'Esperado',   value: totales.presupuesto, color: '' },
+            { label: 'Diferencia', value: totales.actual - totales.presupuesto,
+              color: (totales.actual - totales.presupuesto) >= 0 ? '' : 'text-negative' },
           ].map(({ label, value, color }) => (
             <div key={label} className="card p-4">
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{label}</p>
-              <p className={`text-xl font-bold font-mono ${color}`}>{formatMXN(value)}</p>
+              <p className="stat-label">{label}</p>
+              <p className={`stat-value ${color}`}>{formatMXN(value)}</p>
             </div>
           ))}
         </div>
 
         {/* Tabla */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-50">
-            <h2 className="font-bold text-gray-900">Fuentes de Ingreso</h2>
+          <div className="flex items-center justify-between p-4 border-b border-[var(--divider)]">
+            <h2 className="titulo-seccion">Ingresos del mes</h2>
             <button className="btn-primary flex items-center gap-2 text-sm py-1.5 px-3"
               onClick={() => (form ? setForm(null) : abrirForm())}>
               <Plus className="w-4 h-4" /> Agregar
@@ -169,7 +166,7 @@ export default function Ingresos() {
 
           {/* Formulario de alta */}
           {form && (
-            <div className="p-4 bg-primary-50 border-b border-primary-100">
+            <div className="p-4 border-b border-[var(--divider)] bg-[var(--surface-2)]">
               <IngresoForm form={form} setForm={setForm} />
               <div className="flex gap-2 mt-3">
                 <button className="btn-primary text-sm py-1.5 px-4" onClick={handleAgregar} disabled={saving}>
@@ -184,17 +181,17 @@ export default function Ingresos() {
           <div className="overflow-x-auto">
           <table className="w-full sm:min-w-[500px]">
             <thead>
-              <tr className="border-b border-gray-50">
+              <tr className="border-b border-[var(--divider)]">
                 {[
                   { h: 'Concepto' },
-                  { h: 'Presupuestado', cls: 'hidden sm:table-cell' },
+                  { h: 'Esperado', cls: 'hidden sm:table-cell' },
                   { h: 'Recibido' },
                   { h: 'Diferencia', cls: 'hidden sm:table-cell' },
-                  { h: 'Fecha recibido', cls: 'hidden sm:table-cell' },
-                  { h: 'Aplica en' },
+                  { h: 'Fecha', cls: 'hidden sm:table-cell' },
+                  { h: 'Cuenta para' },
                   { h: '' },
                 ].map(({ h, cls }) => (
-                  <th key={h} className={`celda text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap ${cls ?? ''}`}>{h}</th>
+                  <th key={h} className={`celda text-left text-[13px] font-normal whitespace-nowrap text-gray-500 ${cls ?? ''}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -210,7 +207,7 @@ export default function Ingresos() {
                         <EmptyState
                           icon={Wallet}
                           title="Sin ingresos este mes"
-                          description="Registra tu quincena o cualquier ingreso para calcular presupuesto, ahorro y proyecciones."
+                          description="Registra tu quincena o cualquier otro ingreso."
                           className="min-h-[210px]"
                           action={
                             <button onClick={abrirForm} className="btn-primary text-sm">
@@ -226,11 +223,11 @@ export default function Ingresos() {
                   ))}
             </tbody>
             {ingresos.length > 0 && (
-              <tfoot className="border-t border-gray-100 bg-gray-50">
+              <tfoot className="border-t border-[var(--border)]">
                 <tr>
-                  <td className="celda font-bold text-gray-700 text-sm">TOTAL</td>
-                  <td className="celda font-mono font-bold text-gray-500 hidden sm:table-cell">{formatMXN(totales.presupuesto)}</td>
-                  <td className="celda font-mono font-bold text-positive">{formatMXN(totales.actual)}</td>
+                  <td className="celda font-semibold text-gray-800 text-sm">Total</td>
+                  <td className="celda tabular text-sm text-gray-500 hidden sm:table-cell">{formatMXN(totales.presupuesto)}</td>
+                  <td className="celda tabular text-sm font-semibold text-gray-800">{formatMXN(totales.actual)}</td>
                   <td className="hidden sm:table-cell" colSpan={3} />
                   <td />
                 </tr>

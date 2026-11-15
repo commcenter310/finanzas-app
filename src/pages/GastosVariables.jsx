@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowUpDown,
-  BarChart3,
   Check,
   Copy,
   Gauge,
@@ -13,7 +12,6 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
-  WalletCards,
   X,
 } from 'lucide-react'
 import {
@@ -34,7 +32,6 @@ import { useToast } from '../components/ui/Toast'
 import {
   SectionHeader,
   SegmentedControl,
-  StatusPill,
 } from '../components/commitments/CommitmentUI'
 import {
   SpendingMetric,
@@ -117,9 +114,7 @@ function BudgetCategoryRow({ categoria, onActualizar }) {
         <span className="budget-category-icon">{categoria.icono}</span>
         <div>
           <strong>{categoria.nombre}</strong>
-          <StatusPill tone={categoria.clasificacion === 'ahorro' ? 'positive' : categoria.clasificacion === 'deseo' ? 'warning' : 'primary'}>
-            {categoria.clasificacion}
-          </StatusPill>
+          <span className={`badge-${categoria.clasificacion}`}>{categoria.clasificacion}</span>
         </div>
       </div>
 
@@ -198,9 +193,6 @@ export default function GastosVariables() {
     copiarDelMesAnterior,
     autoCopiadosCount,
     proyeccionTotal,
-    diasTranscurridos,
-    diasDelMes,
-    esMesActual,
     esMesPasado,
   } = useGastosVariables()
   const toast = useToast()
@@ -260,9 +252,6 @@ export default function GastosVariables() {
     }))
     .sort((a, b) => Number(b.sobre) - Number(a.sobre) || b.gastado - a.gastado)
 
-  const estadoPeriodo = esMesActual
-    ? `Día ${diasTranscurridos} de ${diasDelMes}`
-    : esMesPasado ? 'Periodo cerrado' : 'Periodo futuro'
   const proyeccionLabel = esMesPasado ? 'Cierre real' : 'Proyección'
 
   const handleCopiar = async () => {
@@ -277,7 +266,6 @@ export default function GastosVariables() {
     signal = (
       <SpendingSignal
         icon={AlertTriangle}
-        label="Atención inmediata"
         title={categoria.nombre}
         description={`${formatMXN(categoria.gastado - categoria.limite)} por arriba de su límite.`}
         tone="negative"
@@ -292,8 +280,7 @@ export default function GastosVariables() {
     signal = (
       <SpendingSignal
         icon={Gauge}
-        label="Ritmo proyectado"
-        title="El mes puede rebasar el plan"
+        title="Vas a rebasar el presupuesto"
         description={`La proyección supera el presupuesto por ${formatMXN(proyeccionTotal - resumen.totalLimite)}.`}
         tone="warning"
       />
@@ -302,7 +289,6 @@ export default function GastosVariables() {
     signal = (
       <SpendingSignal
         icon={Target}
-        label="Cobertura pendiente"
         title={`${plural(resumen.sinLimite.length, 'categoría', 'categorías')} sin límite`}
         description={`${formatMXN(resumen.gastoSinLimite)} gastados fuera del presupuesto configurado.`}
         tone="warning"
@@ -312,9 +298,8 @@ export default function GastosVariables() {
     signal = (
       <SpendingSignal
         icon={ShieldCheck}
-        label="Presupuesto estable"
-        title="Todo dentro del plan"
-        description="Las categorías configuradas conservan margen disponible."
+        title="Todo dentro del límite"
+        description="Ninguna categoría con límite se ha pasado."
         tone="positive"
       />
     )
@@ -332,10 +317,7 @@ export default function GastosVariables() {
         </div>
 
         <SpendingOverview
-          eyebrow={estadoPeriodo}
-          title="Tu margen para decidir"
-          description={`${plural(resumen.conLimite.length, 'categoría', 'categorías')} con presupuesto activo`}
-          amountLabel={resumen.disponible < 0 ? 'Presupuesto excedido' : 'Disponible en límites'}
+          title={resumen.disponible < 0 ? 'Te pasaste del presupuesto por' : 'Te queda del presupuesto'}
           amount={formatMXN(Math.abs(resumen.disponible))}
           progress={resumen.porcentaje}
           progressLabel={`${formatMXN(resumen.totalGastadoConLimite)} utilizados`}
@@ -344,18 +326,17 @@ export default function GastosVariables() {
           loading={loading}
           metrics={(
             <>
-              <SpendingMetric icon={WalletCards} label="Gasto total" value={formatMXN(resumen.totalGastado)} tone="need" />
-              <SpendingMetric icon={BarChart3} label={proyeccionLabel} value={formatMXN(proyeccionTotal)} tone="want" />
-              <SpendingMetric icon={AlertTriangle} label="Excedidas" value={String(resumen.excedidas.length)} tone={resumen.excedidas.length ? 'negative' : 'saving'} />
+              <SpendingMetric label="Gasto total" value={formatMXN(resumen.totalGastado)} tone="need" />
+              <SpendingMetric label={proyeccionLabel} value={formatMXN(proyeccionTotal)} tone="want" />
+              <SpendingMetric label="Excedidas" value={String(resumen.excedidas.length)} tone={resumen.excedidas.length ? 'negative' : 'saving'} />
             </>
           )}
           aside={signal}
         />
 
         <SectionHeader
-          eyebrow="Límites mensuales"
           title="Presupuesto por categoría"
-          description={plural(filtradas.length, 'categoría visible', 'categorías visibles')}
+          description={plural(filtradas.length, 'categoría')}
           action={(
             <div className="budget-list-controls">
               <SegmentedControl
@@ -410,9 +391,8 @@ export default function GastosVariables() {
         {!loading && datosGrafico.length > 0 && (
           <section className="budget-chart-section">
             <SectionHeader
-              eyebrow="Distribucion"
-              title="Planeado contra ejecutado"
-              description="Comparativo de categorías con límite activo"
+              title="Límite contra gasto"
+              description="Solo categorías con límite"
             />
             <div className="budget-chart">
               <ResponsiveContainer width="100%" height={Math.max(260, datosGrafico.length * 42)}>
@@ -435,8 +415,8 @@ export default function GastosVariables() {
                   />
                   <Tooltip content={<ChartTooltip nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
                   <Legend content={<ChartLegend nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
-                  <Bar dataKey="limite" name="limite" fill="var(--surface-3)" radius={[0, 5, 5, 0]} />
-                  <Bar dataKey="gastado" name="gastado" radius={[0, 5, 5, 0]}>
+                  <Bar dataKey="limite" name="limite" fill="var(--surface-3)" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="gastado" name="gastado" radius={[0, 2, 2, 0]}>
                     {datosGrafico.map(entry => (
                       <Cell
                         key={entry.name}

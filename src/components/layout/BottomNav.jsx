@@ -21,12 +21,12 @@ export default function BottomNav({ onMore }) {
             aria-label={action ? 'Registrar un gasto' : label}
             onClick={action ? () => window.dispatchEvent(new Event('finni:new-expense')) : undefined}
           >
-            <span className="bottom-nav-icon"><Icon strokeWidth={action ? 2.6 : 2} /></span>
+            <span className="bottom-nav-icon"><Icon strokeWidth={action ? 2.2 : 1.75} /></span>
             <span>{label}</span>
           </NavLink>
         ))}
-        <button type="button" className="bottom-nav-item" onClick={onMore} aria-label="Abrir mas opciones">
-          <span className="bottom-nav-icon"><Menu strokeWidth={2} /></span>
+        <button type="button" className="bottom-nav-item" onClick={onMore} aria-label="Abrir más opciones">
+          <span className="bottom-nav-icon"><Menu strokeWidth={1.75} /></span>
           <span>Más</span>
         </button>
       </div>

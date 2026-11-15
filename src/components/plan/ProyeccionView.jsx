@@ -9,7 +9,7 @@ export default function ProyeccionView() {
   const [expandido, setExpandido] = useState(null)
 
   if (loading) {
-    return <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="card h-14 animate-pulse bg-gray-50" />)}</div>
+    return <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="card h-14 animate-pulse" />)}</div>
   }
 
   if (sinDatos) {
@@ -32,18 +32,18 @@ export default function ProyeccionView() {
   return (
     <div className="space-y-4">
       {/* Resumen del horizonte */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
         <div className="card p-4">
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Ingreso 12 meses</p>
-          <p className="text-lg font-bold font-mono break-all" style={{ color: 'var(--positive-fg)' }}>{formatMXN(totalIngreso)}</p>
+          <p className="stat-label">Ingreso en 12 meses</p>
+          <p className="stat-value">{formatMXN(totalIngreso)}</p>
         </div>
         <div className="card p-4">
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Compromisos 12 meses</p>
-          <p className="text-lg font-bold font-mono break-all" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalCompromisos)}</p>
+          <p className="stat-label">Compromisos en 12 meses</p>
+          <p className="stat-value">{formatMXN(totalCompromisos)}</p>
         </div>
-        <div className="card p-4" style={{ borderWidth: 2, borderColor: totalLibre >= 0 ? 'var(--ahorro-bg)' : 'var(--negative-bg)' }}>
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Libre proyectado</p>
-          <p className="text-lg font-bold font-mono break-all" style={{ color: totalLibre >= 0 ? 'var(--ahorro-fg)' : 'var(--negative-fg)' }}>{formatMXN(totalLibre)}</p>
+        <div className="card p-4">
+          <p className="stat-label">Te quedaría libre</p>
+          <p className="stat-value" style={totalLibre < 0 ? { color: 'var(--negative)' } : undefined}>{formatMXN(totalLibre)}</p>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function ProyeccionView() {
                   <p className="font-semibold text-sm" style={{ color: 'var(--fg-1)' }}>
                     {m.labelCorto} <span className="text-gray-400 font-normal">{String(m.anioM).slice(2)}</span>
                   </p>
-                  {m.esActual && <span className="text-[10px] font-bold" style={{ color: 'var(--primary-600)' }}>actual</span>}
+                  {m.esActual && <span className="text-xs font-semibold" style={{ color: 'var(--primary-600)' }}>actual</span>}
                 </div>
 
                 {/* Barra libre */}
@@ -74,7 +74,7 @@ export default function ProyeccionView() {
                         style={{ width: `${barPct}%`, background: negativo ? 'var(--negative)' : 'var(--ahorro)' }} />
                     </div>
                     {m.totalExtra > 0 && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-bold flex-shrink-0 px-1.5 py-0.5 rounded-full"
+                      <span className="flex items-center gap-0.5 text-xs font-semibold flex-shrink-0 px-1.5 py-0.5 rounded-full"
                         style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
                         <Sparkles className="w-2.5 h-2.5" /> +{formatMXN(m.totalExtra)}
                       </span>
@@ -85,10 +85,10 @@ export default function ProyeccionView() {
 
                 {/* Libre */}
                 <div className="text-right flex-shrink-0 w-28">
-                  <p className="font-mono font-bold text-sm" style={{ color: negativo ? 'var(--negative-fg)' : 'var(--ahorro-fg)' }}>
+                  <p className="font-mono font-semibold text-sm" style={{ color: negativo ? 'var(--negative-fg)' : 'var(--ahorro-fg)' }}>
                     {formatMXN(m.libre)}
                   </p>
-                  <p className="text-[10px] text-gray-400">libre</p>
+                  <p className="text-[13px] text-gray-500">libre</p>
                 </div>
                 {abierto ? <ChevronUp className="w-4 h-4 text-gray-300 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-300 flex-shrink-0" />}
               </button>
@@ -99,15 +99,15 @@ export default function ProyeccionView() {
                   {/* Desglose ingreso/compromisos */}
                   <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
                     <div>
-                      <p className="text-xs text-gray-400">Ingreso</p>
+                      <p className="text-[13px] text-gray-500">Ingreso</p>
                       <p className="font-mono font-semibold" style={{ color: 'var(--positive-fg)' }}>{formatMXN(m.ingresoTotal)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">A apartar</p>
+                      <p className="text-[13px] text-gray-500">A apartar</p>
                       <p className="font-mono font-semibold" style={{ color: 'var(--negative-fg)' }}>{formatMXN(m.compromisos)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Libre</p>
+                      <p className="text-[13px] text-gray-500">Libre</p>
                       <p className="font-mono font-semibold" style={{ color: m.libre >= 0 ? 'var(--ahorro-fg)' : 'var(--negative-fg)' }}>{formatMXN(m.libre)}</p>
                     </div>
                   </div>
@@ -151,7 +151,7 @@ export default function ProyeccionView() {
         })}
       </div>
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-[13px] text-gray-500 text-center">
         Proyección basada en tus nóminas y gastos fijos recurrentes. El aguinaldo, prima y utilidades
         aparecen en el mes que configuraste. Los pagos de deuda se proyectan hasta liquidarlas.
       </p>

@@ -64,7 +64,7 @@ export default function Perfil() {
       return
     }
     await refreshProfile()
-    setMsgBasico('Guardado ✅')
+    setMsgBasico('Guardado')
     setTimeout(() => setMsgBasico(''), 2000)
   }
 
@@ -185,7 +185,7 @@ export default function Perfil() {
   // borraría nombre, teléfono (el bot dejaría de reconocerte) y reglas.
   if (!profile) {
     return (
-      <Layout titulo="Perfil">
+      <Layout titulo="Configuración">
         {profileError
           ? <ErrorState onRetry={refreshProfile} mensaje="No pudimos cargar tu perfil. Revisa tu conexión e intenta de nuevo." />
           : <div className="card p-6 text-sm" style={{ color: 'var(--fg-3)' }}>Cargando tu perfil…</div>}
@@ -194,7 +194,7 @@ export default function Perfil() {
   }
 
   return (
-    <Layout titulo="Perfil">
+    <Layout titulo="Configuración">
       <div className="space-y-5">
         <SetupGuide items={setupItems} />
 
@@ -203,7 +203,7 @@ export default function Perfil() {
 
           {/* Datos básicos */}
           <div id="perfil-datos" className="card p-5 scroll-mt-24">
-            <h2 className="font-bold mb-4" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Datos Básicos</h2>
+            <h2 className="titulo-seccion mb-4">Tus datos</h2>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="col-span-2">
                 <label className="label">Email</label>
@@ -235,7 +235,7 @@ export default function Perfil() {
               </div>
             </div>
             <div className="mb-4">
-              <label className="label">Umbral gastos hormiga 🐜</label>
+              <label className="label">Gasto hormiga: hasta cuánto</label>
               <div className="flex items-center gap-2">
                 <input type="number" className="input font-mono text-sm w-28" placeholder="100"
                   value={umbralHormiga} onChange={e => setUmbralHormiga(e.target.value)} />
@@ -255,41 +255,33 @@ export default function Perfil() {
 
           {/* Regla 50/30/20 */}
           <div id="perfil-regla" className="card p-5 scroll-mt-24">
-            <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 15 }}>Regla Personalizada</h2>
+            <h2 className="titulo-seccion mb-1">Tu regla de reparto</h2>
             <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
             <div className="space-y-5 mb-4">
               {[
-                { key: 'necesidad', label: 'Necesidad', emoji: '🔵', color: 'var(--necesidad-fg)', trackColor: 'var(--necesidad)' },
-                { key: 'deseo',     label: 'Deseo',     emoji: '🟡', color: 'var(--deseo-fg)',     trackColor: 'var(--deseo)'     },
-                { key: 'ahorro',    label: 'Ahorro',    emoji: '🟢', color: 'var(--ahorro-fg)',    trackColor: 'var(--ahorro)'    },
-              ].map(({ key, label, emoji, color, trackColor }) => {
+                { key: 'necesidad', label: 'Necesidad', color: 'var(--necesidad-fg)', trackColor: 'var(--necesidad)' },
+                { key: 'deseo',     label: 'Deseo',     color: 'var(--deseo-fg)',     trackColor: 'var(--deseo)'     },
+                { key: 'ahorro',    label: 'Ahorro',    color: 'var(--ahorro-fg)',    trackColor: 'var(--ahorro)'    },
+              ].map(({ key, label, trackColor }) => {
                 const pct = Math.round(Number(regla[key]) * 100)
                 return (
                   <div key={key}>
                     {/* Etiqueta + valor */}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold" style={{ color }}>{emoji} {label}</span>
-                      <span
-                        className="text-sm font-bold tabular px-3 py-0.5 rounded-lg"
-                        style={{
-                          color,
-                          background: 'var(--surface-2)',
-                          fontVariantNumeric: 'tabular-nums',
-                          minWidth: '3.5rem',
-                          textAlign: 'right',
-                          display: 'inline-block',
-                        }}
-                      >
+                      <span className="text-sm flex items-center gap-2" style={{ color: 'var(--fg-1)' }}>
+                        <span className="w-2 h-2 rounded-full" style={{ background: trackColor }} />{label}
+                      </span>
+                      <span className="text-sm font-semibold tabular" style={{ color: 'var(--fg-1)' }}>
                         {pct}%
                       </span>
                     </div>
                     {/* Barra con jalador */}
                     <div className="relative h-5 flex items-center">
                       {/* Track */}
-                      <div className="absolute w-full h-2.5 rounded-full" style={{ background: 'var(--surface-3)' }} />
+                      <div className="absolute w-full h-1 rounded-full" style={{ background: 'var(--surface-3)' }} />
                       {/* Fill */}
                       <div
-                        className="absolute h-2.5 rounded-full pointer-events-none"
+                        className="absolute h-1 rounded-full pointer-events-none"
                         style={{ width: `${pct}%`, background: trackColor }}
                       />
                       {/* Range input invisible — captura todos los eventos de arrastre */}
@@ -302,12 +294,12 @@ export default function Perfil() {
                       />
                       {/* Jalador visible */}
                       <div
-                        className="absolute w-5 h-5 rounded-full bg-white border-[2.5px] shadow-md pointer-events-none"
+                        className="absolute w-4 h-4 rounded-full pointer-events-none"
                         style={{
-                          left:        `calc(${pct}% - 10px)`,
-                          borderColor: trackColor,
-                          zIndex:      1,
-                          boxShadow:   '0 1px 4px rgba(0,0,0,0.18)',
+                          left:       `calc(${pct}% - 8px)`,
+                          background: trackColor,
+                          border:     '2px solid var(--surface)',
+                          zIndex:     1,
                         }}
                       />
                     </div>
@@ -315,19 +307,18 @@ export default function Perfil() {
                 )
               })}
             </div>
-            <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-xl"
-              style={{ background: reglaOk ? 'var(--positive-bg)' : 'var(--negative-bg)' }}>
-              <span className="text-xs font-semibold" style={{ color: reglaOk ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
-                {reglaOk ? '✓ Total correcto' : '⚠ Debe sumar 100%'}
+            <div className="flex items-center justify-between mb-4 pt-3 border-t border-[var(--divider)]">
+              <span className="text-sm" style={{ color: reglaOk ? 'var(--fg-3)' : 'var(--negative-fg)' }}>
+                {reglaOk ? 'Total' : 'Debe sumar 100%'}
               </span>
-              <span className="text-sm font-bold tabular" style={{ color: reglaOk ? 'var(--positive-fg)' : 'var(--negative-fg)', fontVariantNumeric: 'tabular-nums' }}>
+              <span className="text-sm font-semibold tabular" style={{ color: reglaOk ? 'var(--fg-1)' : 'var(--negative-fg)' }}>
                 {(totalRegla * 100).toFixed(0)}%
               </span>
             </div>
             {errorRegla && <p className="text-sm mb-3" style={{ color: 'var(--negative-fg)' }}>{errorRegla}</p>}
-            <button className="btn-primary flex items-center gap-2 text-sm w-full justify-center"
+            <button className="btn-primary flex items-center gap-2 text-sm"
               onClick={guardarRegla} disabled={savingRegla || !reglaOk}>
-              <Save className="w-4 h-4" /> {savingRegla ? 'Guardando...' : 'Guardar Regla'}
+              <Save className="w-4 h-4" /> {savingRegla ? 'Guardando...' : 'Guardar regla'}
             </button>
           </div>
 
@@ -348,7 +339,7 @@ export default function Perfil() {
 
         {/* ── Seguridad ── */}
         <div id="perfil-seguridad" className="card p-5 scroll-mt-24">
-          <h2 className="font-bold mb-1 flex items-center gap-2" style={{ color: 'var(--fg-1)', fontSize: 15 }}>
+          <h2 className="titulo-seccion mb-1 flex items-center gap-2">
             <KeyRound className="w-4 h-4" style={{ color: 'var(--fg-3)' }} /> Seguridad
           </h2>
           <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>

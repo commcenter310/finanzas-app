@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  contextoMes, fechaLocalISO, finMesISO, inicioMesISO,
+  contextoMes, fechaCorta, fechaLocalISO, finMesISO, inicioMesISO,
   mesAnterior, mesSiguiente, mesAplicacionIngreso, ultimosMeses,
 } from './fecha'
 
@@ -62,5 +62,19 @@ describe('ultimosMeses', () => {
     expect(ultimosMeses(2, new Date(2026, 0, 30))).toEqual([
       { mes: 12, anio: 2025 }, { mes: 1, anio: 2026 },
     ])
+  })
+})
+
+describe('fechaCorta', () => {
+  it('muestra día y mes abreviado sin pasar por Date (no cambia con la zona horaria)', () => {
+    expect(fechaCorta('2026-11-04')).toBe('4 nov')
+    expect(fechaCorta('2026-01-31')).toBe('31 ene')
+    expect(fechaCorta('2026-12-01T06:00:00Z')).toBe('1 dic')
+  })
+
+  it('devuelve el valor tal cual si no es una fecha ISO', () => {
+    expect(fechaCorta('ayer')).toBe('ayer')
+    expect(fechaCorta(null)).toBe('')
+    expect(fechaCorta('2026-13-01')).toBe('2026-13-01')
   })
 })

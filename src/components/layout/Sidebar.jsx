@@ -53,26 +53,16 @@ const NAV_GROUPS = [
   },
 ]
 
-const SIDEBAR_TOKENS = {
-  '--sidebar-fg-1': '#F8FAFF',
-  '--sidebar-fg-2': 'rgba(230, 237, 255, 0.72)',
-  '--sidebar-fg-3': 'rgba(205, 216, 244, 0.42)',
-  '--sidebar-line': 'rgba(255, 255, 255, 0.08)',
-  '--sidebar-hover-bg': 'rgba(255, 255, 255, 0.07)',
-  '--sidebar-active-fg': '#FFFFFF',
-}
-
 export default function Sidebar({ open, onClose }) {
   const { signOut } = useAuth()
   const { esOscuro, toggleTema } = useTheme()
 
   return (
     <aside
-      style={SIDEBAR_TOKENS}
       className={`sidebar-shell w-[248px] h-screen flex flex-col fixed left-0 top-0 z-30 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:z-10`}
     >
       <div className="sidebar-brand">
-        <BrandMark inverse />
+        <BrandMark />
         <button type="button" onClick={onClose} className="sidebar-icon-button lg:hidden ml-auto" aria-label="Cerrar menú">
           <X className="w-4 h-4" />
         </button>
@@ -91,7 +81,7 @@ export default function Sidebar({ open, onClose }) {
                   onClick={onClose}
                   className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}
                 >
-                  <span className="sidebar-nav-icon"><Icon strokeWidth={1.9} /></span>
+                  <span className="sidebar-nav-icon"><Icon strokeWidth={1.75} /></span>
                   <span className="truncate">{label}</span>
                 </NavLink>
               ))}
@@ -102,11 +92,11 @@ export default function Sidebar({ open, onClose }) {
 
       <div className="sidebar-footer">
         <NavLink to="/whatsapp" onClick={onClose} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}>
-          <span className="sidebar-nav-icon"><MessageSquare strokeWidth={1.9} /></span>
+          <span className="sidebar-nav-icon"><MessageSquare strokeWidth={1.75} /></span>
           <span>WhatsApp</span>
         </NavLink>
         <NavLink to="/perfil" onClick={onClose} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'is-active' : ''}`}>
-          <span className="sidebar-nav-icon"><Settings strokeWidth={1.9} /></span>
+          <span className="sidebar-nav-icon"><Settings strokeWidth={1.75} /></span>
           <span>Configuración</span>
         </NavLink>
         <div className="sidebar-footer-actions">

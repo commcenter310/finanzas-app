@@ -113,28 +113,28 @@ export default function Tendencias() {
       <div className="space-y-6">
 
         {/* Resumen */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Promedio Ingresos</p>
-            <p className="text-lg lg:text-xl font-bold font-mono break-all" style={{ color: 'var(--positive-fg)' }}>{formatMXN(promIngresos)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">últimos 6 meses</p>
+            <p className="stat-label">Ingreso promedio</p>
+            <p className="stat-value break-all">{formatMXN(promIngresos)}</p>
+            <p className="text-[13px] text-gray-500 mt-0.5">últimos 6 meses</p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Promedio Gastos</p>
-            <p className="text-lg lg:text-xl font-bold font-mono text-primary-700 break-all">{formatMXN(promGastos)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">últimos 6 meses</p>
+            <p className="stat-label">Gasto promedio</p>
+            <p className="stat-value break-all">{formatMXN(promGastos)}</p>
+            <p className="text-[13px] text-gray-500 mt-0.5">últimos 6 meses</p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Mes con Más Gastos</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{mesConMasGastos?.mes ?? '—'}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{mesConMasGastos ? formatMXN(mesConMasGastos.gastos) : ''}</p>
+            <p className="stat-label">Mes más caro</p>
+            <p className="stat-value">{mesConMasGastos?.mes ?? '—'}</p>
+            <p className="text-[13px] text-gray-500 mt-0.5">{mesConMasGastos ? formatMXN(mesConMasGastos.gastos) : ''}</p>
           </div>
         </div>
 
         {/* Ingresos vs Gastos */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Ingresos vs Gastos (6 meses)</h2>
+            <h2 className="titulo-seccion">Ingresos y gastos, últimos 6 meses</h2>
             <span className="text-xs" style={{ color: 'var(--fg-4)' }}>* mes en curso (parcial)</span>
           </div>
           {loading
@@ -147,9 +147,9 @@ export default function Tendencias() {
                   <YAxis {...chartAxisProps} width={52} tickFormatter={formatCompactCurrency} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend content={<ChartLegend />} />
-                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="var(--positive)" strokeWidth={3}
+                  <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="var(--positive)" strokeWidth={2}
                     dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
-                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="var(--negative)" strokeWidth={3}
+                  <Line type="monotone" dataKey="gastos"   name="Gastos"   stroke="var(--negative)" strokeWidth={2}
                     dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -158,7 +158,7 @@ export default function Tendencias() {
 
         {/* Distribución 50/30/20 */}
         <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-4">Distribución de Gastos por Tipo</h2>
+          <h2 className="titulo-seccion mb-4">En qué se fue el gasto</h2>
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (
@@ -182,11 +182,11 @@ export default function Tendencias() {
           <div className="card p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="font-bold text-gray-900">Utilización de Tarjetas de Crédito</h2>
-                <p className="text-xs text-gray-400 mt-0.5">% del límite total utilizado por mes · línea amarilla = 30% recomendado</p>
+                <h2 className="titulo-seccion">Uso de tus tarjetas</h2>
+                <p className="text-[13px] text-gray-500 mt-0.5">% del límite total utilizado por mes · línea amarilla = 30% recomendado</p>
               </div>
               {creditoTendencia?.totalLimite > 0 && (
-                <span className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded">
+                <span className="text-[13px] text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
                   Límite total: {formatMXN(creditoTendencia.totalLimite)}
                 </span>
               )}
@@ -206,9 +206,9 @@ export default function Tendencias() {
                       />}
                     />
                     <Legend content={<ChartLegend nameMap={{ pctTotal: 'Total' }} />} />
-                    <ReferenceLine y={30} stroke="var(--warning)" strokeDasharray="6 6" strokeWidth={2}
-                      label={{ value: '30%', position: 'insideTopRight', fontSize: 11, fontWeight: 700, fill: 'var(--warning)' }} />
-                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="var(--primary-600)" strokeWidth={3}
+                    <ReferenceLine y={30} stroke="var(--warning)" strokeDasharray="4 4" strokeWidth={1}
+                      label={{ value: '30%', position: 'insideTopRight', fontSize: 12, fill: 'var(--warning-fg)' }} />
+                    <Line type="monotone" dataKey="pctTotal" name="pctTotal" stroke="var(--primary-600)" strokeWidth={2}
                       dot={{ r: 3, strokeWidth: 2, fill: 'var(--surface)' }} activeDot={{ r: 5, strokeWidth: 0 }} />
                     {nombresTarjetas.map((nombre, i) => (
                       <Line key={nombre} type="monotone" dataKey={nombre} stroke={COLORES_TARJETA[i % COLORES_TARJETA.length]}
@@ -222,34 +222,34 @@ export default function Tendencias() {
 
         {/* Tabla resumen */}
         <div className="card overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-50">
-            <h2 className="font-bold text-gray-900">Resumen por Mes</h2>
+          <div className="px-5 py-4 border-b border-[var(--divider)]">
+            <h2 className="titulo-seccion">Mes por mes</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px]">
               <thead>
-                <tr className="border-b border-gray-50">
+                <tr className="border-b border-[var(--divider)]">
                   {['Mes','Ingresos','Gastos','Balance','Necesidad','Deseo','Ahorro'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-[13px] font-normal text-gray-500">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[var(--divider)]">
                 {(tendencias ?? []).map(t => {
                   const balance = t.ingresos - t.gastos
                   return (
                     <tr key={t.mes} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-semibold text-gray-800">{t.mes}</td>
-                      <td className="px-4 py-3 font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(t.ingresos)}</td>
-                      <td className="px-4 py-3 font-mono text-primary-700">{formatMXN(t.gastos)}</td>
-                      <td className="px-4 py-3 font-mono font-bold">
-                        <span style={{ color: balance >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{t.mes}</td>
+                      <td className="px-4 py-3 text-sm tabular text-gray-800">{formatMXN(t.ingresos)}</td>
+                      <td className="px-4 py-3 text-sm tabular text-gray-800">{formatMXN(t.gastos)}</td>
+                      <td className="px-4 py-3 text-sm tabular font-semibold">
+                        <span style={{ color: balance >= 0 ? 'var(--fg-1)' : 'var(--negative)' }}>
                           {balance >= 0 ? '+' : ''}{formatMXN(balance)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--necesidad-fg)' }}>{formatMXN(t.necesidad)}</td>
-                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--deseo-fg)' }}>{formatMXN(t.deseo)}</td>
-                      <td className="px-4 py-3 font-mono text-sm" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(t.ahorro)}</td>
+                      <td className="px-4 py-3 text-sm tabular text-gray-500">{formatMXN(t.necesidad)}</td>
+                      <td className="px-4 py-3 text-sm tabular text-gray-500">{formatMXN(t.deseo)}</td>
+                      <td className="px-4 py-3 text-sm tabular text-gray-500">{formatMXN(t.ahorro)}</td>
                     </tr>
                   )
                 })}

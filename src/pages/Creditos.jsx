@@ -13,7 +13,6 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
-  WalletCards,
 } from 'lucide-react'
 import Layout from '../components/layout/Layout'
 import ConfirmModal from '../components/ui/ConfirmModal'
@@ -167,7 +166,7 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
         />
 
         {pagoPara30 > 0 && (
-          <p className="mt-3 text-[10px] font-bold" style={{ color: 'var(--warning-fg)' }}>
+          <p className="mt-3 text-xs font-semibold" style={{ color: 'var(--warning-fg)' }}>
             Paga {formatMXN(pagoPara30)} para llevar esta tarjeta al 30%.
           </p>
         )}
@@ -407,10 +406,7 @@ export default function Creditos() {
         </div>
 
         <CommitmentHero
-          eyebrow="Centro de compromisos"
-          title="Crédito visible, decisiones más ligeras."
-          description="Separa lo que ya debes, lo que está facturado y lo que apenas llegará al siguiente corte."
-          amountLabel="Saldo utilizado"
+          title="Debes en tarjetas"
           amount={formatMXN(totalSaldo)}
           aside={(
             <PriorityPanel
@@ -427,9 +423,9 @@ export default function Creditos() {
             />
           )}
         >
-          <HeroMetric icon={WalletCards} label="Línea total" value={formatMXN(totalLimite)} />
-          <HeroMetric icon={ShieldCheck} label="Disponible" value={formatMXN(totalDisponible)} />
-          <HeroMetric icon={Gauge} label="Utilización global" value={`${pctGlobal.toFixed(0)}%`} />
+          <HeroMetric label="Línea total" value={formatMXN(totalLimite)} />
+          <HeroMetric label="Disponible" value={formatMXN(totalDisponible)} />
+          <HeroMetric label="Uso de la línea" value={`${pctGlobal.toFixed(0)}%`} />
         </CommitmentHero>
 
         {!loading && creditos.length > 0 && (
@@ -453,9 +449,8 @@ export default function Creditos() {
         )}
 
         <SectionHeader
-          eyebrow="Portafolio de crédito"
-          title="Tarjetas activas"
-          description="Ordenadas por urgencia de pago y nivel de utilización."
+          title="Tus tarjetas"
+          description="Primero las que vencen antes."
           action={creditos.length > 0 ? <StatusPill tone={pctGlobal > 30 ? 'warning' : 'positive'} icon={Gauge}>{pctGlobal.toFixed(0)}% global</StatusPill> : null}
         />
 
@@ -467,7 +462,7 @@ export default function Creditos() {
           <EmptyState
             icon={CreditCard}
             title="No tienes tarjetas registradas"
-            description="Agrega tus tarjetas para vigilar utilización, ciclos de corte y pagos desde un mismo lugar."
+            description="Agrega una tarjeta para ver su saldo, su fecha de corte y cuándo toca pagarla."
             action={(
               <button type="button" onClick={abrirNueva} className="btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Nueva tarjeta
@@ -494,7 +489,7 @@ export default function Creditos() {
         open={mostrarForm}
         onClose={cerrarForm}
         title={editando ? 'Editar tarjeta' : 'Nueva tarjeta'}
-        description="La línea, los días del ciclo y el método vinculado alimentan todos los cálculos de esta vista."
+        description="Con el límite y los días de corte y pago se calcula todo lo demás."
         footer={(
           <>
             <button type="button" className="btn-ghost" onClick={cerrarForm}>Cancelar</button>

@@ -55,16 +55,16 @@ export default function Auth() {
   }
 
   const title = modo === 'login'
-    ? 'Bienvenido de vuelta'
+    ? 'Inicia sesión'
     : modo === 'registro'
-      ? 'Empieza con claridad'
+      ? 'Crea tu cuenta'
       : 'Recupera tu acceso'
 
   const subtitle = modo === 'login'
-    ? 'Tu panorama financiero está listo.'
+    ? 'Entra con tu correo y contraseña.'
     : modo === 'registro'
-      ? 'Crea tu espacio personal en Finni.'
-      : 'Te enviaremos un enlace seguro a tu correo.'
+      ? 'Solo necesitas un correo y una contraseña.'
+      : 'Te enviaremos un enlace a tu correo.'
 
   // Con sesión abierta no tiene sentido mostrar el login
   if (!cargandoSesion && user) return <Navigate to="/" replace />
@@ -75,23 +75,8 @@ export default function Auth() {
         <BrandMark inverse />
 
         <div className="auth-statement">
-          <span>Finanzas personales, sin ruido</span>
           <h1>Cada peso.<br />Una dirección.</h1>
-          <p>Control claro para tomar decisiones con calma y avanzar con intención.</p>
-        </div>
-
-        <div className="auth-rhythm" aria-hidden="true">
-          {[
-            ['01', 'Observa', '100%'],
-            ['02', 'Decide', '72%'],
-            ['03', 'Avanza', '86%'],
-          ].map(([number, label, width]) => (
-            <div key={number} className="auth-rhythm-row">
-              <span>{number}</span>
-              <strong>{label}</strong>
-              <i><b style={{ width }} /></i>
-            </div>
-          ))}
+          <p>Lleva la cuenta de lo que entra, lo que sale y lo que debes. Sin hojas de cálculo.</p>
         </div>
 
         <div className="auth-privacy"><ShieldCheck /> Espacio privado y personal</div>
@@ -101,7 +86,6 @@ export default function Auth() {
         <div className="auth-mobile-brand"><BrandMark /></div>
         <div className="auth-form-wrap">
           <div className="auth-form-heading">
-            <span>Acceso a Finni</span>
             <h2>{title}</h2>
             <p>{subtitle}</p>
           </div>
@@ -143,7 +127,7 @@ export default function Auth() {
             {info && <p className="auth-message is-success" role="status">{info}</p>}
 
             <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-              <span>{loading ? 'Cargando...' : modo === 'login' ? 'Entrar a Finni' : modo === 'registro' ? 'Crear cuenta' : 'Enviar enlace'}</span>
+              <span>{loading ? 'Cargando...' : modo === 'login' ? 'Entrar' : modo === 'registro' ? 'Crear cuenta' : 'Enviar enlace'}</span>
               {!loading && <ArrowRight />}
             </button>
 

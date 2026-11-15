@@ -1,10 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  // Se usan como `badge-${clasificacion}`: Tailwind no ve el nombre completo
+  // en el código y sin esto descarta las clases.
+  safelist: ['badge-necesidad', 'badge-deseo', 'badge-ahorro'],
   theme: {
     extend: {
       colors: {
-        // Primary — Finni Iris (violet)
+        // Primario — verde botella (ver finni-tokens.css)
         primary: {
           50:  'var(--primary-50)',
           100: 'var(--primary-100)',
@@ -60,8 +63,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Manrope', 'system-ui', 'sans-serif'],
-        mono: ['Manrope', 'system-ui', 'sans-serif'],
+        sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+        display: ['Bricolage Grotesque', 'IBM Plex Sans', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'finni-sm':      'var(--shadow-sm)',

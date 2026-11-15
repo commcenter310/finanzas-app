@@ -117,14 +117,12 @@ function MovimientoBadges({ transaccion }) {
 
   return (
     <div className="spending-row-badges">
-      <StatusPill tone={transaccion.clasificacion === 'ahorro' ? 'positive' : transaccion.clasificacion === 'deseo' ? 'warning' : 'primary'}>
-        {transaccion.clasificacion}
-      </StatusPill>
+      <span className={`badge-${transaccion.clasificacion}`}>{transaccion.clasificacion}</span>
       {origen && (
         <StatusPill icon={OrigenIcon}>{origen.label}</StatusPill>
       )}
       {transaccion.msi_meses && (
-        <StatusPill tone="primary">{transaccion.msi_meses} MSI</StatusPill>
+        <StatusPill>{transaccion.msi_meses} MSI</StatusPill>
       )}
     </div>
   )
@@ -327,10 +325,7 @@ export default function ControlGastos() {
         </div>
 
         <SpendingOverview
-          eyebrow={`${MESES[mes - 1]} ${anio}`}
-          title="El pulso de tus gastos"
-          description={`${transacciones.length} movimiento${transacciones.length === 1 ? '' : 's'} en seguimiento`}
-          amountLabel="Salida acumulada"
+          title={`Gastado en ${MESES[mes - 1].toLowerCase()}`}
           amount={formatMXN(totales.total)}
           progress={categoriaPct}
           progressLabel={resumen.categoriaPrincipal ? `Mayor concentración: ${resumen.categoriaPrincipal.nombre}` : 'Sin concentración de gasto'}
@@ -338,15 +333,14 @@ export default function ControlGastos() {
           loading={loading}
           metrics={(
             <>
-              <SpendingMetric icon={ShieldCheck} label="Necesidad" value={formatMXN(totales.necesidad)} tone="need" />
-              <SpendingMetric icon={Sparkles} label="Deseo" value={formatMXN(totales.deseo)} tone="want" />
-              <SpendingMetric icon={PiggyBank} label="Ahorro" value={formatMXN(totales.ahorro)} tone="saving" />
+              <SpendingMetric label="Necesidad" value={formatMXN(totales.necesidad)} tone="need" />
+              <SpendingMetric label="Deseo" value={formatMXN(totales.deseo)} tone="want" />
+              <SpendingMetric label="Ahorro" value={formatMXN(totales.ahorro)} tone="saving" />
             </>
           )}
           aside={resumen.hormigaCantidad > 0 ? (
             <SpendingSignal
               icon={CircleDollarSign}
-              label="Fuga detectada"
               title={plural(resumen.hormigaCantidad, 'gasto hormiga', 'gastos hormiga')}
               description={`${formatMXN(resumen.hormigaMonto)} en compras de hasta ${formatMXN(umbral)}.`}
               tone="warning"
@@ -359,7 +353,6 @@ export default function ControlGastos() {
           ) : (
             <SpendingSignal
               icon={WalletCards}
-              label="Ritmo del mes"
               title={`${formatMXN(resumen.promedioDia)} al día`}
               description={resumen.categoriaPrincipal
                 ? `${resumen.categoriaPrincipal.nombre} concentra ${formatMXN(resumen.categoriaPrincipal.monto)}.`
@@ -370,9 +363,8 @@ export default function ControlGastos() {
         />
 
         <SectionHeader
-          eyebrow="Bitácora mensual"
           title="Movimientos"
-          description={`${filtradas.length} de ${plural(transacciones.length, 'registro visible', 'registros visibles')}`}
+          description={hayFiltros ? `${filtradas.length} de ${transacciones.length} con los filtros actuales` : plural(transacciones.length, 'movimiento')}
         />
 
         <section className="spending-ledger">
@@ -520,9 +512,8 @@ export default function ControlGastos() {
       <Sheet
         open={mostrarForm}
         onClose={cerrarForm}
-        eyebrow="Centro de gastos"
         title={editandoId ? 'Editar movimiento' : 'Registrar gasto'}
-        description={editandoId ? 'Actualiza los datos del movimiento seleccionado.' : 'Añade una salida a la bitácora del periodo.'}
+        description={editandoId ? 'Actualiza los datos del movimiento seleccionado.' : 'Se suma a los gastos del mes de la fecha que elijas.'}
         footer={(
           <>
             <button type="button" className="btn-ghost" onClick={cerrarForm}>Cancelar</button>

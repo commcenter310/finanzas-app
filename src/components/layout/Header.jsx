@@ -5,30 +5,13 @@ import { MESES } from '../../utils/constantes'
 import ReminderBell from './ReminderBell'
 import BrandMark from './BrandMark'
 
-const PAGE_CONTEXT = {
-  Dashboard: 'Tu panorama financiero',
-  'Plan de Quincena': 'Decide antes de gastar',
-  Ingresos: 'Dinero que entra',
-  'Gastos Fijos': 'Compromisos del mes',
-  Presupuesto: 'Límites que sí ayudan',
-  Movimientos: 'Cada movimiento en su lugar',
-  'Créditos': 'Uso y ciclos de tus tarjetas',
-  Deudas: 'Avance de tus compromisos',
-  Ahorros: 'Metas que toman forma',
-  Tendencias: 'Patrones para decidir mejor',
-  'Proyección 12 Meses': 'Lo que viene, con perspectiva',
-  'Simulador de Crédito': 'Compara antes de comprometerte',
-  'WhatsApp Log': 'Actividad de automatizaciones',
-  Perfil: 'Tu configuración financiera',
-}
-
 // En teléfonos el encabezado tiene ~100 px para el título (menú, selector de
 // mes y campana ocupan el resto): los títulos largos usan su nombre corto,
 // el mismo de la barra inferior.
 const TITULO_CORTO = {
-  'Plan de Quincena': 'Plan',
-  'Proyección 12 Meses': 'Proyección',
-  'Simulador de Crédito': 'Simulador',
+  'Plan de quincena': 'Plan',
+  'Proyección a 12 meses': 'Proyección',
+  'Simulador de crédito': 'Simulador',
 }
 
 export default function Header({ titulo, onMenuClick }) {
@@ -54,9 +37,7 @@ export default function Header({ titulo, onMenuClick }) {
         </button>
         {/* En teléfonos no cabe junto al título; se muestra en tablets */}
         <BrandMark compact className="hidden sm:block lg:hidden" />
-        <span className="header-title-rule hidden lg:block" aria-hidden="true" />
         <div className="min-w-0">
-          <p className="header-kicker">Finni / {PAGE_CONTEXT[titulo] ?? 'Control personal'}</p>
           <h1 className="header-title">
             {TITULO_CORTO[titulo] ? (
               <>
@@ -71,14 +52,14 @@ export default function Header({ titulo, onMenuClick }) {
       <div className="header-actions">
         <div className="month-switcher" aria-label="Cambiar mes">
           <button onClick={irMesAnterior} className="icon-button icon-button-sm" aria-label="Mes anterior">
-            <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
+            <ChevronLeft className="w-4 h-4" strokeWidth={2} />
           </button>
           <span className="month-switcher-label">
             <span className="hidden sm:inline">{MESES[mes - 1]} {anio}</span>
             <span className="sm:hidden">{MESES[mes - 1].slice(0, 3)} {String(anio).slice(2)}</span>
           </span>
           <button onClick={irMesSiguiente} className="icon-button icon-button-sm" aria-label="Mes siguiente">
-            <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
+            <ChevronRight className="w-4 h-4" strokeWidth={2} />
           </button>
           {!esActual && <button onClick={irHoy} className="today-button">Hoy</button>}
         </div>
@@ -88,7 +69,7 @@ export default function Header({ titulo, onMenuClick }) {
           className="header-add-button hidden lg:inline-flex"
           onClick={() => window.dispatchEvent(new Event('finni:new-expense'))}
         >
-          <Plus className="w-4 h-4" strokeWidth={2.6} />
+          <Plus className="w-4 h-4" strokeWidth={2.2} />
           Registrar
         </Link>
         <ReminderBell />

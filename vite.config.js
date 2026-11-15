@@ -35,8 +35,8 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         // Colores de la app (fondo claro de Finni y marino del logo)
-        background_color: '#EEF3FA',
-        theme_color: '#0F172A',
+        background_color: '#F3F2EE',
+        theme_color: '#F3F2EE',
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },

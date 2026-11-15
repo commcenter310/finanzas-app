@@ -11,6 +11,7 @@ import { lazyWithRetry } from '../utils/lazyWithRetry'
 import DashboardOverview, { OverviewSkeleton } from '../components/dashboard/DashboardOverview'
 import { buildDashboardInsights } from '../components/dashboard/insights'
 import { calcularIngresoPendiente } from '../utils/calculos'
+import { fechaCorta } from '../utils/fecha'
 import { plural } from '../utils/texto'
 
 const DashboardCharts = lazyWithRetry(() => import('../components/dashboard/DashboardCharts'))
@@ -68,10 +69,10 @@ export default function Dashboard() {
   const sinNada = !loading && ingresoEsperado === null
     && totalIngresos === 0 && totalGastos === 0 && transacciones.length === 0
   const pasosOnboarding = [
-    { emoji: '💰', label: 'Configura tu nómina',     desc: 'Para ver tu ingreso esperado y proyecciones', to: '/perfil'          },
-    { emoji: '📥', label: 'Registra tus ingresos',    desc: 'Cuánto dinero recibes este mes',              to: '/ingresos'        },
-    { emoji: '🧾', label: 'Registra tu primer gasto', desc: 'Empieza a llevar el control',                 to: '/control-gastos'  },
-    { emoji: '📊', label: 'Define tu presupuesto',    desc: 'Pon límites por categoría',                   to: '/gastos-variables' },
+    { label: 'Configura tu nómina',     desc: 'Para ver tu ingreso esperado y proyecciones', to: '/perfil'          },
+    { label: 'Registra tus ingresos',    desc: 'Cuánto dinero recibes este mes',              to: '/ingresos'        },
+    { label: 'Registra tu primer gasto', desc: 'Empieza a llevar el control',                 to: '/control-gastos'  },
+    { label: 'Define tu presupuesto',    desc: 'Pon límites por categoría',                   to: '/gastos-variables' },
   ]
 
   // Solo mostramos el error de pantalla completa si no hay nada que mostrar.
@@ -79,37 +80,36 @@ export default function Dashboard() {
   const hayDatos = transacciones.length > 0 || totalIngresos > 0 || totalGastos > 0
   if (error && !loading && !hayDatos) {
     return (
-      <Layout titulo="Dashboard">
+      <Layout titulo="Inicio">
         <ErrorState onRetry={refetch} mensaje={error} />
       </Layout>
     )
   }
 
   return (
-    <Layout titulo="Dashboard">
+    <Layout titulo="Inicio">
       <div className="space-y-5">
 
         {/* ── Bienvenida / primeros pasos (usuario nuevo) ── */}
         {sinNada && (
-          <div className="card p-6" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-100)' }}>
-            <h2 className="font-bold mb-1" style={{ color: 'var(--fg-1)', fontSize: 18 }}>
-              👋 ¡Bienvenido a Finni Apoyo!
+          <div className="card p-6">
+            <h2 className="titulo-seccion mb-1">
+              Empecemos por lo básico
             </h2>
             <p className="text-sm mb-4" style={{ color: 'var(--fg-3)' }}>
-              Configura lo básico para sacarle todo el provecho. Te toma menos de 2 minutos.
+              Cuatro pasos para que los números de esta pantalla tengan sentido. Son un par de minutos.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {pasosOnboarding.map((p, i) => (
                 <Link key={p.to} to={p.to}
-                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] bg-surface transition-all hover:shadow-md">
-                  <span className="text-2xl flex-shrink-0">{p.emoji}</span>
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] border border-[var(--border)] hover:bg-[var(--surface-2)]">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold" style={{ color: 'var(--fg-1)' }}>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>
                       {i + 1}. {p.label}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>{p.desc}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--primary-600)' }} />
+                  <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fg-3)' }} />
                 </Link>
               ))}
             </div>
@@ -131,37 +131,23 @@ export default function Dashboard() {
 
         {/* ── Saldo arrastrado del mes anterior (ya incluido en Por Asignar) ── */}
         {saldoAnterior !== null && Math.abs(saldoAnterior) > 0.5 && (
-          <div
-            className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
-            style={{
-              background: saldoAnterior >= 0 ? 'var(--positive-bg)' : 'var(--warning-bg)',
-              borderLeft: `3px solid ${saldoAnterior >= 0 ? 'var(--positive)' : 'var(--warning)'}`,
-            }}
-          >
+          <div className="card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
             <div className="min-w-0">
-              <p
-                className="text-[11px] font-bold uppercase tracking-normal mb-0.5"
-                style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)', letterSpacing: 0 }}
-              >
-                {saldoAnterior >= 0 ? '✓ Saldo de' : '⚠ Déficit de'} {MESES[mesPrev - 1]} {anioPrev}
+              <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>
+                {saldoAnterior >= 0 ? 'Sobrante de' : 'Déficit de'} {MESES[mesPrev - 1].toLowerCase()} {anioPrev}
               </p>
-              <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
+              <p className="text-sm" style={{ color: 'var(--fg-3)' }}>
                 {saldoAnterior >= 0
-                  ? 'Ya incluido en tu saldo Por Asignar de este mes.'
+                  ? 'Ya está sumado a tu disponible de este mes.'
                   : 'El mes pasado se gastó más de lo que entró.'}
               </p>
             </div>
-            <div className="text-right flex-shrink-0">
-              <p
-                className="text-xl font-bold tabular"
-                style={{
-                  color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--warning-fg)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
-              </p>
-            </div>
+            <p
+              className="text-xl font-semibold font-display tabular flex-shrink-0"
+              style={{ color: saldoAnterior >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)' }}
+            >
+              {saldoAnterior >= 0 ? '+' : ''}{formatMXN(saldoAnterior)}
+            </p>
           </div>
         )}
 
@@ -169,12 +155,11 @@ export default function Dashboard() {
         {!loading && ((ingresoEsperado != null && ingresoEsperado > 0) || (proyeccion.esMesActual && proyeccion.saldoProyectado !== null)) && (
           <div className="card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
-                Proyección de {MESES[mes - 1]}
+              <h2 className="titulo-seccion">
+                Cierre de {MESES[mes - 1].toLowerCase()}
               </h2>
               <Link to="/plan-quincena"
-                className="text-xs font-semibold flex items-center gap-1 hover:gap-1.5 transition-all"
-                style={{ color: 'var(--primary-600)' }}>
+                className="enlace-seccion">
                 Ver plan <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
@@ -187,28 +172,28 @@ export default function Dashboard() {
               return (
                 <div className="mb-4">
                   <div className="flex flex-wrap justify-between gap-x-2 text-sm mb-1.5">
-                    <span className="font-semibold" style={{ color: 'var(--fg-1)' }}>
+                    <span style={{ color: 'var(--fg-2)' }}>
                       Ingreso registrado
                     </span>
-                    <span className="tabular" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
-                      <span style={{ color: 'var(--positive-fg)', fontWeight: 700 }}>{formatMXN(totalIngresos)}</span>
+                    <span className="tabular" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums', fontSize: 13 }}>
+                      <span style={{ color: 'var(--fg-1)', fontWeight: 600 }}>{formatMXN(totalIngresos)}</span>
                       <span style={{ color: 'var(--fg-4)' }}> / ~</span>
                       {formatMXN(ingresoEsperado)}
                     </span>
                   </div>
-                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
                     <div className="h-full rounded-full"
                       style={{
                         width: `${pct}%`,
-                        background: completo ? 'var(--positive)' : 'var(--primary)',
+                        background: 'var(--fg-1)',
                         transition: 'width var(--dur-slow) var(--ease-out)',
                       }} />
                   </div>
                   {!completo && (
-                    <p className="text-xs mt-1.5" style={{ color: 'var(--fg-3)' }}>
+                    <p className="text-[13px] mt-2" style={{ color: 'var(--fg-3)' }}>
                       Faltan {formatMXN(faltante)} por registrar según tu nómina.{' '}
-                      <Link to="/ingresos" className="font-semibold" style={{ color: 'var(--primary-600)' }}>
-                        ¿Capturar quincena?
+                      <Link to="/ingresos" className="underline underline-offset-2" style={{ color: 'var(--primary-700)' }}>
+                        Registrar quincena
                       </Link>
                     </p>
                   )}
@@ -218,25 +203,17 @@ export default function Dashboard() {
 
             {/* Saldo proyectado a fin de mes */}
             {proyeccion.esMesActual && proyeccion.saldoProyectado !== null && (
-              <div
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 rounded-[var(--r-md)]"
-                style={{
-                  background: proyeccion.saldoProyectado >= 0 ? 'var(--positive-bg)' : 'var(--negative-bg)',
-                }}
-              >
+              <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 pt-4 border-t border-[var(--divider)]">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>
-                    A este ritmo terminarás {MESES[mes - 1]} con
+                  <p className="text-sm" style={{ color: 'var(--fg-2)' }}>
+                    A este ritmo cierras {MESES[mes - 1].toLowerCase()} con
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
-                    Gasto proyectado: {formatMXN(proyeccion.gastoProyectado)} · día {proyeccion.diaActual} de {proyeccion.diasMes}
+                  <p className="text-[13px] mt-0.5" style={{ color: 'var(--fg-3)' }}>
+                    Gasto proyectado {formatMXN(proyeccion.gastoProyectado)} · día {proyeccion.diaActual} de {proyeccion.diasMes}
                   </p>
                 </div>
-                <p className="text-xl font-bold tabular flex-shrink-0"
-                  style={{
-                    color: proyeccion.saldoProyectado >= 0 ? 'var(--positive-fg)' : 'var(--negative-fg)',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>
+                <p className="text-2xl font-semibold font-display tabular flex-shrink-0"
+                  style={{ color: proyeccion.saldoProyectado >= 0 ? 'var(--fg-1)' : 'var(--negative)' }}>
                   {proyeccion.saldoProyectado >= 0 ? '+' : ''}{formatMXN(proyeccion.saldoProyectado)}
                 </p>
               </div>
@@ -246,42 +223,33 @@ export default function Dashboard() {
 
         {/* ── Facturas pendientes ── */}
         {!loading && fijosPendientes.length > 0 && (
-          <div className="card p-4" style={{ borderLeft: '3px solid var(--warning)' }}>
+          <div className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4" style={{ color: 'var(--warning-fg)' }} />
-                <p className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>
-                  {fijosPendientes.length} factura{fijosPendientes.length !== 1 ? 's' : ''} pendiente{fijosPendientes.length !== 1 ? 's' : ''} de pago
-                </p>
-              </div>
-              <Link to="/gastos-fijos"
-                className="text-xs font-semibold flex items-center gap-1"
-                style={{ color: 'var(--primary-600)' }}>
+              <h2 className="titulo-seccion">
+                {plural(fijosPendientes.length, 'pago fijo pendiente', 'pagos fijos pendientes')}
+              </h2>
+              <Link to="/gastos-fijos" className="enlace-seccion">
                 Ver todas <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="space-y-1.5">
+            <div className="divide-y divide-[var(--divider)]">
               {fijosPendientes.slice(0, 4).map(g => {
                 const hoyDia = new Date().getDate()
                 const vencido = g.dia_cobro && g.dia_cobro < hoyDia
                 const proximo = g.dia_cobro && (g.dia_cobro - hoyDia) <= 3 && !vencido
                 return (
-                  <div key={g.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium" style={{ color: 'var(--fg-1)' }}>{g.concepto}</span>
+                  <div key={g.id} className="flex items-center justify-between text-sm py-2">
+                    <div className="flex items-baseline gap-3 min-w-0">
+                      <span style={{ color: 'var(--fg-1)' }}>{g.concepto}</span>
                       {g.dia_cobro && (
-                        <span className="text-xs font-mono px-1.5 py-0.5 rounded"
-                          style={{
-                            background: vencido ? 'var(--negative-bg)' : proximo ? 'var(--warning-bg)' : 'var(--surface-3)',
-                            color: vencido ? 'var(--negative-fg)' : proximo ? 'var(--warning-fg)' : 'var(--fg-3)',
-                            fontWeight: (vencido || proximo) ? 700 : 400,
-                          }}>
-                          Día {g.dia_cobro}{vencido ? ' · vencido' : proximo ? ' · próximo' : ''}
+                        <span className="text-[13px] tabular"
+                          style={{ color: vencido ? 'var(--negative-fg)' : proximo ? 'var(--warning-fg)' : 'var(--fg-3)' }}>
+                          {vencido ? `venció el día ${g.dia_cobro}` : `día ${g.dia_cobro}`}
                         </span>
                       )}
                     </div>
-                    <span className="font-mono font-semibold" style={{ color: 'var(--negative-fg)' }}>
-                      -{formatMXN(g.monto_previsto)}
+                    <span className="tabular font-medium" style={{ color: 'var(--fg-1)' }}>
+                      {formatMXN(g.monto_previsto)}
                     </span>
                   </div>
                 )
@@ -297,14 +265,12 @@ export default function Dashboard() {
 
         {/* ── Regla 50/30/20 ── */}
         <div className="card p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
-              Regla 50/30/20
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-5">
+            <h2 className="titulo-seccion">
+              Regla {Math.round(reglas.regla_necesidad * 100)}/{Math.round(reglas.regla_deseo * 100)}/{Math.round(reglas.regla_ahorro * 100)}
             </h2>
-            <span className="text-xs" style={{ color: 'var(--fg-3)' }}>
-              {Math.round(reglas.regla_necesidad * 100)}% Necesidad /&nbsp;
-              {Math.round(reglas.regla_deseo * 100)}% Deseo /&nbsp;
-              {Math.round(reglas.regla_ahorro * 100)}% Ahorro
+            <span className="text-[13px]" style={{ color: 'var(--fg-3)' }}>
+              gastado / meta según tu ingreso
             </span>
           </div>
           <div className="space-y-4">
@@ -314,16 +280,18 @@ export default function Dashboard() {
               return (
                 <div key={name}>
                   <div className="flex justify-between text-sm mb-1.5">
-                    <span className="font-semibold" style={{ color: 'var(--fg-1)' }}>{name}</span>
-                    <span className="tabular" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
-                      <span style={{ color: sobre ? 'var(--negative-fg)' : 'var(--fg-2)', fontWeight: sobre ? 700 : 400 }}>
+                    <span className="flex items-center gap-2" style={{ color: 'var(--fg-1)' }}>
+                      <span className="w-2 h-2 rounded-full" style={{ background: fill }} />{name}
+                    </span>
+                    <span className="tabular" style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums', fontSize: 13 }}>
+                      <span style={{ color: sobre ? 'var(--negative-fg)' : 'var(--fg-1)', fontWeight: 600 }}>
                         {formatMXN(actual)}
                       </span>
                       <span style={{ color: 'var(--fg-4)' }}> / </span>
                       {formatMXN(meta)}
                     </span>
                   </div>
-                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -343,24 +311,22 @@ export default function Dashboard() {
         {!loading && categoriasEnRiesgo.length > 0 && (
           <div className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
-                Presupuesto — Categorías en Riesgo
+              <h2 className="titulo-seccion">
+                Categorías cerca del límite
               </h2>
               <Link
                 to="/gastos-variables"
-                className="text-xs font-semibold flex items-center gap-1 hover:gap-1.5 transition-all"
-                style={{ color: 'var(--primary-600)' }}
+                className="enlace-seccion"
               >
                 Ver presupuesto <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {categoriasEnRiesgo.map(cat => (
                 <div key={cat.nombre} className="flex items-center gap-3">
-                  <span className="text-base w-5 text-center flex-shrink-0">{cat.icono ?? '📦'}</span>
                   <div className="flex-1">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-semibold" style={{ color: 'var(--fg-2)' }}>{cat.nombre}</span>
+                    <div className="flex justify-between text-sm mb-1.5">
+                      <span style={{ color: 'var(--fg-1)' }}>{cat.nombre}</span>
                       <span
                         className="tabular font-semibold"
                         style={{ color: cat.pct >= 100 ? 'var(--negative-fg)' : 'var(--warning-fg)', fontVariantNumeric: 'tabular-nums' }}
@@ -380,8 +346,8 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span
-                    className="text-xs tabular w-20 text-right flex-shrink-0"
-                    style={{ color: 'var(--fg-4)', fontVariantNumeric: 'tabular-nums' }}
+                    className="text-sm tabular w-24 text-right flex-shrink-0"
+                    style={{ color: 'var(--fg-3)', fontVariantNumeric: 'tabular-nums' }}
                   >
                     {formatMXN(cat.gastado)}
                   </span>
@@ -398,43 +364,28 @@ export default function Dashboard() {
 
         {/* ── Gastos Hormiga ── */}
         {!loading && gastosHormiga.count > 0 && (
-          <div
-            className="card p-5 flex items-center justify-between gap-4"
-            style={{ background: 'var(--warning-bg)', borderColor: 'var(--deseo-bg)' }}
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-2xl flex-shrink-0">🐜</span>
-              <div>
-                <p className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>
-                  Gastos Hormiga del Mes
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
-                  Transacciones ≤ {formatMXN(gastosHormiga.umbral)} · {plural(gastosHormiga.count, 'movimiento pequeño', 'movimientos pequeños')}
-                </p>
-              </div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p
-                className="text-xl font-bold tabular"
-                style={{ color: 'var(--warning-fg)', fontVariantNumeric: 'tabular-nums' }}
-              >
-                {formatMXN(gastosHormiga.total)}
+          <div className="card px-5 py-4 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold" style={{ color: 'var(--fg-1)' }}>Gastos hormiga</p>
+              <p className="text-sm" style={{ color: 'var(--fg-3)' }}>
+                {plural(gastosHormiga.count, 'gusto', 'gustos')} de hasta {formatMXN(gastosHormiga.umbral)} en lo que va del mes
               </p>
-              <p className="text-xs" style={{ color: 'var(--fg-4)' }}>acumulado este mes</p>
             </div>
+            <p className="text-xl font-semibold font-display tabular flex-shrink-0" style={{ color: 'var(--fg-1)' }}>
+              {formatMXN(gastosHormiga.total)}
+            </p>
           </div>
         )}
 
         {/* ── Últimos Movimientos ── */}
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--divider)]">
-            <h2 className="font-bold" style={{ color: 'var(--fg-1)', fontSize: 17, letterSpacing: 0 }}>
-              Últimos Movimientos
+            <h2 className="titulo-seccion">
+              Últimos movimientos
             </h2>
             <Link
               to="/control-gastos"
-              className="text-sm font-semibold flex items-center gap-1 hover:gap-1.5 transition-all"
-              style={{ color: 'var(--primary-600)' }}
+              className="enlace-seccion"
             >
               Ver todos <ArrowRight className="w-3 h-3" />
             </Link>
@@ -454,7 +405,7 @@ export default function Dashboard() {
                   <EmptyState
                     icon={Receipt}
                     title="Sin movimientos este mes"
-                    description="Captura un gasto para que el dashboard empiece a mostrar patrones y alertas."
+                    description="Cuando registres un gasto aparecerá aquí."
                     className="min-h-[210px]"
                     action={
                       <Link to="/control-gastos" className="btn-primary text-sm">
@@ -474,28 +425,25 @@ export default function Dashboard() {
                       onMouseLeave={e => { e.currentTarget.style.background = '' }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-lg flex-shrink-0">
-                          {t.origen === 'gastos_fijos' ? '🧾' : t.origen === 'deuda' ? '💳' : (t.categorias?.icono ?? '📦')}
-                        </span>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold truncate" style={{ color: 'var(--fg-1)' }}>
+                            <p className="text-sm font-medium truncate" style={{ color: 'var(--fg-1)' }}>
                               {t.descripcion}
                             </p>
-                            {t.origen === 'whatsapp' && <MessageSquare className="w-3 h-3 flex-shrink-0 text-gray-300" />}
+                            {t.origen === 'whatsapp' && <MessageSquare className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--fg-4)' }} aria-label="Registrado por WhatsApp" />}
                           </div>
-                          <p className="text-xs mt-0.5" style={{ color: 'var(--fg-3)' }}>
-                            {t.origen === 'gastos_fijos' ? 'Gasto fijo' : t.origen === 'deuda' ? 'Pago deuda' : (t.categorias?.nombre ?? '—')} · {t.fecha}
+                          <p className="text-[13px] mt-0.5" style={{ color: 'var(--fg-3)' }}>
+                            {t.origen === 'gastos_fijos' ? 'Gasto fijo' : t.origen === 'deuda' ? 'Pago deuda' : (t.categorias?.nombre ?? '—')} · {fechaCorta(t.fecha)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                        <span className={`badge-${t.clasificacion}`}>{t.clasificacion}</span>
+                      <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+                        <span className={`badge-${t.clasificacion} hidden sm:inline-flex`}>{t.clasificacion}</span>
                         <span
-                          className="font-bold text-sm tabular"
-                          style={{ color: 'var(--primary-700)', fontVariantNumeric: 'tabular-nums' }}
+                          className="font-medium text-sm tabular w-24 text-right"
+                          style={{ color: 'var(--fg-1)' }}
                         >
-                          -{formatMXN(t.monto)}
+                          {formatMXN(t.monto)}
                         </span>
                       </div>
                     </div>

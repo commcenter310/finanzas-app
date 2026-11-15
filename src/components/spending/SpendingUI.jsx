@@ -17,10 +17,7 @@ export function SpendingNav() {
 }
 
 export function SpendingOverview({
-  eyebrow,
   title,
-  description,
-  amountLabel,
   amount,
   progress,
   progressLabel,
@@ -36,13 +33,10 @@ export function SpendingOverview({
     <section className="spending-overview">
       <div className="spending-overview-main">
         <div className="spending-overview-copy">
-          <p>{eyebrow}</p>
           <h1>{title}</h1>
-          <span>{description}</span>
         </div>
 
         <div className={`spending-overview-amount tone-${tone}`}>
-          <span>{amountLabel}</span>
           {loading ? <i className="spending-overview-skeleton is-amount" /> : <strong>{amount}</strong>}
         </div>
 
@@ -79,10 +73,9 @@ export function SpendingOverview({
   )
 }
 
-export function SpendingMetric({ icon: Icon, label, value, tone = 'neutral' }) {
+export function SpendingMetric({ label, value, tone = 'neutral' }) {
   return (
     <div className={`spending-metric tone-${tone}`}>
-      <span className="spending-metric-icon">{Icon && <Icon aria-hidden="true" />}</span>
       <span className="spending-metric-copy">
         <small>{label}</small>
         <strong>{value}</strong>
@@ -91,12 +84,10 @@ export function SpendingMetric({ icon: Icon, label, value, tone = 'neutral' }) {
   )
 }
 
-export function SpendingSignal({ icon: Icon, label, title, description, action, tone = 'primary' }) {
+export function SpendingSignal({ title, description, action, tone = 'primary' }) {
   return (
     <div className={`spending-signal tone-${tone}`}>
-      <span className="spending-signal-icon">{Icon && <Icon aria-hidden="true" />}</span>
       <div className="spending-signal-copy">
-        <small>{label}</small>
         <strong>{title}</strong>
         {description && <p>{description}</p>}
         {action && <div className="spending-signal-action">{action}</div>}

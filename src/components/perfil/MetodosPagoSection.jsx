@@ -80,7 +80,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
     <>
     <div id="perfil-metodos" className="card overflow-hidden scroll-mt-24">
       <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
-        <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Métodos de Pago</h2>
+        <h2 className="titulo-seccion">Métodos de pago</h2>
         <button onClick={() => setMostrarFormMetodo(v => !v)}
           className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
           <Plus className="w-3.5 h-3.5" /> Agregar
@@ -148,12 +148,12 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
                   />
                 </div>
                 <button onClick={() => guardarEditMetodo(m.id)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+                  className="icon-button icon-button-sm"
                   style={{ background: 'var(--ahorro)' }}>
                   <Check className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => setEditandoMetodo(null)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
+                  className="icon-button icon-button-sm">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -166,14 +166,14 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
                 </div>
                 <div className="flex items-center gap-1 acciones-hover">
                   <button onClick={() => iniciarEditMetodo(m)} aria-label={`Editar ${m.nombre}`} title="Editar"
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                    className="icon-button icon-button-sm"
                     style={{ color: 'var(--fg-4)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-50)'; e.currentTarget.style.color = 'var(--primary-700)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => setMetodoAEliminar(m)} aria-label={`Eliminar ${m.nombre}`} title="Eliminar"
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                    className="icon-button icon-button-sm"
                     style={{ color: 'var(--fg-4)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--negative-bg)'; e.currentTarget.style.color = 'var(--negative-fg)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--fg-4)' }}>

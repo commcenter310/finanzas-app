@@ -126,7 +126,7 @@ export default function Bienvenida() {
                     }}>
                     {hecho ? <Check className="w-4 h-4" /> : <Icono className="w-4 h-4" />}
                   </div>
-                  <span className="text-[10px] font-semibold" style={{ color: activo ? 'var(--fg-1)' : 'var(--fg-4)' }}>
+                  <span className="text-xs font-semibold" style={{ color: activo ? 'var(--fg-1)' : 'var(--fg-4)' }}>
                     {p.titulo}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export default function Bienvenida() {
 
           {paso === 0 && (
             <>
-              <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--fg-1)' }}>¡Bienvenido! 👋</h1>
+              <h1 className="titulo-pagina mb-1">Bienvenido</h1>
               <p className="text-sm mb-5" style={{ color: 'var(--fg-3)' }}>
                 Empecemos por lo básico. ¿Cómo te llamas?
               </p>
@@ -156,7 +156,7 @@ export default function Bienvenida() {
 
           {paso === 1 && (
             <>
-              <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--fg-1)' }}>Tu WhatsApp 💬</h1>
+              <h1 className="titulo-pagina mb-1">Tu WhatsApp</h1>
               <p className="text-sm mb-5" style={{ color: 'var(--fg-3)' }}>
                 Vincula tu número y podrás registrar gastos mandando un mensaje:
                 <em> "89 starbucks"</em> y listo. Opcional, lo puedes hacer después.
@@ -186,7 +186,7 @@ export default function Bienvenida() {
 
           {paso === 2 && (
             <>
-              <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--fg-1)' }}>Tus tarjetas de crédito 💳</h1>
+              <h1 className="titulo-pagina mb-1">Tus tarjetas de crédito</h1>
               <p className="text-sm mb-5" style={{ color: 'var(--fg-3)' }}>
                 Agrégalas para llevar el control de saldos, cortes y fechas de pago. Opcional.
               </p>
@@ -194,7 +194,7 @@ export default function Bienvenida() {
               {tarjetas.length > 0 && (
                 <div className="space-y-2 mb-4">
                   {tarjetas.map((t, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-xl border"
+                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-[var(--r-lg)] border"
                       style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
                       <div className="flex items-center gap-2 min-w-0">
                         <CreditCard className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fg-3)' }} />
@@ -202,7 +202,7 @@ export default function Bienvenida() {
                         {t.limite_credito && <span className="text-xs font-mono" style={{ color: 'var(--fg-4)' }}>{formatMXN(t.limite_credito)}</span>}
                       </div>
                       <button onClick={() => quitarTarjeta(i)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-500 flex-shrink-0">
+                        className="icon-button icon-button-sm">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -241,7 +241,7 @@ export default function Bienvenida() {
 
           {paso === 3 && (
             <>
-              <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--fg-1)' }}>Tu ingreso principal 💰</h1>
+              <h1 className="titulo-pagina mb-1">Tu ingreso principal</h1>
               <p className="text-sm mb-5" style={{ color: 'var(--fg-3)' }}>
                 Con esto la app puede planear tus quincenas y proyectar tu año. Opcional —
                 en Perfil podrás agregar más nóminas y prestaciones (aguinaldo, prima).
@@ -267,7 +267,7 @@ export default function Bienvenida() {
           )}
 
           {errorMsg && (
-            <p className="text-sm mt-4 px-3 py-2 rounded-xl" style={{ background: 'var(--negative-bg)', color: 'var(--negative-fg)' }}>
+            <p className="text-sm mt-4 px-3 py-2 rounded-[var(--r-lg)]" style={{ background: 'var(--negative-bg)', color: 'var(--negative-fg)' }}>
               {errorMsg}
             </p>
           )}

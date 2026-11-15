@@ -63,7 +63,7 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
   return (
     <div id="perfil-categorias" className="card overflow-hidden scroll-mt-24">
       <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
-        <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Categorías</h2>
+        <h2 className="titulo-seccion">Categorías</h2>
         <button onClick={() => setMostrarFormCat(v => !v)}
           className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
           <Plus className="w-3.5 h-3.5" /> Agregar
@@ -140,12 +140,12 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
                 />
               </div>
               <button onClick={() => guardarEditCat(c.id)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+                className="icon-button icon-button-sm"
                 style={{ background: 'var(--ahorro)' }}>
                 <Check className="w-3.5 h-3.5" />
               </button>
               <button onClick={() => setEditandoCat(null)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600 flex-shrink-0">
+                className="icon-button icon-button-sm">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -169,8 +169,8 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
                 </button>
                 {/* Botón activar/desactivar — siempre visible */}
                 <button onClick={() => toggleCategoria(c.id, c.activa)}
-                  className="text-xs px-2 py-1 rounded-full font-semibold transition-all"
-                  style={c.activa ? { background: 'var(--surface-3)', color: 'var(--fg-3)' } : { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                  className="text-[13px] underline underline-offset-2"
+                  style={{ color: c.activa ? 'var(--fg-3)' : 'var(--primary-700)' }}>
                   {c.activa ? 'Desactivar' : 'Activar'}
                 </button>
               </div>

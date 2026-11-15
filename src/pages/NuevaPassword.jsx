@@ -10,7 +10,7 @@ export default function NuevaPassword() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-app)' }}>
       <div className="card p-6 w-full" style={{ maxWidth: 420 }}>
         <BrandMark />
-        <h1 className="text-xl font-bold mt-5" style={{ color: 'var(--fg-1)' }}>Elige una contraseña nueva</h1>
+        <h1 className="titulo-pagina mt-5">Elige una contraseña nueva</h1>
         <p className="text-sm mt-1 mb-5" style={{ color: 'var(--fg-3)' }}>
           Con ella entrarás a Finni a partir de ahora.
         </p>

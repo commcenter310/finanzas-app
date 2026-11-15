@@ -19,10 +19,7 @@ export function CommitmentNav() {
 }
 
 export function CommitmentHero({
-  eyebrow,
   title,
-  description,
-  amountLabel,
   amount,
   aside,
   children,
@@ -31,12 +28,9 @@ export function CommitmentHero({
     <section className="commitment-hero">
       <div className="commitment-hero-main">
         <div>
-          <p className="commitment-eyebrow">{eyebrow}</p>
           <h1>{title}</h1>
-          <p className="commitment-hero-description">{description}</p>
         </div>
         <div className="commitment-hero-balance">
-          <span>{amountLabel}</span>
           <strong>{amount}</strong>
         </div>
         {children && <div className="commitment-hero-metrics">{children}</div>}
@@ -46,10 +40,9 @@ export function CommitmentHero({
   )
 }
 
-export function HeroMetric({ icon: Icon, label, value, tone = 'default' }) {
+export function HeroMetric({ label, value, tone = 'default' }) {
   return (
     <div className={`commitment-hero-metric tone-${tone}`}>
-      {Icon && <Icon aria-hidden="true" />}
       <div>
         <span>{label}</span>
         <strong>{value}</strong>
@@ -58,12 +51,10 @@ export function HeroMetric({ icon: Icon, label, value, tone = 'default' }) {
   )
 }
 
-export function PriorityPanel({ icon: Icon, label = 'Prioridad ahora', title, description, action, tone = 'primary' }) {
+export function PriorityPanel({ title, description, action, tone = 'primary' }) {
   return (
     <div className={`commitment-priority tone-${tone}`}>
-      <div className="commitment-priority-icon">{Icon && <Icon aria-hidden="true" />}</div>
       <div className="commitment-priority-copy">
-        <span>{label}</span>
         <strong>{title}</strong>
         {description && <p>{description}</p>}
       </div>
@@ -72,11 +63,10 @@ export function PriorityPanel({ icon: Icon, label = 'Prioridad ahora', title, de
   )
 }
 
-export function SectionHeader({ eyebrow, title, description, action }) {
+export function SectionHeader({ title, description, action }) {
   return (
     <div className="commitment-section-header">
       <div>
-        {eyebrow && <p>{eyebrow}</p>}
         <h2>{title}</h2>
         {description && <span>{description}</span>}
       </div>
@@ -134,7 +124,7 @@ export function SegmentedControl({ value, options, onChange, ariaLabel }) {
   )
 }
 
-export function Sheet({ open, onClose, title, description, eyebrow = 'Centro de compromisos', children, footer }) {
+export function Sheet({ open, onClose, title, description, children, footer }) {
   useEffect(() => {
     if (!open) return undefined
     const previousOverflow = document.body.style.overflow
@@ -157,7 +147,6 @@ export function Sheet({ open, onClose, title, description, eyebrow = 'Centro de 
       <section className="commitment-sheet" role="dialog" aria-modal="true" aria-labelledby="commitment-sheet-title">
         <header className="commitment-sheet-header">
           <div>
-            <p>{eyebrow}</p>
             <h2 id="commitment-sheet-title">{title}</h2>
             {description && <span>{description}</span>}
           </div>

@@ -23,3 +23,12 @@ deriva del logo transparente poniendo las letras en blanco y aclarando el
 símbolo. Los PNG del kit traen color oculto en píxeles 100% transparentes; el
 script lo limpia y redimensiona con alfa premultiplicado para que no aparezcan
 halos en los bordes.
+
+## Logo en la app (rediseño "Libreta", nov 2026)
+
+`logo-claro.png` y `logo-oscuro.png` de `src/assets/brand/` ya no son los que
+genera el script tal cual: se pasaron a una sola tinta (casi negro `#1A1C19`
+para fondo claro, blanco hueso `#F3F2EE` para fondo oscuro) conservando la
+forma, para que el logo no pelee con la paleta nueva. Si se regeneran desde el
+kit, hay que volver a aplicar ese paso (rellenar con un color plano usando el
+canal alfa del PNG). Los íconos de `public/` siguen con el arte original.
