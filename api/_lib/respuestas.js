@@ -135,7 +135,7 @@ export function textoPendientes(fijos, mes, anio) {
     '',
     `💰 Total: ${fmx(total)}`,
     '',
-    '_Cuando pagues uno, escríbeme: *pagué la luz*_',
+    `_Cuando pagues uno, escríbeme: *pagué ${String(fijos[0].concepto).trim().toLowerCase()}*_`,
   )
 }
 

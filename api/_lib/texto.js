@@ -16,7 +16,11 @@ export const tokenizar = (texto) => String(texto ?? '')
   .map(orig => ({ orig: orig.replace(/^[¿¡"'(]+|[?!"'),;:]+$/g, ''), norm: normalizar(orig).replace(/[.,]+$/, '') }))
   .filter(t => t.norm !== '')
 
-export const fmx = (n) => `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+// $1,200 · $13,904.20 (centavos solo cuando los hay)
+export const fmx = (n) => {
+  const v = Number(n)
+  return `$${v.toLocaleString('es-MX', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 })}`
+}
 
 // "$1,200.50" → 1200.5 · "2k" → 2000 · "abc" → null
 export function parsearMonto(token) {

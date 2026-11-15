@@ -24,7 +24,7 @@ Money-math logic lives in pure functions in `src/utils/calculos.js` and `src/uti
 ### Two separate apps in one repo
 
 1. **Frontend SPA** (`src/`) — React app, all routes protected by Supabase auth.
-2. **WhatsApp webhook** (`api/webhook.js`) — Vercel serverless function. Receives Meta webhook POSTs, parses text messages, calls Groq LLM to categorize spending, then writes transactions to Supabase using the service role key (`api/lib/supabase-admin.js`). The frontend uses the anon key (`src/lib/supabase.js`).
+2. **WhatsApp webhook** (`api/webhook.js`) — Vercel serverless function. Receives Meta webhook POSTs (signature required), understands the message and writes to Supabase with the service role key (`api/_lib/supabase-admin.js`). The frontend uses the anon key (`src/lib/supabase.js`). See "WhatsApp bot" below.
 
 `vercel.json` rewrites all non-`/api/` paths to `index.html` for SPA routing.
 
@@ -105,13 +105,23 @@ Fixed-expense urgency and totals are pure functions in `calculos.js` (`urgenciaG
 
 `src/finni-tokens.css` defines all CSS custom properties (colors, surfaces, shadows). Tailwind is configured to use these tokens. Use `var(--token-name)` in inline styles; use Tailwind utility classes for spacing/layout.
 
-### WhatsApp bot flow
+### WhatsApp bot
 
-`api/lib/whatsapp.js` → `processMessage()`:
-1. Looks up user by phone number from `profiles.telefono`.
-2. Maintains conversational state in `whatsapp_estado` table (upsert per phone).
-3. Calls Groq (`api/lib/groq.js`) to extract amount + category from free-text.
-4. Writes a row to `transacciones` with `origen = 'whatsapp'`.
+Only `api/webhook.js` is a serverless function; everything else lives in `api/_lib/` (the underscore keeps Vercel from turning each file into a function — the Hobby plan allows 12). Tests sit next to the code (`api/_lib/*.test.js`).
+
+- `webhook.js` — verifies Meta's HMAC signature (**mandatory**: without `WHATSAPP_APP_SECRET` it answers 503; `WHATSAPP_REQUIRE_SIGNATURE=false` only for local tests), then handles every message in the batch: text, button/list replies, voice notes; other types get a polite "not supported".
+- `_lib/whatsapp.js` — the conversation (`procesarMensaje`). It never touches Supabase/Meta/Groq directly, only through `datos.js`, `meta.js`, `groq.js`, which the tests replace with doubles.
+- `_lib/interprete.js` — pure. `interpretarLocal` understands commands and simple movements ("89 café nu ayer", "3000 tele nu a 12 meses", "pagué la luz", "aboné 500 a nu", "era 95") **without AI**. Only what returns `null` goes to Groq (`interpretarConIA`), and its answer is validated against the user's catalogs by `intencionDesdeIA` (never trust model output). A new description with no category asks the AI for the category only; if Groq is down, simple messages still work.
+- `_lib/fechas.js` — dates in the user's time zone (`APP_TIME_ZONE`, default `America/Mazatlan`), "ayer / el lunes / el 5 de noviembre" computed in code.
+- `_lib/respuestas.js` — pure reply texts. The monthly summary imports `src/utils/calculos.js`, so the bot and the Dashboard give the same numbers (imports from `src/utils` must keep the `.js` extension: the function runs on plain Node ESM).
+- `_lib/groq.js` — model ids come from `GROQ_MODEL` / `GROQ_MODEL_VOZ` (defaults `openai/gpt-oss-120b`, `whisper-large-v3-turbo`). Groq retires models often (the previous one was shut down in Aug 2026 and the bot was dead until Nov): check https://console.groq.com/docs/deprecations.
+
+Rules that must hold:
+- **Every money write goes through `whatsapp_ejecutar(p_user_id, p_operacion, p_args)`** (`supabase-whatsapp.sql`, service_role only). It impersonates the phone's owner for that transaction and calls the same atomic RPCs as the app. Never insert into `transacciones` or touch `creditos.saldo_utilizado` from the bot.
+- **No duplicates:** each message reserves a `whatsapp_log` row with its unique `wamid`; a Meta retry collides and is ignored. Writes also carry `operacion_id = operacionId(wamid, paso)` (the two-step "which payment method?" flow stores the id of the *original* message).
+- **Only verified numbers are served.** An unverified profile gets a 6-digit code by WhatsApp (stored in `whatsapp_estado`, never in the log) and types it in Perfil (`components/perfil/VerificarWhatsapp` → RPC `verificar_whatsapp`). A trigger on `profiles` stops users from setting `whatsapp_verificado` themselves and clears it when `telefono` changes. `whatsapp_log` is readable only with a verified number.
+- Pending questions (`whatsapp_estado`) expire after 15 minutes; a complete new order discards the pending one instead of being read as its answer.
+- Not built: reading photos of receipts, and proactive reminders (they need Meta-approved message templates and a scheduled job).
 
 ### Key files
 
@@ -122,6 +132,7 @@ Fixed-expense urgency and totals are pure functions in `calculos.js` (`urgenciaG
 | `src/hooks/useGastosFijos.js` | Fixed expenses; auto-copies `es_recurrente=true` rows when navigating to an empty month |
 | `src/hooks/useDeudas.js` | Unifies manual debts + credit cards with balance into one list; `abonarCredito` writes to `pagos_credito` |
 | `src/utils/constantes.js` | `formatMXN`, `MESES`, `CLASIFICACIONES`, default categories/payment methods |
+| `supabase-whatsapp.sql` | Bot: `whatsapp_ejecutar`, message de-duplication, number verification (applied in production Nov 2026) |
 | `supabase-schema.sql` | Full DB schema — reference before adding tables or columns. Note `pagos_credito` (credit-card payment history) and `abonos_deuda` (manual debt payments) |
 
 ### Making code changes

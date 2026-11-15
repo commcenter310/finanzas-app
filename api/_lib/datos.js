@@ -115,7 +115,8 @@ export async function gastoPorId(userId, id) {
 
 export async function ultimosMovimientos(userId, n = 5) {
   const { data } = await db.from('transacciones').select(CAMPOS_GASTO)
-    .eq('user_id', userId).order('created_at', { ascending: false }).limit(n)
+    .eq('user_id', userId)
+    .order('fecha', { ascending: false }).order('created_at', { ascending: false }).limit(n)
   return data ?? []
 }
 
