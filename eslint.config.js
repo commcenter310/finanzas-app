@@ -25,4 +25,11 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  {
+    // Herramientas de desarrollo (capturas con datos ficticios): también Node
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
