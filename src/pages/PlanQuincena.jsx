@@ -95,7 +95,7 @@ export default function PlanQuincena() {
 
   return (
     <Layout titulo="Plan de quincena">
-      <div className="space-y-5">
+      <div className="space-y-3">
 
         {/* Selector de quincena */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -176,7 +176,7 @@ export default function PlanQuincena() {
         </div>
 
         {mostrarManual && (
-          <div className="card p-5">
+          <div className="card p-4">
             <h3 className="titulo-seccion mb-3">Apartar para otra cosa</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div>

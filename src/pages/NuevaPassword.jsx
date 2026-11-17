@@ -8,7 +8,7 @@ export default function NuevaPassword() {
   const { cambiarPassword, signOutLocal } = useAuth()
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-app)' }}>
-      <div className="card p-6 w-full" style={{ maxWidth: 420 }}>
+      <div className="card p-4 w-full" style={{ maxWidth: 420 }}>
         <BrandMark />
         <h1 className="titulo-pagina mt-5">Elige una contraseña nueva</h1>
         <p className="text-sm mt-1 mb-5" style={{ color: 'var(--fg-3)' }}>

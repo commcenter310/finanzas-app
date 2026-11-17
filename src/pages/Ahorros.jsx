@@ -83,7 +83,7 @@ function TarjetaAhorro({ ahorro, metodos, ultimoDeposito, onActualizar, onElimin
   }
 
   return (
-    <div className="card p-5 self-start">
+    <div className="card p-4 self-start">
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-semibold text-gray-900">{ahorro.concepto}</p>
@@ -196,7 +196,7 @@ export default function Ahorros() {
 
   return (
     <Layout titulo="Ahorros">
-      <div className="space-y-5">
+      <div className="space-y-3">
 
         <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
           <div className="card p-4">
@@ -220,7 +220,7 @@ export default function Ahorros() {
         </div>
 
         {mostrarForm && (
-          <div className="card p-5 border-2" style={{ borderColor: 'var(--ahorro-bg)' }}>
+          <div className="card p-4 border-2" style={{ borderColor: 'var(--ahorro-bg)' }}>
             <h3 className="titulo-seccion mb-3">Nueva meta de ahorro</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div className="sm:col-span-2">

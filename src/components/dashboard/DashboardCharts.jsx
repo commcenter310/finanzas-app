@@ -14,7 +14,7 @@ export default function DashboardCharts({ datosDona, totalDona, datos5030 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Donut categorías */}
-      <div className="card p-5">
+      <div className="card p-4">
         <h2 className="titulo-seccion mb-4">
           Gasto por categoría
         </h2>
@@ -61,7 +61,7 @@ export default function DashboardCharts({ datosDona, totalDona, datos5030 }) {
       </div>
 
       {/* Barras presupuesto vs actual */}
-      <div className="card p-5">
+      <div className="card p-4">
         <h2 className="titulo-seccion mb-4">
           Meta contra gasto real
         </h2>

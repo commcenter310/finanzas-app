@@ -15,7 +15,7 @@ export default function WhatsappLog() {
 
   return (
     <Layout titulo="WhatsApp">
-      <div className="space-y-4">
+      <div className="space-y-3">
 
         {/* Stats */}
         <div className="stat-strip grid grid-cols-1 sm:grid-cols-3">
@@ -45,7 +45,7 @@ export default function WhatsappLog() {
         )}
 
         {/* Info de uso */}
-        <div className="card p-5">
+        <div className="card p-4">
           <h3 className="titulo-seccion mb-2">Cómo usar el bot de WhatsApp</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
             {[

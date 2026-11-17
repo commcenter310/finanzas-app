@@ -2,7 +2,7 @@ export default function ConfirmModal({ open, titulo, descripcion, onConfirm, onC
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-backdrop-in">
-      <div className="card p-6 w-full max-w-sm shadow-xl animate-modal-in">
+      <div className="card p-4 w-full max-w-sm shadow-xl animate-modal-in">
         <h3 className="titulo-seccion mb-1">{titulo}</h3>
         {descripcion && (
           <p className="text-sm mb-5" style={{ color: 'var(--fg-3)' }}>{descripcion}</p>

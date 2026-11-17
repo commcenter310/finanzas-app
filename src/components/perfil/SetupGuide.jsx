@@ -8,7 +8,7 @@ export default function SetupGuide({ items }) {
   const completados = items.length - pendientes.length
 
   return (
-    <section className="card p-5">
+    <section className="card p-4">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="titulo-seccion">Te falta configurar</h2>
         <span className="text-[13px] tabular" style={{ color: 'var(--fg-3)' }}>

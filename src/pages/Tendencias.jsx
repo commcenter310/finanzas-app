@@ -132,7 +132,7 @@ export default function Tendencias() {
         </div>
 
         {/* Ingresos vs Gastos */}
-        <div className="card p-5">
+        <div className="card p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="titulo-seccion">Ingresos y gastos, últimos 6 meses</h2>
             <span className="text-xs" style={{ color: 'var(--fg-4)' }}>* mes en curso (parcial)</span>
@@ -157,7 +157,7 @@ export default function Tendencias() {
         </div>
 
         {/* Distribución 50/30/20 */}
-        <div className="card p-5">
+        <div className="card p-4">
           <h2 className="titulo-seccion mb-4">En qué se fue el gasto</h2>
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
@@ -179,7 +179,7 @@ export default function Tendencias() {
 
         {/* Utilización de Crédito */}
         {(creditoTendencia?.datos?.length > 0 || loadingCredito) && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="titulo-seccion">Uso de tus tarjetas</h2>

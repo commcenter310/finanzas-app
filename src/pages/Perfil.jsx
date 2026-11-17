@@ -188,21 +188,21 @@ export default function Perfil() {
       <Layout titulo="Configuración">
         {profileError
           ? <ErrorState onRetry={refreshProfile} mensaje="No pudimos cargar tu perfil. Revisa tu conexión e intenta de nuevo." />
-          : <div className="card p-6 text-sm" style={{ color: 'var(--fg-3)' }}>Cargando tu perfil…</div>}
+          : <div className="card p-4 text-sm" style={{ color: 'var(--fg-3)' }}>Cargando tu perfil…</div>}
       </Layout>
     )
   }
 
   return (
     <Layout titulo="Configuración">
-      <div className="space-y-5">
+      <div className="space-y-3">
         <SetupGuide items={setupItems} />
 
         {/* ── Fila 1: misma altura en ambas columnas ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
 
           {/* Datos básicos */}
-          <div id="perfil-datos" className="card p-5 scroll-mt-24">
+          <div id="perfil-datos" className="card p-4 scroll-mt-24">
             <h2 className="titulo-seccion mb-4">Tus datos</h2>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="col-span-2">
@@ -254,10 +254,10 @@ export default function Perfil() {
           </div>
 
           {/* Regla 50/30/20 */}
-          <div id="perfil-regla" className="card p-5 scroll-mt-24">
+          <div id="perfil-regla" className="card p-4 scroll-mt-24">
             <h2 className="titulo-seccion mb-1">Tu regla de reparto</h2>
             <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
-            <div className="space-y-5 mb-4">
+            <div className="space-y-3 mb-4">
               {[
                 { key: 'necesidad', label: 'Necesidad', color: 'var(--necesidad-fg)', trackColor: 'var(--necesidad)' },
                 { key: 'deseo',     label: 'Deseo',     color: 'var(--deseo-fg)',     trackColor: 'var(--deseo)'     },
@@ -330,7 +330,7 @@ export default function Perfil() {
         </div>
 
         {/* ── Fila 2: Métodos de pago + Categorías ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
 
           <MetodosPagoSection metodos={metodos ?? []} mostrarForm={mostrarFormMetodo} setMostrarForm={setMostrarFormMetodo} />
 
@@ -338,7 +338,7 @@ export default function Perfil() {
         </div>
 
         {/* ── Seguridad ── */}
-        <div id="perfil-seguridad" className="card p-5 scroll-mt-24">
+        <div id="perfil-seguridad" className="card p-4 scroll-mt-24">
           <h2 className="titulo-seccion mb-1 flex items-center gap-2">
             <KeyRound className="w-4 h-4" style={{ color: 'var(--fg-3)' }} /> Seguridad
           </h2>

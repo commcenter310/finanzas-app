@@ -1,3 +1,8 @@
+// Envoltorios de Resumen con las props que ya usan Movimientos y Presupuesto.
+import Resumen, { Aviso, Dato } from '../ui/Resumen'
+
+const TONO = { primary: 'neutral', warning: 'warning', negative: 'negative' }
+
 export function SpendingOverview({
   title,
   amount,
@@ -9,71 +14,25 @@ export function SpendingOverview({
   metrics,
   aside,
 }) {
-  const safeProgress = Math.max(0, Math.min(Number(progress) || 0, 100))
-
+  const nota = [progressLabel, progressEnd].filter(Boolean).join(' · ')
   return (
-    <section className="spending-overview">
-      <div className="spending-overview-main">
-        <div className="spending-overview-copy">
-          <h1>{title}</h1>
-        </div>
-
-        <div className={`spending-overview-amount tone-${tone}`}>
-          {loading ? <i className="spending-overview-skeleton is-amount" /> : <strong>{amount}</strong>}
-        </div>
-
-        {(progressLabel || progressEnd) && (
-          <div className="spending-overview-progress">
-            {loading ? (
-              <i className="spending-overview-skeleton is-progress" />
-            ) : (
-              <>
-                <div>
-                  <span>{progressLabel}</span>
-                  <strong>{progressEnd}</strong>
-                </div>
-                <div className={`spending-overview-track tone-${tone}`}>
-                  <span style={{ width: `${safeProgress}%` }} />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {metrics && (
-          <div className={`spending-overview-metrics ${loading ? 'is-loading' : ''}`}>
-            {loading
-              ? Array.from({ length: 3 }, (_, index) => <i key={index} className="spending-overview-skeleton is-metric" />)
-              : metrics}
-          </div>
-        )}
-      </div>
-      <aside className="spending-overview-aside">
-        {loading ? <i className="spending-overview-skeleton is-signal" /> : aside}
-      </aside>
-    </section>
+    <Resumen
+      titulo={title}
+      cifra={amount}
+      nota={nota || null}
+      tono={TONO[tone] ?? 'neutral'}
+      progreso={progressLabel || progressEnd ? progress : null}
+      desgloses={metrics}
+      aviso={aside}
+      cargando={loading}
+    />
   )
 }
 
-export function SpendingMetric({ label, value, tone = 'neutral' }) {
-  return (
-    <div className={`spending-metric tone-${tone}`}>
-      <span className="spending-metric-copy">
-        <small>{label}</small>
-        <strong>{value}</strong>
-      </span>
-    </div>
-  )
+export function SpendingMetric({ label, value, tone }) {
+  return <Dato label={label} value={value} tone={tone === 'negative' ? 'negative' : 'neutral'} />
 }
 
-export function SpendingSignal({ title, description, action, tone = 'primary' }) {
-  return (
-    <div className={`spending-signal tone-${tone}`}>
-      <div className="spending-signal-copy">
-        <strong>{title}</strong>
-        {description && <p>{description}</p>}
-        {action && <div className="spending-signal-action">{action}</div>}
-      </div>
-    </div>
-  )
+export function SpendingSignal({ title, description, action, tone }) {
+  return <Aviso title={title} description={description} action={action} tone={tone} />
 }

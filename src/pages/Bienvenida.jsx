@@ -139,7 +139,7 @@ export default function Bienvenida() {
         </div>
 
         {/* Tarjeta del paso */}
-        <div className="card p-6 sm:p-8">
+        <div className="card p-4 sm:p-8">
 
           {paso === 0 && (
             <>

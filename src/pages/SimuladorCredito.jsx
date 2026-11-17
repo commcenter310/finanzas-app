@@ -112,7 +112,7 @@ export default function SimuladorCredito() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Inputs */}
-          <div className="card p-5 space-y-4">
+          <div className="card p-4 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Calculator className="w-5 h-5 text-primary-700" />
               <h2 className="titulo-seccion">Datos del crédito</h2>
@@ -195,7 +195,7 @@ export default function SimuladorCredito() {
           </div>
 
           {/* Resultado principal */}
-          <div className="card p-5 flex flex-col justify-center">
+          <div className="card p-4 flex flex-col justify-center">
             {!listo && (
               <div className="text-center text-gray-300 py-8">
                 <Calculator className="w-10 h-10 mx-auto mb-3 opacity-40" />
@@ -220,7 +220,7 @@ export default function SimuladorCredito() {
             {listo && resultado && !resultado.imposible && (() => {
               const dur = duracionLabel(resultado.periodos, esQuincenal)
               return (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h2 className="titulo-seccion">Resultado</h2>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-primary-50 rounded-[var(--r-lg)] p-4 border border-primary-100">
@@ -258,7 +258,7 @@ export default function SimuladorCredito() {
 
         {/* Comparativa de pagos */}
         {listo && resultado && !resultado.imposible && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingDown className="w-5 h-5" style={{ color: 'var(--ahorro-fg)' }} />
               <h2 className="titulo-seccion">¿Qué pasa si pago más?</h2>

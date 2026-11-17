@@ -137,7 +137,7 @@ export default function Ingresos() {
 
   return (
     <Layout titulo="Ingresos">
-      <div className="space-y-4">
+      <div className="space-y-3">
 
         {/* Tarjetas resumen */}
         <div className="stat-strip grid grid-cols-1 sm:grid-cols-3">

@@ -143,7 +143,7 @@ export default function GastosFijos() {
 
   return (
     <Layout titulo="Gastos fijos">
-      <div className="space-y-5">
+      <div className="space-y-3">
 
         {/* Resumen */}
         <div className="stat-strip grid grid-cols-2 lg:grid-cols-4">
@@ -187,7 +187,7 @@ export default function GastosFijos() {
 
         {/* Formulario */}
         {mostrarForm && (
-          <div className="card p-5">
+          <div className="card p-4">
             <h3 className="titulo-seccion mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
               <div className="col-span-2 lg:col-span-1">
@@ -355,7 +355,7 @@ export default function GastosFijos() {
       {/* Diálogo de pago: monto y fecha reales */}
       {pagando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-backdrop-in">
-          <div className="card p-6 w-full max-w-sm shadow-xl animate-modal-in">
+          <div className="card p-4 w-full max-w-sm shadow-xl animate-modal-in">
             <h3 className="titulo-seccion mb-1">
               Pagar: {pagando.concepto}
             </h3>

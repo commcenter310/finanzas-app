@@ -20,8 +20,8 @@ const DashboardCharts = lazyWithRetry(() => import('../components/dashboard/Dash
 function ChartsPlaceholder() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4" aria-hidden="true">
-      <div className="card p-5" style={{ minHeight: 330 }} />
-      <div className="card p-5" style={{ minHeight: 330 }} />
+      <div className="card p-4" style={{ minHeight: 330 }} />
+      <div className="card p-4" style={{ minHeight: 330 }} />
     </div>
   )
 }
@@ -88,11 +88,11 @@ export default function Dashboard() {
 
   return (
     <Layout titulo="Inicio">
-      <div className="space-y-5">
+      <div className="space-y-3">
 
         {/* ── Bienvenida / primeros pasos (usuario nuevo) ── */}
         {sinNada && (
-          <div className="card p-6">
+          <div className="card p-4">
             <h2 className="titulo-seccion mb-1">
               Empecemos por lo básico
             </h2>
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
         {/* ── Proyección del mes (ingreso esperado + saldo proyectado) ── */}
         {!loading && ((ingresoEsperado != null && ingresoEsperado > 0) || (proyeccion.esMesActual && proyeccion.saldoProyectado !== null)) && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="titulo-seccion">
                 Cierre de {MESES[mes - 1].toLowerCase()}
@@ -223,7 +223,7 @@ export default function Dashboard() {
 
         {/* ── Facturas pendientes ── */}
         {!loading && fijosPendientes.length > 0 && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="titulo-seccion">
                 {plural(fijosPendientes.length, 'pago fijo pendiente', 'pagos fijos pendientes')}
@@ -264,7 +264,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Regla 50/30/20 ── */}
-        <div className="card p-5">
+        <div className="card p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-5">
             <h2 className="titulo-seccion">
               Regla {Math.round(reglas.regla_necesidad * 100)}/{Math.round(reglas.regla_deseo * 100)}/{Math.round(reglas.regla_ahorro * 100)}
@@ -273,7 +273,7 @@ export default function Dashboard() {
               gastado / meta según tu ingreso
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {datos5030.map(({ name, actual, meta, fill }) => {
               const pct   = meta > 0 ? Math.min((actual / meta) * 100, 100) : 0
               const sobre = actual > meta
@@ -309,7 +309,7 @@ export default function Dashboard() {
 
         {/* ── Categorías en Riesgo ── */}
         {!loading && categoriasEnRiesgo.length > 0 && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="titulo-seccion">
                 Categorías cerca del límite

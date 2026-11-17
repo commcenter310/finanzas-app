@@ -30,7 +30,7 @@ export default function ProyeccionView() {
   const maxAbs = Math.max(...meses.map(m => Math.abs(m.libre)), 1)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Resumen del horizonte */}
       <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
         <div className="card p-4">

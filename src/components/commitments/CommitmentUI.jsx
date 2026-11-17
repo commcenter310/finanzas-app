@@ -1,50 +1,19 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowRight, X } from 'lucide-react'
+import Resumen, { Aviso, Dato } from '../ui/Resumen'
 
-export function CommitmentHero({
-  title,
-  amount,
-  aside,
-  children,
-}) {
-  return (
-    <section className="commitment-hero">
-      <div className="commitment-hero-main">
-        <div>
-          <h1>{title}</h1>
-        </div>
-        <div className="commitment-hero-balance">
-          <strong>{amount}</strong>
-        </div>
-        {children && <div className="commitment-hero-metrics">{children}</div>}
-      </div>
-      <aside className="commitment-hero-aside">{aside}</aside>
-    </section>
-  )
+// Envoltorios de Resumen con las props que ya usan Deudas y Tarjetas.
+export function CommitmentHero({ title, amount, aside, children }) {
+  return <Resumen titulo={title} cifra={amount} desgloses={children} aviso={aside} />
 }
 
-export function HeroMetric({ label, value, tone = 'default' }) {
-  return (
-    <div className={`commitment-hero-metric tone-${tone}`}>
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </div>
-  )
+export function HeroMetric({ label, value, tone }) {
+  return <Dato label={label} value={value} tone={tone === 'negative' ? 'negative' : 'neutral'} />
 }
 
-export function PriorityPanel({ title, description, action, tone = 'primary' }) {
-  return (
-    <div className={`commitment-priority tone-${tone}`}>
-      <div className="commitment-priority-copy">
-        <strong>{title}</strong>
-        {description && <p>{description}</p>}
-      </div>
-      {action && <div className="commitment-priority-action">{action}</div>}
-    </div>
-  )
+export function PriorityPanel({ title, description, action, tone }) {
+  return <Aviso title={title} description={description} action={action} tone={tone} />
 }
 
 export function SectionHeader({ title, description, action }) {
