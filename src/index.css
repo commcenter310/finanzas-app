@@ -1555,25 +1555,6 @@
   .commitment-strategy-note > strong { display: block; margin-top: 6px; color: var(--fg-1); font-size: 16px; font-weight: 600; line-height: 1.3; }
   .commitment-strategy-note > p { margin-top: 8px; color: var(--fg-3); font-size: 12px; line-height: 1.55; }
 
-  .credit-overview-strip {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .credit-overview-item {
-    min-width: 0;
-    padding: 16px 18px;
-    border-right: 1px solid var(--divider);
-  }
-
-  .credit-overview-item:last-child { border-right: 0; }
-  .credit-overview-item span { display: block; color: var(--fg-3); font-size: 12px; font-weight: 600; }
-  .credit-overview-item strong { display: block; margin-top: 5px; color: var(--fg-1); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .credit-overview-item p { margin-top: 3px; color: var(--fg-4); font-size: 12px; }
 
   .credit-grid {
     display: grid;
@@ -1581,146 +1562,14 @@
     gap: 14px;
   }
 
-  .credit-instrument {
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-  }
 
 
-  .credit-instrument-top {
-    position: relative;
-    padding: 20px;
-  }
 
-  .credit-instrument-top::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary);
-  }
-
-  .credit-instrument-top::before { display: none; }
-
-  .credit-instrument-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .credit-instrument-brand { min-width: 0; }
-  .credit-instrument-brand > span { color: var(--fg-4); font-size: 12px; font-weight: 600; }
-  .credit-instrument-brand h3 { margin-top: 3px; overflow: hidden; color: var(--fg-1); font-size: 17px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-  .credit-instrument-tools { display: flex; gap: 2px; flex: 0 0 auto; }
-  .credit-instrument-tools svg { width: 14px; height: 14px; }
-
-  .credit-instrument-balance {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 14px;
-    margin: 25px 0 17px;
-  }
-
-  .credit-instrument-balance span { display: block; color: var(--fg-3); font-size: 12px; }
-  .credit-instrument-balance strong { display: block; margin-top: 4px; color: var(--fg-1); font-size: 23px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .credit-instrument-pct { color: var(--primary-700); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .credit-instrument-pct.tone-warning { color: var(--warning-fg); }
-  .credit-instrument-pct.tone-negative { color: var(--negative-fg); }
-
-  .credit-instrument-meta {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    padding: 14px 20px;
-    border-top: 1px solid var(--divider);
-    border-bottom: 1px solid var(--divider);
-    background: var(--surface-2);
-  }
-
-  .credit-date-cell {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .credit-date-cell > svg { width: 16px; height: 16px; flex: 0 0 auto; color: var(--fg-4); }
-  .credit-date-cell span, .credit-date-cell strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .credit-date-cell span { color: var(--fg-4); font-size: 12px; font-weight: 600; }
-  .credit-date-cell strong { margin-top: 2px; color: var(--fg-2); font-size: 12px; font-weight: 600; }
-  .credit-date-cell.is-paid > svg, .credit-date-cell.is-paid strong { color: var(--positive-fg); }
-  .credit-date-cell.is-urgent > svg, .credit-date-cell.is-urgent strong { color: var(--negative-fg); }
-
-  .credit-cycle {
-    padding: 17px 20px 19px;
-  }
 
   /* Aviso: parte del saldo no viene de compras registradas en la app */
-  .credit-cycle-note {
-    margin-top: 10px;
-    padding: 8px 10px;
-    border-radius: var(--r-md);
-    background: var(--warning-bg);
-    color: var(--warning-fg);
-    font-size: 12px;
-    line-height: 1.45;
-  }
 
-  .credit-cycle-primary {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 14px;
-  }
 
-  .credit-cycle-primary span { display: block; color: var(--fg-3); font-size: 12px; }
-  .credit-cycle-primary strong { display: block; margin-top: 4px; color: var(--fg-1); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .credit-cycle-primary p { max-width: 180px; color: var(--fg-4); font-size: 12px; line-height: 1.4; text-align: right; }
 
-  .credit-cycle-secondary {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 13px;
-    padding-top: 13px;
-    border-top: 1px solid var(--divider);
-  }
-
-  .credit-cycle-secondary span { display: block; color: var(--fg-4); font-size: 12px; }
-  .credit-cycle-secondary strong { display: block; margin-top: 3px; color: var(--fg-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-  .credit-guidance {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-top: 1px solid var(--divider);
-  }
-
-  .credit-guidance-cell {
-    min-width: 0;
-    padding: 12px 20px;
-  }
-
-  .credit-guidance-cell:first-child { border-right: 1px solid var(--divider); }
-  .credit-guidance-cell span { display: block; color: var(--fg-4); font-size: 12px; font-weight: 600; }
-  .credit-guidance-cell strong { display: block; margin-top: 3px; color: var(--fg-2); font-size: 12px; font-weight: 600; }
-  .credit-guidance-cell.is-good span, .credit-guidance-cell.is-good strong { color: var(--positive-fg); }
-  .credit-guidance-cell.is-bad span, .credit-guidance-cell.is-bad strong { color: var(--negative-fg); }
-
-  .credit-unlinked {
-    padding: 14px 20px;
-    color: var(--fg-3);
-    background: var(--surface-2);
-    font-size: 12px;
-    line-height: 1.45;
-  }
 
   @media (max-width: 1120px) {
     .commitment-debt-main { grid-template-columns: minmax(200px, 1.2fr) minmax(150px, 0.9fr); }
@@ -1744,15 +1593,6 @@
     .commitment-debt-detail { grid-template-columns: minmax(0, 1fr); padding: 15px; }
     .commitment-strategy-item { grid-template-columns: 30px minmax(0, 1fr); padding: 12px; }
     .commitment-strategy-amount { grid-column: 2; }
-    .credit-overview-strip { grid-template-columns: minmax(0, 1fr); }
-    .credit-overview-item { border-right: 0; border-bottom: 1px solid var(--divider); }
-    .credit-overview-item:last-child { border-bottom: 0; }
-    .credit-instrument-top { padding: 18px 16px; }
-    .credit-instrument-meta, .credit-cycle, .credit-unlinked { padding-left: 16px; padding-right: 16px; }
-    .credit-instrument-balance strong { font-size: 20px; }
-    .credit-cycle-primary { align-items: flex-start; flex-direction: column; gap: 7px; }
-    .credit-cycle-primary p { max-width: none; text-align: left; }
-    .credit-guidance-cell { padding: 11px 16px; }
     .commitment-sheet-layer { align-items: flex-end; }
     .commitment-sheet {
       width: 100%;
@@ -2176,6 +2016,7 @@
     .resumen-datos { width: 100%; }
     .resumen-dato { flex: 1; padding: 0 10px; }
     .resumen-dato strong { font-size: 14px; }
+    .resumen-dato span { white-space: normal; font-size: 11px; line-height: 1.25; }
     .resumen-aviso-accion { margin-left: 0; }
   }
 }
@@ -2669,5 +2510,88 @@
   @media (max-width: 640px) {
     .deudas-vista .commitment-segments { width: 100%; }
     .deudas-vista .commitment-segments button { flex: 1; }
+  }
+}
+
+/* ============================================================================
+   TARJETAS — bloque compacto por tarjeta
+   ============================================================================ */
+@layer components {
+  .credit-grid { gap: var(--gap); }
+  @media (max-width: 1023px) {
+    .credit-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .tarjeta {
+    min-width: 0;
+    padding: 12px var(--card-pad) 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+  }
+  .tarjeta.is-urgent { border-color: color-mix(in srgb, var(--negative) 45%, var(--border)); }
+
+  .tarjeta-cabecera { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+  .tarjeta-cabecera h3 { color: var(--fg-1); font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .tarjeta-estados { display: flex; flex-wrap: wrap; gap: 2px 10px; min-width: 0; }
+  .tarjeta-herramientas { display: flex; margin-left: auto; }
+  .tarjeta-herramientas svg { width: 14px; height: 14px; }
+
+  .tarjeta-saldo {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin: 4px 0 6px;
+  }
+  .tarjeta-saldo > strong {
+    color: var(--fg-1);
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tarjeta-saldo > span { color: var(--fg-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .tarjeta-pct { font-weight: 600; color: var(--fg-1); }
+  .tarjeta-pct.tone-warning { color: var(--warning-fg); }
+  .tarjeta-pct.tone-negative { color: var(--negative-fg); }
+
+  /* corte · pago · para no pagar intereses · compras del periodo */
+  .tarjeta-datos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 10px;
+    border-top: 1px solid var(--divider);
+  }
+  .tarjeta-datos > div { min-width: 0; padding: 8px 10px 0; border-left: 1px solid var(--divider); }
+  .tarjeta-datos > div:first-child { padding-left: 0; border-left: 0; }
+  .tarjeta-datos dt { color: var(--fg-3); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tarjeta-datos dd { margin-top: 1px; color: var(--fg-1); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tarjeta-datos dd small { color: var(--fg-3); font-weight: 400; }
+  .tarjeta-datos .is-paid dd { color: var(--positive-fg); }
+  .tarjeta-datos .is-urgent dd { color: var(--negative-fg); }
+  .tarjeta-datos .tarjeta-sin-metodo { grid-column: span 2; }
+  .tarjeta-sin-metodo dd { color: var(--fg-3); font-size: 12px; font-weight: 400; }
+
+  .tarjeta-ventana {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 16px;
+    margin-top: 8px;
+    color: var(--fg-3);
+    font-size: 12px;
+  }
+  .tarjeta-ventana .is-good { color: var(--positive-fg); font-weight: 500; }
+  .tarjeta-ventana .is-bad { color: var(--warning-fg); font-weight: 500; }
+
+  .tarjeta-notas { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--fg-3); }
+  .tarjeta-notas p { display: flex; align-items: flex-start; gap: 5px; }
+  .tarjeta-notas svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 2px; }
+
+  @media (max-width: 640px) {
+    .tarjeta-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tarjeta-datos > div:nth-child(3) { padding-left: 0; border-left: 0; }
+    .tarjeta-datos > div:nth-child(n+3) { border-top: 1px solid var(--divider); margin-top: 8px; }
   }
 }
