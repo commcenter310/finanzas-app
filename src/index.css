@@ -2690,3 +2690,78 @@
     .mov-filtro-select { flex: 1 1 120px; width: auto; }
   }
 }
+
+/* ============================================================================
+   GASTOS FIJOS — línea de totales + filas de una línea
+   ============================================================================ */
+@layer components {
+  .fijos-resumen {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    padding: 10px 14px 8px;
+    color: var(--fg-3);
+    font-size: 13px;
+  }
+  .fijos-resumen strong { color: var(--fg-1); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .fijos-resumen-sep { margin: 0 6px; color: var(--fg-4); }
+  .fijos-barra { height: 3px; background: var(--surface-3); }
+  .fijos-barra > span { display: block; height: 100%; background: var(--fg-1); transition: width var(--dur-slow) var(--ease-out); }
+
+  /* concepto · tipo · detalle · monto · pagado · acciones */
+  .fijo-fila {
+    display: grid;
+    grid-template-columns: minmax(130px, 1.1fr) 90px minmax(0, 1.6fr) 120px 128px 60px;
+    align-items: center;
+    column-gap: 12px;
+    min-height: 44px;
+    padding: 4px 8px 4px 14px;
+    border-top: 1px solid var(--divider);
+    color: var(--fg-1);
+    font-size: 13px;
+  }
+  .fijo-concepto { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 12px; }
+  .fijo-abrir {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+  }
+  .fijo-abrir:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .fijo-detalle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-3); }
+  .fijo-monto { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fijo-monto small { display: block; color: var(--fg-3); font-size: 11px; font-weight: 400; }
+  .fijo-check { justify-self: end; }
+  .fijo-acciones { display: flex; justify-content: flex-end; }
+  .fijo-meta { display: none; }
+
+  @media (max-width: 840px) {
+    .fijo-fila {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "concepto monto" "meta check";
+      row-gap: 4px;
+      padding: 8px 14px;
+    }
+    .fijo-concepto { grid-area: concepto; }
+    .fijo-abrir { font-size: 14px; padding: 2px 0; }
+    .fijo-monto { grid-area: monto; }
+    .fijo-check { grid-area: check; }
+    .fijo-meta {
+      grid-area: meta;
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--fg-3);
+      font-size: 12px;
+    }
+    .fijo-meta .badge-necesidad, .fijo-meta .badge-deseo, .fijo-meta .badge-ahorro { display: inline-flex; }
+    .fijo-tipo, .fijo-detalle, .fijo-acciones { display: none; }
+  }
+}

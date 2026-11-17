@@ -141,49 +141,15 @@ export default function GastosFijos() {
     )
   }
 
+  const abrirNuevo = () => { cerrarForm(); setMostrarForm(v => !v) }
+
   return (
-    <Layout titulo="Gastos fijos">
+    <Layout titulo="Gastos fijos" acciones={(
+      <button type="button" onClick={abrirNuevo} className="btn-primary">
+        <Plus className="w-4 h-4" aria-hidden="true" /> <span>Agregar gasto fijo</span>
+      </button>
+    )}>
       <div className="space-y-3">
-
-        {/* Resumen */}
-        <div className="stat-strip grid grid-cols-2 lg:grid-cols-4">
-          <div className="card p-4">
-            <p className="stat-label">Por pagar</p>
-            <p className="stat-value">
-              {formatMXN(totales.porPagar)}
-            </p>
-          </div>
-          <div className="card p-4">
-            <p className="stat-label">Ya pagado</p>
-            <p className="stat-value">
-              {formatMXN(totales.actual)}
-            </p>
-          </div>
-          <div className="card p-4">
-            <p className="stat-label">Total del mes</p>
-            <p className="stat-value">{formatMXN(totales.previsto)}</p>
-          </div>
-          <div className="card p-4">
-            <p className="stat-label">Pagados</p>
-            <p className="stat-value">{pagados} de {total}</p>
-          </div>
-        </div>
-
-        {/* Barra de progreso */}
-        {total > 0 && (
-          <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}
-            role="progressbar" aria-valuenow={Math.round(pctPagado)} aria-valuemin={0} aria-valuemax={100} aria-label="Gastos fijos pagados">
-            <div className="h-full rounded-full bar-fill" style={{ width: `${pctPagado}%`, background: 'var(--fg-1)' }} />
-          </div>
-        )}
-
-        {/* Acciones */}
-        <div className="flex justify-end gap-2">
-          <button onClick={() => { cerrarForm(); setMostrarForm(v => !v) }}
-            className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Agregar gasto fijo
-          </button>
-        </div>
 
         {/* Formulario */}
         {mostrarForm && (
@@ -237,18 +203,24 @@ export default function GastosFijos() {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
                 <input type="checkbox" className="accent-primary-700 w-4 h-4"
                   checked={form.es_recurrente} onChange={e => setF('es_recurrente', e.target.checked)} />
                 Se repite cada mes
               </label>
               <div className="flex gap-2">
-                <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>
-                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
-                </button>
+                {editandoId && (
+                  <button className="btn-ghost" style={{ color: 'var(--negative-fg)' }}
+                    onClick={() => { const g = gastos.find(x => x.id === editandoId); cerrarForm(); setConfirmDelete(g) }}>
+                    <Trash2 className="w-4 h-4" aria-hidden="true" /> Eliminar
+                  </button>
+                )}
                 <button className="btn-ghost" onClick={cerrarForm}>
                   Cancelar
+                </button>
+                <button className="btn-primary" onClick={handleGuardar} disabled={saving}>
+                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -274,64 +246,68 @@ export default function GastosFijos() {
             }
           />
         ) : (
-          <div className="card divide-y divide-[var(--divider)]">
-            {gastos.map(g => {
-              const u = urgencia(g)
-              const met = metodos.find(m => m.id === g.metodo_pago_id)
-              const detalle = [
-                g.dia_cobro ? `día ${g.dia_cobro}` : null,
-                g.categorias?.nombre,
-                met?.nombre,
-                g.es_recurrente ? 'cada mes' : null,
-              ].filter(Boolean).join(' · ')
-              return (
-                <div key={g.id} className="group px-4 sm:px-5 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div className="min-w-0 flex-1 basis-48">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{g.concepto}</p>
-                      {u === 'vencido' && <span className="text-[13px] font-medium" style={{ color: 'var(--negative-fg)' }}>vencido</span>}
-                      {u === 'proximo' && <span className="text-[13px] font-medium" style={{ color: 'var(--warning-fg)' }}>vence pronto</span>}
-                    </div>
-                    <div className="flex items-center gap-3 mt-0.5 flex-wrap text-[13px]" style={{ color: 'var(--fg-3)' }}>
-                      <span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span>
-                      {detalle && <span>{detalle}</span>}
-                    </div>
-                  </div>
-
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-medium text-sm tabular" style={{ color: 'var(--fg-1)' }}>
+          <section className="card">
+            <div className="fijos-resumen">
+              <p>
+                Por pagar <strong>{formatMXN(totales.porPagar)}</strong>
+                <span className="fijos-resumen-sep">·</span>
+                pagado {formatMXN(totales.actual)} de {formatMXN(totales.previsto)}
+              </p>
+              <p className="tabular">{pagados} de {total} pagados</p>
+            </div>
+            <div className="fijos-barra" role="progressbar" aria-valuenow={Math.round(pctPagado)} aria-valuemin={0} aria-valuemax={100} aria-label="Gastos fijos pagados">
+              <span style={{ width: `${pctPagado}%` }} />
+            </div>
+            <ul>
+              {gastos.map(g => {
+                const u = urgencia(g)
+                const met = metodos.find(m => m.id === g.metodo_pago_id)
+                const detalle = [
+                  g.dia_cobro ? `día ${g.dia_cobro}` : null,
+                  g.categorias?.nombre,
+                  met?.nombre,
+                  g.es_recurrente ? 'cada mes' : null,
+                ].filter(Boolean).join(' · ')
+                return (
+                  <li key={g.id} className="fijo-fila group">
+                    <span className="fijo-concepto">
+                      <button type="button" className="fijo-abrir" onClick={() => abrirEditar(g)} title="Editar">{g.concepto}</button>
+                      {u === 'vencido' && <span style={{ color: 'var(--negative-fg)' }}>vencido</span>}
+                      {u === 'proximo' && <span style={{ color: 'var(--warning-fg)' }}>vence pronto</span>}
+                    </span>
+                    <span className={`badge-${g.clasificacion} fijo-tipo`}>{g.clasificacion}</span>
+                    <span className="fijo-detalle">{detalle}</span>
+                    <span className="fijo-monto">
                       {formatMXN(g.pagado && Number(g.monto_actual) > 0 ? g.monto_actual : g.monto_previsto)}
-                    </p>
-                    {g.pagado && g.fecha_pago && (
-                      <p className="text-[13px]" style={{ color: 'var(--fg-3)' }}>pagado el {fechaCorta(g.fecha_pago)}</p>
-                    )}
-                  </div>
-
-                  {/* Al marcar pide monto/fecha reales; desmarcar es directo */}
-                  <button
-                    onClick={() => g.pagado ? desmarcarPago(g) : abrirDialogoPago(g)}
-                    disabled={saving}
-                    className={`btn-check ${g.pagado ? 'is-on' : ''}`}
-                    title={g.pagado ? 'Desmarcar el pago' : undefined}
-                  >
-                    {g.pagado
-                      ? <><CheckCircle2 className="w-4 h-4" /> Pagado</>
-                      : <><Circle className="w-4 h-4" /> Marcar pagado</>
-                    }
-                  </button>
-
-                  <div className="acciones-hover flex gap-1 flex-shrink-0">
-                    <button onClick={() => abrirEditar(g)} aria-label={`Editar ${g.concepto}`} title="Editar" className="icon-button icon-button-sm">
-                      <Pencil className="w-3.5 h-3.5" />
+                      {g.pagado && g.fecha_pago && <small>pagado el {fechaCorta(g.fecha_pago)}</small>}
+                    </span>
+                    {/* Al marcar pide monto/fecha reales; desmarcar es directo */}
+                    <button
+                      onClick={() => g.pagado ? desmarcarPago(g) : abrirDialogoPago(g)}
+                      disabled={saving}
+                      className={`btn-check fijo-check ${g.pagado ? 'is-on' : ''}`}
+                      title={g.pagado ? 'Desmarcar el pago' : undefined}
+                    >
+                      {g.pagado
+                        ? <><CheckCircle2 className="w-4 h-4" aria-hidden="true" /> Pagado</>
+                        : <><Circle className="w-4 h-4" aria-hidden="true" /> Marcar pagado</>}
                     </button>
-                    <button onClick={() => setConfirmDelete(g)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar" className="icon-button icon-button-sm">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                    <span className="acciones-hover fijo-acciones">
+                      <button onClick={() => abrirEditar(g)} aria-label={`Editar ${g.concepto}`} title="Editar" className="icon-button icon-button-sm">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => setConfirmDelete(g)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar" className="icon-button icon-button-sm">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                    <span className="fijo-meta">
+                      <span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span>{detalle && ` · ${detalle}`}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
         )}
 
       </div>
