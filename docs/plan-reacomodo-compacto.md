@@ -1,5 +1,10 @@
 # Plan: reacomodo y compactación de la app
 
+> **Estado: ejecutado (17 nov 2026)** en la rama `claude/busy-ramanujan-tgpwcd`,
+> una fase o pantalla por commit. Resultado medido al final (sección 9). Las
+> reglas que quedaron vigentes están resumidas en `CLAUDE.md` ("Navigation" y
+> "Design system"); este documento queda como registro de las decisiones.
+
 Documento de trabajo para que lo ejecute un agente de IA (o una persona) sin más
 contexto que este archivo y el repositorio. Está escrito para seguirse de arriba
 abajo, una fase por commit.
@@ -375,3 +380,37 @@ Confirmadas el 17 nov 2026: todas con su valor por defecto, salvo la 2.
    botones en cada fila. Por defecto: sí.
 4. **Quitar la gráfica "Límite contra gasto" de Presupuesto.** Por defecto: sí.
 5. **Tarjetas como bloque compacto** en vez de ficha grande. Por defecto: sí.
+
+## 9. Resultado (17 nov 2026)
+
+Alto total de página en px, datos ficticios (`scripts/capturas/capturar.mjs`).
+"900" en escritorio y "844" en móvil significan que la pantalla cabe sin scroll.
+
+| Pantalla | Escritorio antes → después | Meta | Móvil antes → después | Meta |
+|---|---:|---:|---:|---:|
+| Inicio | 2591 → 900 | ≤ 1400 | 3460 → 1699 | ≤ 2300 |
+| Movimientos (17 filas) | 1776 → 1118 | ≤ 1150 | 4208 → 1727 | ≤ 1900 |
+| Presupuesto | 1549 → 900 | ≤ 1100 | 2825 → 1168 | ≤ 1700 |
+| Tarjetas | 1234 → 900 | ≤ 950 | 2520 → 1087 | ≤ 1700 |
+| Deudas | 958 → 900 | ≤ 900 | 1940 → 1113 | ≤ 1300 |
+| Tendencias | 1742 → 1124 | ≤ 1500 | 1898 → 1525 | ≤ 1900 |
+| Configuración | 1460 → 1138 | ≤ 1200 | 2321 → 1970 | ≤ 2000 |
+| Fijos | 900 → 900 | — | 1316 → 844 | — |
+| Plan (quincena) | 900 → 900 | — | 1040 → 844 | — |
+| WhatsApp | 900 → 900 | — | 1038 → 844 | — |
+
+En 1280×720, Inicio cabe completo (881 px). Ninguna pantalla desborda a lo
+ancho en 390 px.
+
+Diferencias con el plan:
+
+- La dona se quedó en Inicio (decisión del dueño); Tendencias solo ganó
+  densidad (sus dos primeras gráficas van lado a lado).
+- El bloque aparte de gastos hormiga en Inicio se quitó: ya sale como aviso en
+  "Por atender" cuando hay 3 o más.
+- "Por atender" omite los avisos que Inicio ya muestra (disponible, pagos
+  fijos, categoría); para eso `buildDashboardInsights` acepta `{ omitir }`.
+- En Movimientos se quitó el botón "Registrar gasto" de la página: repetía el
+  "Registrar" de la barra superior y el (+) de la barra inferior.
+- `SpendingOverview` y `CommitmentHero` quedaron como envoltorios de `Resumen`
+  en vez de borrarse, para no tocar dos veces cada página.

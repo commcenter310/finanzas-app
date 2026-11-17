@@ -16,18 +16,6 @@ export function PriorityPanel({ title, description, action, tone }) {
   return <Aviso title={title} description={description} action={action} tone={tone} />
 }
 
-export function SectionHeader({ title, description, action }) {
-  return (
-    <div className="commitment-section-header">
-      <div>
-        <h2>{title}</h2>
-        {description && <span>{description}</span>}
-      </div>
-      {action && <div className="commitment-section-action">{action}</div>}
-    </div>
-  )
-}
-
 export function StatusPill({ tone = 'neutral', icon: Icon, children }) {
   return (
     <span className={`commitment-pill tone-${tone}`}>

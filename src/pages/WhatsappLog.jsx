@@ -18,7 +18,7 @@ export default function WhatsappLog() {
       <div className="space-y-3">
 
         {/* Stats */}
-        <div className="stat-strip grid grid-cols-1 sm:grid-cols-3">
+        <div className="stat-strip grid grid-cols-3">
           <div className="card p-4">
             <p className="stat-label">Mensajes</p>
             <p className="stat-value">{logs.length}</p>
@@ -60,7 +60,7 @@ export default function WhatsappLog() {
             ].map(([label, ejemplo]) => (
               <div key={label}>
                 <span className="font-semibold">{label}:</span>{' '}
-                <code className="bg-primary-100 px-1 rounded text-xs">{ejemplo}</code>
+                <code className="px-1 rounded text-xs bg-[var(--surface-3)] text-[var(--fg-2)]">{ejemplo}</code>
               </div>
             ))}
           </div>

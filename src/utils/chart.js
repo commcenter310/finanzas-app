@@ -1,4 +1,4 @@
-export const chartAxisTick = {
+const chartAxisTick = {
   fill: 'var(--fg-3)',
   fontSize: 12,
 }
