@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
-  CalendarDays,
   CircleDollarSign,
   Download,
   Landmark,
@@ -29,10 +28,8 @@ import ErrorState from '../components/ui/ErrorState'
 import FilterSelect from '../components/ui/FilterSelect'
 import { useToast } from '../components/ui/Toast'
 import {
-  SectionHeader,
   SegmentedControl,
   Sheet,
-  StatusPill,
 } from '../components/commitments/CommitmentUI'
 import {
   SpendingMetric,
@@ -44,7 +41,7 @@ import { useMes } from '../context/MesContext'
 import { useTransacciones } from '../hooks/useTransacciones'
 import { mensajeErrorOperacion } from '../utils/operaciones'
 import { CLASIF_OPTS, formatMXN, MESES } from '../utils/constantes'
-import { fechaLocalISO } from '../utils/fecha'
+import { fechaCorta, fechaLocalISO } from '../utils/fecha'
 import { esGastoHormiga } from '../utils/calculos'
 import { plural } from '../utils/texto'
 
@@ -104,26 +101,16 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url)
 }
 
-function fechaCorta(fecha) {
-  const [, mes, dia] = String(fecha ?? '').split('-').map(Number)
-  if (!mes || !dia) return fecha
-  return `${String(dia).padStart(2, '0')} ${MESES[mes - 1].slice(0, 3).toLowerCase()}`
-}
-
-function MovimientoBadges({ transaccion }) {
+// Origen (gasto fijo, WhatsApp…) y meses sin intereses, como texto gris junto a la descripción
+function EtiquetasMovimiento({ transaccion }) {
   const origen = ORIGEN_META[transaccion.origen]
   const OrigenIcon = origen?.icon
-
+  if (!origen && !transaccion.msi_meses) return null
   return (
-    <div className="spending-row-badges">
-      <span className={`badge-${transaccion.clasificacion}`}>{transaccion.clasificacion}</span>
-      {origen && (
-        <StatusPill icon={OrigenIcon}>{origen.label}</StatusPill>
-      )}
-      {transaccion.msi_meses && (
-        <StatusPill>{transaccion.msi_meses} MSI</StatusPill>
-      )}
-    </div>
+    <span className="mov-etiquetas">
+      {origen && <span><OrigenIcon aria-hidden="true" />{origen.label}</span>}
+      {transaccion.msi_meses && <span>{transaccion.msi_meses} MSI</span>}
+    </span>
   )
 }
 
@@ -353,75 +340,65 @@ export default function ControlGastos() {
           )}
         />
 
-        <SectionHeader
-          title="Movimientos"
-          description={hayFiltros ? `${filtradas.length} de ${transacciones.length} con los filtros actuales` : plural(transacciones.length, 'movimiento')}
-        />
-
         <section className="spending-ledger">
-          <div className="spending-filters">
-            <div className="spending-filter-primary">
-              <label className="spending-search">
-                <Search aria-hidden="true" />
-                <input
-                  className="input"
-                  placeholder="Buscar descripción"
-                  value={busqueda}
-                  onChange={event => setBusqueda(event.target.value)}
-                />
-              </label>
-              <SegmentedControl
-                ariaLabel="Filtrar por clasificación"
-                value={filtroClasif}
-                options={CLASIF_SEGMENTS}
-                onChange={setFiltroClasif}
+          <div className="mov-filtros">
+            <label className="mov-buscar">
+              <Search aria-hidden="true" />
+              <input
+                className="input"
+                placeholder="Buscar"
+                aria-label="Buscar por descripción"
+                value={busqueda}
+                onChange={event => setBusqueda(event.target.value)}
               />
-            </div>
-
-            <div className="spending-filter-secondary">
-              <FilterSelect
-                className="spending-filter-select"
-                value={filtroCategoria}
-                onChange={setFiltroCategoria}
-                options={categorias.map(categoria => ({ value: categoria.id, label: categoria.nombre, icon: categoria.icono }))}
-                placeholder="Todas las categorías"
-                searchable
-                searchPlaceholder="Buscar categoría"
-              />
-              <FilterSelect
-                className="spending-filter-select"
-                value={filtroOrigen}
-                onChange={setFiltroOrigen}
-                options={ORIGEN_OPTS}
-                placeholder="Todos los orígenes"
-              />
-              <button
-                type="button"
-                onClick={() => setSoloHormiga(current => !current)}
-                className={`spending-filter-toggle ${soloHormiga ? 'is-active' : ''}`}
-                aria-pressed={soloHormiga}
-              >
-                <CircleDollarSign aria-hidden="true" />
-                Gastos hormiga
-              </button>
-              <div className="spending-filter-actions">
-                {hayFiltros && (
-                  <button type="button" onClick={limpiarFiltros} className="icon-button" aria-label="Limpiar filtros" title="Limpiar filtros">
-                    <X aria-hidden="true" />
-                  </button>
-                )}
-                {filtradas.length > 0 && (
-                  <button type="button" onClick={exportarCSV} className="icon-button" aria-label="Exportar movimientos" title="Exportar movimientos">
-                    <Download aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            </div>
+            </label>
+            <SegmentedControl
+              ariaLabel="Filtrar por clasificación"
+              value={filtroClasif}
+              options={CLASIF_SEGMENTS}
+              onChange={setFiltroClasif}
+            />
+            <FilterSelect
+              className="mov-filtro-select"
+              value={filtroCategoria}
+              onChange={setFiltroCategoria}
+              options={categorias.map(categoria => ({ value: categoria.id, label: categoria.nombre, icon: categoria.icono }))}
+              placeholder="Categoría"
+              searchable
+              searchPlaceholder="Buscar categoría"
+            />
+            <FilterSelect
+              className="mov-filtro-select"
+              value={filtroOrigen}
+              onChange={setFiltroOrigen}
+              options={ORIGEN_OPTS}
+              placeholder="Origen"
+            />
+            <button
+              type="button"
+              onClick={() => setSoloHormiga(current => !current)}
+              className={`mov-filtro-toggle ${soloHormiga ? 'is-active' : ''}`}
+              aria-pressed={soloHormiga}
+            >
+              Hormiga
+            </button>
           </div>
 
-          <div className="spending-ledger-summary">
-            <span>{hayFiltros ? 'Subtotal filtrado' : 'Total del periodo'}</span>
-            <strong>-{formatMXN(subtotal)}</strong>
+          <div className="mov-resumen">
+            <span>
+              {hayFiltros ? `${filtradas.length} de ${transacciones.length}` : plural(transacciones.length, 'movimiento')}
+              {hayFiltros && (
+                <button type="button" onClick={limpiarFiltros} className="mov-limpiar">Limpiar filtros</button>
+              )}
+            </span>
+            <span className="mov-resumen-total">
+              {hayFiltros ? 'Subtotal' : 'Total'} <strong>{formatMXN(subtotal)}</strong>
+              {filtradas.length > 0 && (
+                <button type="button" onClick={exportarCSV} className="icon-button icon-button-sm" aria-label="Exportar a CSV" title="Exportar a CSV">
+                  <Download aria-hidden="true" />
+                </button>
+              )}
+            </span>
           </div>
 
           {loading ? (
@@ -433,9 +410,9 @@ export default function ControlGastos() {
               icon={hayFiltros ? Search : ReceiptText}
               title={hayFiltros ? 'Ningún gasto coincide' : 'Sin gastos este mes'}
               description={hayFiltros
-                ? 'Ajusta la busqueda o limpia los filtros activos.'
-                : 'Tu bitácora comenzará con el primer movimiento del periodo.'}
-              className="min-h-[260px]"
+                ? 'Cambia la búsqueda o limpia los filtros.'
+                : 'Cuando registres un gasto aparecerá aquí.'}
+              className="min-h-[180px] m-3"
               action={hayFiltros ? (
                 <button type="button" onClick={limpiarFiltros} className="btn-secondary text-sm">
                   <X aria-hidden="true" /> Limpiar filtros
@@ -448,53 +425,63 @@ export default function ControlGastos() {
             />
           ) : (
             <>
-              <div className="spending-table spending-table-head" aria-hidden="true">
+              <div className="mov-fila mov-cabecera" aria-hidden="true">
                 <span>Fecha</span>
                 <span>Movimiento</span>
+                <span>Tipo</span>
                 <span>Categoría</span>
                 <span>Método</span>
-                <span>Monto</span>
+                <span className="text-right">Monto</span>
                 <span />
               </div>
-              <div className="spending-rows">
+              <ul>
                 {filtradas.map(transaccion => {
                   const esAuto = ['gastos_fijos', 'deuda', 'ahorro'].includes(transaccion.origen)
+                  const categoria = transaccion.categorias?.nombre ?? 'Sin categoría'
+                  const metodo = transaccion.metodos_pago?.nombre ?? 'Sin método'
                   return (
-                    <article key={transaccion.id} className="spending-table spending-row">
-                      <div className="spending-row-date">
-                        <CalendarDays aria-hidden="true" />
-                        <span>{fechaCorta(transaccion.fecha)}</span>
-                      </div>
-                      <div className="spending-row-main">
-                        <strong>{transaccion.descripcion}</strong>
-                        <MovimientoBadges transaccion={transaccion} />
-                      </div>
-                      <div className="spending-row-category">
-                        <span>{transaccion.categorias?.icono ?? '–'}</span>
-                        <strong>{transaccion.categorias?.nombre ?? 'Sin categoría'}</strong>
-                      </div>
-                      <span className="spending-row-method">{transaccion.metodos_pago?.nombre ?? 'No especificado'}</span>
-                      <strong className="spending-row-amount">-{formatMXN(transaccion.monto)}</strong>
-                      <div className="spending-row-actions">
+                    <li key={transaccion.id} className="mov-fila group">
+                      <span className="mov-fecha">{fechaCorta(transaccion.fecha)}</span>
+                      <span className="mov-desc">
                         {esAuto ? (
-                          <span className="icon-button is-static" title="Se edita desde su módulo de origen">
+                          <span className="mov-desc-texto" title="Se edita desde su módulo de origen">{transaccion.descripcion}</span>
+                        ) : (
+                          // Tocar la descripción abre el panel para editar (y, desde ahí, eliminar)
+                          <button type="button" className="mov-desc-texto mov-abrir" onClick={() => abrirEditar(transaccion)}>
+                            {transaccion.descripcion}
+                          </button>
+                        )}
+                        <EtiquetasMovimiento transaccion={transaccion} />
+                      </span>
+                      <span className={`badge-${transaccion.clasificacion} mov-tipo`}>{transaccion.clasificacion}</span>
+                      <span className="mov-categoria">{categoria}</span>
+                      <span className="mov-metodo">{metodo}</span>
+                      <span className="mov-monto">{formatMXN(transaccion.monto)}</span>
+                      <span className="mov-acciones">
+                        {esAuto ? (
+                          <span className="icon-button icon-button-sm is-static" title="Se edita desde su módulo de origen" aria-label="Se edita desde su módulo de origen">
                             <Lock aria-hidden="true" />
                           </span>
                         ) : (
-                          <>
-                            <button type="button" onClick={() => abrirEditar(transaccion)} className="icon-button" aria-label={`Editar ${transaccion.descripcion}`} title="Editar">
+                          <span className="acciones-hover flex">
+                            <button type="button" onClick={() => abrirEditar(transaccion)} className="icon-button icon-button-sm" aria-label={`Editar ${transaccion.descripcion}`} title="Editar">
                               <Pencil aria-hidden="true" />
                             </button>
-                            <button type="button" onClick={() => setConfirmDelete(transaccion)} className="icon-button is-danger" aria-label={`Eliminar ${transaccion.descripcion}`} title="Eliminar">
+                            <button type="button" onClick={() => setConfirmDelete(transaccion)} className="icon-button icon-button-sm is-danger" aria-label={`Eliminar ${transaccion.descripcion}`} title="Eliminar">
                               <Trash2 aria-hidden="true" />
                             </button>
-                          </>
+                          </span>
                         )}
-                      </div>
-                    </article>
+                      </span>
+                      {/* Móvil: segunda línea con los datos de las columnas */}
+                      <span className="mov-meta">
+                        {fechaCorta(transaccion.fecha)} · <span className={`badge-${transaccion.clasificacion}`}>{transaccion.clasificacion}</span> · {categoria} · {metodo}
+                        {esAuto && <Lock className="mov-meta-candado" aria-label="Se edita desde su módulo de origen" />}
+                      </span>
+                    </li>
                   )
                 })}
-              </div>
+              </ul>
             </>
           )}
         </section>
@@ -504,9 +491,23 @@ export default function ControlGastos() {
         open={mostrarForm}
         onClose={cerrarForm}
         title={editandoId ? 'Editar movimiento' : 'Registrar gasto'}
-        description={editandoId ? 'Actualiza los datos del movimiento seleccionado.' : 'Se suma a los gastos del mes de la fecha que elijas.'}
+        description={editandoId ? null : 'Se suma a los gastos del mes de la fecha que elijas.'}
         footer={(
           <>
+            {editandoId && (
+              <button
+                type="button"
+                className="btn-ghost mr-auto"
+                style={{ color: 'var(--negative-fg)' }}
+                onClick={() => {
+                  const transaccion = transaccionOriginal
+                  cerrarForm()
+                  setConfirmDelete(transaccion)
+                }}
+              >
+                <Trash2 className="w-4 h-4" aria-hidden="true" /> Eliminar
+              </button>
+            )}
             <button type="button" className="btn-ghost" onClick={cerrarForm}>Cancelar</button>
             <button
               type="button"
@@ -602,7 +603,7 @@ export default function ControlGastos() {
       <ConfirmModal
         open={Boolean(confirmDelete)}
         titulo="¿Eliminar gasto?"
-        descripcion={confirmDelete ? `${confirmDelete.descripcion} — ${confirmDelete.fecha}` : ''}
+        descripcion={confirmDelete ? `${confirmDelete.descripcion} — ${fechaCorta(confirmDelete.fecha)} — ${formatMXN(confirmDelete.monto)}` : ''}
         onConfirm={async () => {
           const resultado = await eliminar(confirmDelete)
           setConfirmDelete(null)
