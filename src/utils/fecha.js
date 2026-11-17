@@ -54,3 +54,14 @@ export const ultimosMeses = (n, hoy = new Date()) =>
     const d = new Date(hoy.getFullYear(), hoy.getMonth() - (n - 1 - k), 1)
     return { mes: d.getMonth() + 1, anio: d.getFullYear() }
   })
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+// '2026-11-04' → '4 nov'. Se lee del texto (no con Date) para que la zona
+// horaria no mueva el día. Si no es una fecha ISO devuelve el valor tal cual.
+export const fechaCorta = (fechaISO) => {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaISO ?? '')
+  if (!partes) return fechaISO ?? ''
+  const mes = MESES_CORTOS[Number(partes[2]) - 1]
+  return mes ? `${Number(partes[3])} ${mes}` : fechaISO
+}

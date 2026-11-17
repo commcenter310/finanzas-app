@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/layout/Layout'
 import { useGastosFijos } from '../hooks/useGastosFijos'
 import { CLASIF_OPTS, formatMXN } from '../utils/constantes'
-import { Plus, Trash2, Repeat, CheckCircle2, Circle, CalendarClock, AlertCircle, Pencil } from 'lucide-react'
+import { Plus, Trash2, Repeat, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
 import DatePicker   from '../components/ui/DatePicker'
 import ErrorState   from '../components/ui/ErrorState'
 import EmptyState   from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
-import { contextoMes, fechaLocalISO } from '../utils/fecha'
+import { contextoMes, fechaCorta, fechaLocalISO } from '../utils/fecha'
 import { urgenciaGastoFijo } from '../utils/calculos'
 import { esDiaDelMesOpcional, esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import { useMes } from '../context/MesContext'
@@ -28,7 +28,7 @@ export default function GastosFijos() {
   useEffect(() => {
     if (autoCopiadosCount > 0 && autoCopiadosCount !== prevAutoCopRef.current) {
       prevAutoCopRef.current = autoCopiadosCount
-      toast(`✅ ${plural(autoCopiadosCount, 'gasto recurrente cargado', 'gastos recurrentes cargados')} para este mes`, 'success')
+      toast(`${plural(autoCopiadosCount, 'gasto recurrente cargado', 'gastos recurrentes cargados')} para este mes`, 'success')
     }
   }, [autoCopiadosCount, toast])
 
@@ -62,7 +62,7 @@ export default function GastosFijos() {
       toast(mensajeErrorOperacion(resultado.error), 'error')
       return
     }
-    toast('Pago registrado ✓', 'success')
+    toast('Pago registrado', 'success')
     setPagando(null)
   }
 
@@ -122,7 +122,7 @@ export default function GastosFijos() {
       toast('No se pudo guardar el gasto fijo. Intenta de nuevo.', 'error')
       return
     }
-    toast(editandoId ? 'Gasto fijo actualizado ✓' : 'Gasto fijo guardado ✓', 'success')
+    toast(editandoId ? 'Gasto fijo actualizado' : 'Gasto fijo guardado', 'success')
     cerrarForm()
   }
 
@@ -135,66 +135,26 @@ export default function GastosFijos() {
 
   if (error && !loading && gastos.length === 0) {
     return (
-      <Layout titulo="Gastos Fijos">
+      <Layout titulo="Gastos fijos">
         <ErrorState onRetry={refetch} mensaje={error} />
       </Layout>
     )
   }
 
+  const abrirNuevo = () => { cerrarForm(); setMostrarForm(v => !v) }
+
   return (
-    <Layout titulo="Gastos Fijos">
-      <div className="space-y-5">
-
-        {/* Resumen */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Por pagar</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>
-              {formatMXN(totales.porPagar)}
-            </p>
-          </div>
-          <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Ya pagado</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>
-              {formatMXN(totales.actual)}
-            </p>
-          </div>
-          <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total del mes</p>
-            <p className="text-xl font-bold font-mono text-gray-700">{formatMXN(totales.previsto)}</p>
-          </div>
-          <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Progreso</p>
-            <p className="text-xl font-bold font-mono text-primary-700">{pagados}/{total} facturas</p>
-          </div>
-        </div>
-
-        {/* Barra de progreso */}
-        {total > 0 && (
-          <div className="card px-5 py-3">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-semibold text-gray-700">Facturas pagadas este mes</span>
-              <span className="font-mono text-gray-500">{pctPagado.toFixed(0)}%</span>
-            </div>
-            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bar-fill"
-                style={{ width: `${pctPagado}%`, background: 'var(--ahorro)' }} />
-            </div>
-          </div>
-        )}
-
-        {/* Acciones */}
-        <div className="flex justify-end gap-2">
-          <button onClick={() => { cerrarForm(); setMostrarForm(v => !v) }}
-            className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Agregar gasto fijo
-          </button>
-        </div>
+    <Layout titulo="Gastos fijos" acciones={(
+      <button type="button" onClick={abrirNuevo} className="btn-primary">
+        <Plus className="w-4 h-4" aria-hidden="true" /> <span>Agregar gasto fijo</span>
+      </button>
+    )}>
+      <div className="space-y-3">
 
         {/* Formulario */}
         {mostrarForm && (
-          <div className="card p-5 border-2 border-primary-100">
-            <h3 className="font-bold text-gray-900 mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
+          <div className="card p-4">
+            <h3 className="titulo-seccion mb-4">{editandoId ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}</h3>
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
               <div className="col-span-2 lg:col-span-1">
                 <label className="label">Concepto</label>
@@ -238,24 +198,29 @@ export default function GastosFijos() {
                 <FilterSelect
                   value={form.metodo_pago_id}
                   onChange={v => setF('metodo_pago_id', v)}
-                  options={metodos.map(m => ({ value: m.id, label: m.credito_id ? `💳 ${m.nombre}` : m.nombre }))}
+                  options={metodos.map(m => ({ value: m.id, label: m.nombre }))}
                   placeholder="Sin método"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
                 <input type="checkbox" className="accent-primary-700 w-4 h-4"
                   checked={form.es_recurrente} onChange={e => setF('es_recurrente', e.target.checked)} />
-                <Repeat className="w-3.5 h-3.5 text-gray-400" />
                 Se repite cada mes
               </label>
               <div className="flex gap-2">
-                <button className="btn-primary px-6" onClick={handleGuardar} disabled={saving}>
-                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
-                </button>
+                {editandoId && (
+                  <button className="btn-ghost" style={{ color: 'var(--negative-fg)' }}
+                    onClick={() => { const g = gastos.find(x => x.id === editandoId); cerrarForm(); setConfirmDelete(g) }}>
+                    <Trash2 className="w-4 h-4" aria-hidden="true" /> Eliminar
+                  </button>
+                )}
                 <button className="btn-ghost" onClick={cerrarForm}>
                   Cancelar
+                </button>
+                <button className="btn-primary" onClick={handleGuardar} disabled={saving}>
+                  {saving ? 'Guardando...' : editandoId ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -264,9 +229,9 @@ export default function GastosFijos() {
 
         {/* Tarjetas */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-2">
             {Array(4).fill(0).map((_, i) => (
-              <div key={i} className="card h-32 animate-pulse bg-gray-50" />
+              <div key={i} className="card h-14 animate-pulse" />
             ))}
           </div>
         ) : gastos.length === 0 ? (
@@ -281,107 +246,68 @@ export default function GastosFijos() {
             }
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-            {gastos.map(g => {
-              const u = urgencia(g)
-              return (
-                <div key={g.id}
-                  className="card p-4 self-start transition-all"
-                  style={
-                    g.pagado      ? { opacity: 0.65 } :
-                    u === 'vencido' ? { borderColor: 'var(--negative)', borderWidth: 2 } :
-                    u === 'proximo' ? { borderColor: 'var(--deseo)',    borderWidth: 2 } :
-                    {}
-                  }
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-bold text-gray-900 text-sm truncate">{g.concepto}</p>
-                        {g.es_recurrente && <Repeat className="w-3 h-3 text-gray-300 flex-shrink-0" title="Recurrente" />}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className={`badge-${g.clasificacion} text-xs`}>{g.clasificacion}</span>
-                        {g.categorias && (
-                          <span className="text-xs text-gray-400">{g.categorias.icono} {g.categorias.nombre}</span>
-                        )}
-                        {(() => {
-                          const met = metodos.find(m => m.id === g.metodo_pago_id)
-                          return met && (
-                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                              style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}>
-                              {met.credito_id ? '💳' : ''} {met.nombre}
-                            </span>
-                          )
-                        })()}
-                        {g.dia_cobro && (
-                          <span className="flex items-center gap-1 text-xs font-mono text-gray-400">
-                            <CalendarClock className="w-3 h-3" />
-                            Día {g.dia_cobro}
-                          </span>
-                        )}
-                        {u === 'vencido' && (
-                          <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--negative-fg)' }}>
-                            <AlertCircle className="w-3 h-3" /> Vencido
-                          </span>
-                        )}
-                        {u === 'proximo' && (
-                          <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--deseo-fg)' }}>
-                            <AlertCircle className="w-3 h-3" /> Próximo
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1 ml-2 flex-shrink-0">
-                      <button onClick={() => abrirEditar(g)} aria-label={`Editar ${g.concepto}`} title="Editar"
-                        className="w-7 h-7 rounded-lg hover:bg-primary-50 hover:text-primary-700 flex items-center justify-center text-gray-300 transition-all">
+          <section className="card">
+            <div className="fijos-resumen">
+              <p>
+                Por pagar <strong>{formatMXN(totales.porPagar)}</strong>
+                <span className="fijos-resumen-sep">·</span>
+                pagado {formatMXN(totales.actual)} de {formatMXN(totales.previsto)}
+              </p>
+              <p className="tabular">{pagados} de {total} pagados</p>
+            </div>
+            <div className="fijos-barra" role="progressbar" aria-valuenow={Math.round(pctPagado)} aria-valuemin={0} aria-valuemax={100} aria-label="Gastos fijos pagados">
+              <span style={{ width: `${pctPagado}%` }} />
+            </div>
+            <ul>
+              {gastos.map(g => {
+                const u = urgencia(g)
+                const met = metodos.find(m => m.id === g.metodo_pago_id)
+                const detalle = [
+                  g.dia_cobro ? `día ${g.dia_cobro}` : null,
+                  g.categorias?.nombre,
+                  met?.nombre,
+                  g.es_recurrente ? 'cada mes' : null,
+                ].filter(Boolean).join(' · ')
+                return (
+                  <li key={g.id} className="fijo-fila group">
+                    <span className="fijo-concepto">
+                      <button type="button" className="fijo-abrir" onClick={() => abrirEditar(g)} title="Editar">{g.concepto}</button>
+                      {u === 'vencido' && <span style={{ color: 'var(--negative-fg)' }}>vencido</span>}
+                      {u === 'proximo' && <span style={{ color: 'var(--warning-fg)' }}>vence pronto</span>}
+                    </span>
+                    <span className={`badge-${g.clasificacion} fijo-tipo`}>{g.clasificacion}</span>
+                    <span className="fijo-detalle">{detalle}</span>
+                    <span className="fijo-monto">
+                      {formatMXN(g.pagado && Number(g.monto_actual) > 0 ? g.monto_actual : g.monto_previsto)}
+                      {g.pagado && g.fecha_pago && <small>pagado el {fechaCorta(g.fecha_pago)}</small>}
+                    </span>
+                    {/* Al marcar pide monto/fecha reales; desmarcar es directo */}
+                    <button
+                      onClick={() => g.pagado ? desmarcarPago(g) : abrirDialogoPago(g)}
+                      disabled={saving}
+                      className={`btn-check fijo-check ${g.pagado ? 'is-on' : ''}`}
+                      title={g.pagado ? 'Desmarcar el pago' : undefined}
+                    >
+                      {g.pagado
+                        ? <><CheckCircle2 className="w-4 h-4" aria-hidden="true" /> Pagado</>
+                        : <><Circle className="w-4 h-4" aria-hidden="true" /> Marcar pagado</>}
+                    </button>
+                    <span className="acciones-hover fijo-acciones">
+                      <button onClick={() => abrirEditar(g)} aria-label={`Editar ${g.concepto}`} title="Editar" className="icon-button icon-button-sm">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(g)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar"
-                        className="w-7 h-7 rounded-lg hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-300 transition-all">
+                      <button onClick={() => setConfirmDelete(g)} aria-label={`Eliminar ${g.concepto}`} title="Eliminar" className="icon-button icon-button-sm">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Monto */}
-                  <div className="flex items-end justify-between mb-3">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Monto</p>
-                      <p className="text-2xl font-bold font-mono" style={{ color: g.pagado ? 'var(--ahorro-fg)' : 'var(--fg-1)' }}>
-                        {formatMXN(g.monto_previsto)}
-                      </p>
-                    </div>
-                    {g.pagado && (
-                      <div className="text-right text-xs text-gray-400 font-mono">
-                        {Number(g.monto_actual) > 0 && Number(g.monto_actual) !== Number(g.monto_previsto) && (
-                          <p>Pagaste {formatMXN(g.monto_actual)}</p>
-                        )}
-                        {g.fecha_pago && <p>Pagado {g.fecha_pago}</p>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Botón pago: al marcar pide monto/fecha reales; desmarcar es directo */}
-                  <button
-                    onClick={() => g.pagado ? desmarcarPago(g) : abrirDialogoPago(g)}
-                    disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-all"
-                    style={g.pagado
-                      ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }
-                      : { background: 'var(--surface-2, #f3f4f6)', color: 'var(--fg-2)' }
-                    }
-                  >
-                    {g.pagado
-                      ? <><CheckCircle2 className="w-4 h-4" /> Pagado — desmarcar</>
-                      : <><Circle className="w-4 h-4" /> Marcar como pagado</>
-                    }
-                  </button>
-                </div>
-              )
-            })}
-          </div>
+                    </span>
+                    <span className="fijo-meta">
+                      <span className={`badge-${g.clasificacion}`}>{g.clasificacion}</span>{detalle && ` · ${detalle}`}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
         )}
 
       </div>
@@ -405,8 +331,8 @@ export default function GastosFijos() {
       {/* Diálogo de pago: monto y fecha reales */}
       {pagando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-backdrop-in">
-          <div className="card p-6 w-full max-w-sm shadow-xl animate-modal-in">
-            <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--fg-1)' }}>
+          <div className="card p-4 w-full max-w-sm shadow-xl animate-modal-in">
+            <h3 className="titulo-seccion mb-1">
               Pagar: {pagando.concepto}
             </h3>
             <p className="text-sm mb-4" style={{ color: 'var(--fg-3)' }}>

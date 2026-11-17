@@ -4,8 +4,8 @@ import { usePlanQuincena } from '../hooks/usePlanQuincena'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES, rangoQuincena } from '../utils/constantes'
 import {
-  PiggyBank, CheckCircle2, Circle, CalendarClock, Plus, Sparkles,
-  Receipt, CreditCard, Wallet, TrendingUp, X,
+  PiggyBank, CheckCircle2, Circle, CalendarClock, Plus,
+  Receipt, CreditCard, Wallet, X,
 } from 'lucide-react'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import FilterSelect from '../components/ui/FilterSelect'
@@ -15,7 +15,6 @@ import { plural } from '../utils/texto'
 import { useToast } from '../components/ui/Toast'
 import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
 import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
-import ProyeccionView from '../components/plan/ProyeccionView'
 
 const TIPO_META = {
   gasto_fijo: { icon: Receipt,    emoji: '🧾', label: 'Gasto fijo' },
@@ -39,7 +38,6 @@ export default function PlanQuincena() {
     apartar, quitarApartado, editarMonto, agregarManual, apartarTodo,
   } = usePlanQuincena()
 
-  const [vista, setVista] = useState('plan')
   const [confirmQuitar, setConfirmQuitar] = useState(null)
   const [editId, setEditId] = useState(null)
   const [editValor, setEditValor] = useState('')
@@ -83,138 +81,96 @@ export default function PlanQuincena() {
       if (meta) { concepto = `Ahorro: ${meta.concepto}`; origen_id = meta.id }
     }
     if (!await guardar(agregarManual({ concepto, monto: formManual.monto, tipo: formManual.tipo, origen_id }), AVISO_FALLO)) return
-    toast('Apartado agregado ✓', 'success')
+    toast('Apartado agregado', 'success')
     setFormManual(FORM_MANUAL); setMostrarManual(false)
   }
 
   if (error && !loading && compromisos.length === 0) {
     return (
-      <Layout titulo="Plan de Quincena">
+      <Layout titulo="Plan de quincena">
         <ErrorState onRetry={recargar} mensaje={error} />
       </Layout>
     )
   }
 
+  // Selector de quincena: va en la cabecera de la lista, con el avance
+  const selectorQuincena = (
+    <div className="tabs" role="group" aria-label="Periodo">
+      {[
+        { k: 'q1',  label: '1ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 1); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+        { k: 'q2',  label: '2ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 2); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+        { k: 'mes', label: 'Todo el mes', sub: () => '' },
+      ].map(({ k, label, sub }) => {
+        const active = modo === k
+        return (
+          <button key={k} onClick={() => setModo(k)}
+            className={`tab ${active ? 'is-active' : ''}`}>
+            {label}{sub() && <span className="font-normal ml-1.5" style={{ color: 'var(--fg-3)' }}>{sub()}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <Layout titulo="Plan de Quincena">
-      <div className="space-y-5">
+    <Layout titulo="Plan de quincena" acciones={(
+      <>
+        <button type="button" onClick={() => setMostrarManual(v => !v)} className="btn-secondary">
+          <Plus className="w-4 h-4" aria-hidden="true" /> <span>Apartar para otra cosa</span>
+        </button>
+        {pendientes.length > 0 && (
+          <button type="button" onClick={handleApartarTodo} disabled={saving} className="btn-primary">
+            <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> <span>Apartar todo ({pendientes.length})</span>
+          </button>
+        )}
+      </>
+    )}>
+      <div className="space-y-3">
 
-        {/* Tabs: plan actual vs proyección */}
-        <div className="flex gap-2">
-          {[['plan', 'Plan actual'], ['proyeccion', 'Proyección 12 meses']].map(([k, label]) => (
-            <button key={k} onClick={() => setVista(k)}
-              className="px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
-              style={vista === k
-                ? { background: 'var(--primary-700)', color: 'var(--fg-on-primary)' }
-                : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg-2)' }}>
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {vista === 'proyeccion' ? <ProyeccionView /> : (
-        <>
-
-        {/* Selector de quincena */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            {[
-              { k: 'q1',  label: '1ª Quincena', sub: () => { const r = rangoQuincena(mes, anio, 1); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
-              { k: 'q2',  label: '2ª Quincena', sub: () => { const r = rangoQuincena(mes, anio, 2); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
-              { k: 'mes', label: 'Mes completo', sub: () => MESES[mes - 1] },
-            ].map(({ k, label, sub }) => {
-              const active = modo === k
-              return (
-                <button key={k} onClick={() => setModo(k)}
-                  className="px-4 py-2 text-sm font-semibold transition-colors leading-tight text-center"
-                  style={{
-                    background: active ? 'var(--primary-700)' : 'var(--surface-2)',
-                    color: active ? 'var(--fg-on-primary)' : 'var(--fg-3)',
-                  }}>
-                  <div>{label}</div>
-                  <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.85 }}>{sub()}</div>
-                </button>
-              )
-            })}
-          </div>
-          {pendientes.length > 0 && (
-            <button onClick={handleApartarTodo} disabled={saving}
-              className="btn-primary flex items-center gap-2 text-sm">
-              <Sparkles className="w-4 h-4" /> Apartar todo ({pendientes.length})
-            </button>
-          )}
-        </div>
 
         {/* Tarjetas de resultado */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="stat-strip grid grid-cols-2 lg:grid-cols-4">
           <div className="card p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--positive-fg)' }} />
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">
-                {esMes ? 'Ingreso del mes' : 'Ingreso quincena'}
-              </p>
-            </div>
-            <p className="text-xl font-bold font-mono text-gray-800">{formatMXN(ingresoEsperado)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="stat-label">
+              {esMes ? 'Ingreso del mes' : 'Ingreso de la quincena'}
+            </p>
+            <p className="stat-value">{formatMXN(ingresoEsperado)}</p>
+            <p className="stat-nota">
               {usandoEstimado
                 ? '≈ estimado de tu nómina'
                 : ingresoRecibido > 0 ? `${formatMXN(ingresoRecibido)} recibido` : 'esperado'}
             </p>
           </div>
           <div className="card p-4">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">A apartar</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(totalCompromisos)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{totalItems} compromiso{totalItems !== 1 ? 's' : ''}</p>
-          </div>
-          <div className="card p-4" style={{ borderWidth: 2, borderColor: libreSiApartasTodo >= 0 ? 'var(--ahorro-bg)' : 'var(--negative-bg)' }}>
-            <div className="flex items-center gap-2 mb-1">
-              <Wallet className="w-3.5 h-3.5" style={{ color: 'var(--primary-700)' }} />
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Libre para gastar</p>
-            </div>
-            <p className="text-xl font-bold font-mono"
-              style={{ color: libreSiApartasTodo >= 0 ? 'var(--ahorro-fg)' : 'var(--negative-fg)' }}>
-              {formatMXN(libreSiApartasTodo)}
-            </p>
-            <p className="text-xs text-gray-400 mt-0.5">si apartas todo</p>
+            <p className="stat-label">A apartar</p>
+            <p className="stat-value">{formatMXN(totalCompromisos)}</p>
+            <p className="stat-nota">{totalItems} compromiso{totalItems !== 1 ? 's' : ''}</p>
           </div>
           <div className="card p-4">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Disponible ahora</p>
-            <p className="text-xl font-bold font-mono text-primary-700">{formatMXN(disponibleAhora)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{formatMXN(totalApartado)} ya apartado</p>
+            <p className="stat-label">Libre para gastar</p>
+            <p className="stat-value"
+              style={libreSiApartasTodo < 0 ? { color: 'var(--negative)' } : undefined}>
+              {formatMXN(libreSiApartasTodo)}
+            </p>
+            <p className="stat-nota">si apartas todo</p>
           </div>
-        </div>
-
-        {/* Barra de progreso */}
-        {totalItems > 0 && (
-          <div className="card px-5 py-3">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-semibold text-gray-700">Compromisos apartados</span>
-              <span className="font-mono text-gray-500">{countApartados}/{totalItems}</span>
-            </div>
-            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bar-fill"
-                style={{ width: `${totalItems > 0 ? (countApartados / totalItems) * 100 : 0}%`, background: 'var(--ahorro)' }} />
-            </div>
+          <div className="card p-4">
+            <p className="stat-label">Disponible ahora</p>
+            <p className="stat-value">{formatMXN(disponibleAhora)}</p>
+            <p className="stat-nota">{formatMXN(totalApartado)} ya apartado</p>
           </div>
-        )}
-
-        {/* Acción: agregar manual */}
-        <div className="flex justify-end">
-          <button onClick={() => setMostrarManual(v => !v)} className="btn-secondary flex items-center gap-2 text-sm">
-            <Plus className="w-4 h-4" /> Apartar para otra cosa
-          </button>
         </div>
 
         {mostrarManual && (
-          <div className="card p-5 border-2 border-primary-100">
-            <h3 className="font-bold text-gray-900 mb-3">Nuevo apartado manual</h3>
+          <div className="card p-4">
+            <h3 className="titulo-seccion mb-3">Apartar para otra cosa</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div>
                 <label className="label">Tipo</label>
                 <FilterSelect
                   value={formManual.tipo}
                   onChange={v => setFM('tipo', v)}
-                  options={[{ value: 'ahorro', label: '🐷 Ahorro' }, { value: 'otro', label: '📌 Otro' }]}
+                  options={[{ value: 'ahorro', label: 'Ahorro' }, { value: 'otro', label: 'Otro' }]}
                   placeholder="Tipo" showClear={false}
                 />
               </div>
@@ -252,72 +208,74 @@ export default function PlanQuincena() {
         {/* Lista de compromisos */}
         {loading ? (
           <div className="space-y-2">
-            {Array(4).fill(0).map((_, i) => <div key={i} className="card h-16 animate-pulse bg-gray-50" />)}
+            {Array(4).fill(0).map((_, i) => <div key={i} className="card h-16 animate-pulse" />)}
           </div>
         ) : compromisos.length === 0 ? (
-          <EmptyState
-            icon={CalendarClock}
-            title="No hay compromisos en esta quincena"
-            description={`Agrega gastos fijos con dia de cobro ${rango.diaInicio}-${rango.diaFin} o aparta algo manualmente.`}
-            action={
-              <button onClick={() => setMostrarManual(true)} className="btn-primary text-sm">
-                <Plus className="w-4 h-4" /> Apartar para otra cosa
-              </button>
-            }
-          />
+          <section className="card">
+            <div className="plan-cabecera">{selectorQuincena}</div>
+            <EmptyState
+              icon={CalendarClock}
+              title={esMes ? 'No hay compromisos este mes' : 'No hay compromisos en esta quincena'}
+              description={esMes
+                ? 'Agrega gastos fijos o deudas, o aparta algo a mano.'
+                : `Agrega gastos fijos con día de cobro del ${rango.diaInicio} al ${rango.diaFin}, o aparta algo a mano.`}
+              className="min-h-[160px] m-3"
+              action={
+                <button onClick={() => setMostrarManual(true)} className="btn-primary text-sm">
+                  <Plus className="w-4 h-4" /> Apartar para otra cosa
+                </button>
+              }
+            />
+          </section>
         ) : (
-          <div className="space-y-2">
+          <section className="card">
+            <div className="plan-cabecera">
+              {selectorQuincena}
+              {totalItems > 0 && <span className="plan-avance">{countApartados} de {totalItems} apartados</span>}
+            </div>
+            {totalItems > 0 && (
+              <div className="fijos-barra" aria-hidden="true">
+                <span style={{ width: `${(countApartados / totalItems) * 100}%` }} />
+              </div>
+            )}
+            <ul>
             {compromisos.map(c => {
               const meta = TIPO_META[c.tipo] ?? TIPO_META.otro
               const estaApartado = !!c.apartadoRow
               const montoMostrado = estaApartado ? Number(c.apartadoRow.monto) : c.montoSugerido
               return (
-                <div key={c.key}
-                  className="card p-4 flex items-center gap-3 transition-all"
-                  style={estaApartado ? { borderColor: 'var(--ahorro-bg)', borderWidth: 2 } : {}}>
-                  <span className="text-xl flex-shrink-0">{meta.emoji}</span>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{c.concepto}</p>
-                      {c.pagado && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>✅ ya pagado</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                      <span>{meta.label}</span>
-                      {c.dia_cobro && (
-                        <span className="flex items-center gap-1 font-mono">
-                          <CalendarClock className="w-3 h-3" /> Día {c.dia_cobro}
-                        </span>
-                      )}
-                      {c.sinFecha && c.tipo !== 'ahorro' && c.tipo !== 'otro' && (
-                        <span className="text-amber-500">sin día asignado</span>
-                      )}
-                    </div>
-                  </div>
+                <li key={c.key} className="plan-fila">
+                  <span className="plan-concepto">
+                    <span className="truncate">{c.concepto}</span>
+                    {c.pagado && <small style={{ color: 'var(--positive-fg)' }}>ya pagado</small>}
+                  </span>
+                  <span className="plan-detalle">
+                    {meta.label}
+                    {c.dia_cobro && ` · día ${c.dia_cobro}`}
+                    {c.sinFecha && c.tipo !== 'ahorro' && c.tipo !== 'otro' && (
+                      <span style={{ color: 'var(--warning-fg)' }}> · sin día asignado</span>
+                    )}
+                  </span>
 
                   {/* Monto */}
                   {editId === c.apartadoRow?.id ? (
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <input type="number" autoFocus
+                    <div className="plan-monto flex items-center justify-end gap-1">
+                      <input type="number" autoFocus aria-label={`Monto apartado para ${c.concepto}`}
                         className="input text-sm py-1 px-2 w-28 font-mono text-right"
                         value={editValor} onChange={e => setEditValor(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && guardarEdicion(c.apartadoRow.id)} />
                       <button onClick={() => guardarEdicion(c.apartadoRow.id)}
-                        className="w-7 h-7 text-white rounded-lg flex items-center justify-center" style={{ background: 'var(--ahorro)' }}>
+                        className="icon-button icon-button-sm" style={{ background: 'var(--primary-600)', color: 'var(--fg-on-primary)' }} aria-label="Guardar monto">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => { setEditId(null); setEditValor('') }}
-                        className="w-7 h-7 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+                        className="icon-button icon-button-sm" aria-label="Cancelar"><X className="w-3.5 h-3.5" /></button>
                     </div>
                   ) : (
                     <button
                       onClick={() => estaApartado && (setEditId(c.apartadoRow.id), setEditValor(String(montoMostrado)))}
-                      className="font-mono font-bold text-base flex-shrink-0 text-right tabular"
-                      style={{ color: estaApartado ? 'var(--ahorro-fg)' : 'var(--fg-1)', fontVariantNumeric: 'tabular-nums' }}
-                      title={estaApartado ? 'Click para editar monto' : ''}>
+                      className={`plan-monto ${estaApartado ? 'is-editable' : ''}`}
+                      title={estaApartado ? 'Cambiar el monto apartado' : undefined}>
                       {formatMXN(montoMostrado)}
                     </button>
                   )}
@@ -325,28 +283,25 @@ export default function PlanQuincena() {
                   {/* Botón apartar/quitar */}
                   {estaApartado ? (
                     <button onClick={() => setConfirmQuitar(c.apartadoRow.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold flex-shrink-0 transition-all"
-                      style={{ background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' }}>
+                      className="btn-check is-on plan-check" title="Quitar el apartado">
                       <CheckCircle2 className="w-4 h-4" /> Apartado
                     </button>
                   ) : (
                     <button onClick={() => handleApartar(c)} disabled={saving}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold flex-shrink-0 transition-all"
-                      style={{ background: 'var(--surface-3, #f3f4f6)', color: 'var(--fg-2)' }}>
+                      className="btn-check plan-check">
                       <Circle className="w-4 h-4" /> Apartar
                     </button>
                   )}
-                </div>
+                </li>
               )
             })}
-          </div>
+            </ul>
+          </section>
         )}
 
-        <p className="text-xs text-gray-400 text-center">
-          Los gastos fijos y deudas se sugieren según su día de cobro. Click en el monto apartado para ajustarlo.
+        <p className="text-[13px] text-gray-500 text-center">
+          Los gastos fijos y las deudas se sugieren según su día de cobro. Toca un monto apartado para cambiarlo.
         </p>
-        </>
-        )}
       </div>
 
       <ConfirmModal

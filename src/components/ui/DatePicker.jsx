@@ -107,7 +107,7 @@ export default function DatePicker({ value, onChange, className = '', placeholde
 
       <div className="grid grid-cols-7 mb-1">
         {DIAS.map(d => (
-          <div key={d} className="text-center text-[11px] font-bold py-1 uppercase"
+          <div key={d} className="text-center text-xs font-semibold py-1 "
             style={{ color: 'var(--fg-4)' }}>
             {d}
           </div>
@@ -177,7 +177,7 @@ function NavBtn({ onClick, children }) {
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="w-7 h-7 rounded-[var(--r-sm)] flex items-center justify-center transition-colors"
+      className="icon-button icon-button-sm"
       style={{ color: 'var(--fg-3)', background: hover ? 'var(--surface-2)' : '' }}
     >
       {children}

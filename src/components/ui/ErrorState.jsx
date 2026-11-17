@@ -9,7 +9,7 @@ export default function ErrorState({ onRetry, mensaje }) {
         <AlertTriangle className="w-6 h-6" />
       </div>
       <div>
-        <p className="font-bold" style={{ color: 'var(--fg-1)' }}>No se pudieron cargar los datos</p>
+        <p className="font-semibold" style={{ color: 'var(--fg-1)' }}>No se pudieron cargar los datos</p>
         <p className="text-sm mt-1" style={{ color: 'var(--fg-3)' }}>
           {mensaje || 'Revisa tu conexión e intenta de nuevo.'}
         </p>

@@ -8,7 +8,7 @@ import { baseMesPicker } from '../../utils/ingresos'
 function MesPicker({ mes, anio, base, onChange }) {
   const opciones = [mesAnterior(base.mes, base.anio), base, mesSiguiente(base.mes, base.anio)]
   return (
-    <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+    <div className="flex rounded-[var(--r-lg)] border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
       {opciones.map(op => {
         const activo = mes === op.mes && anio === op.anio
         return (
@@ -23,7 +23,7 @@ function MesPicker({ mes, anio, base, onChange }) {
             }}
             onClick={() => onChange(op)}
           >
-            <div className="text-[11px] font-bold">{MESES[op.mes - 1].slice(0, 3)}</div>
+            <div className="text-xs font-semibold">{MESES[op.mes - 1].slice(0, 3)}</div>
             <div style={{ fontSize: 10, fontWeight: 400, opacity: activo ? 0.85 : 0.7 }}>{op.anio}</div>
           </button>
         )

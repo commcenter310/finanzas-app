@@ -2,31 +2,26 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
+  ArrowRight,
   Bell,
-  CalendarClock,
   CheckCircle2,
-  CircleDollarSign,
   CreditCard,
-  Gauge,
+  Info,
   Link2,
   Pencil,
   Plus,
   ShieldCheck,
   Trash2,
-  WalletCards,
 } from 'lucide-react'
 import Layout from '../components/layout/Layout'
+import Resumen, { Dato } from '../components/ui/Resumen'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import EmptyState from '../components/ui/EmptyState'
 import ErrorState from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 import {
-  CommitmentHero,
-  CommitmentNav,
-  HeroMetric,
   PriorityPanel,
   ProgressRail,
-  SectionHeader,
   Sheet,
   StatusPill,
 } from '../components/commitments/CommitmentUI'
@@ -125,113 +120,87 @@ function TarjetaCredito({ credito, metodos, ciclo, onEditar, onEliminar }) {
   const requiereAtencion = !riesgoAlto && (pctUso > 30 || pagoProximo || corteProximo)
   const tonoUso = pctUso > 80 ? 'negative' : pctUso > 30 ? 'warning' : 'positive'
 
+  // El método vinculado solo se menciona si se llama distinto de la tarjeta
+  const mostrarMetodo = metodoVinculado && metodoVinculado.nombre.trim().toLowerCase() !== credito.nombre.trim().toLowerCase()
+
   return (
-    <article className={`credit-instrument ${riesgoAlto ? 'is-urgent' : requiereAtencion ? 'is-warning' : ''}`}>
-      <div className="credit-instrument-top">
-        <div className="credit-instrument-header">
-          <div className="credit-instrument-brand">
-            <span>Línea de crédito</span>
-            <h3>{credito.nombre}</h3>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {metodoVinculado && <StatusPill tone="primary" icon={Link2}>{metodoVinculado.nombre}</StatusPill>}
-              {pagoRegistrado && <StatusPill tone="positive" icon={CheckCircle2}>Ciclo cubierto</StatusPill>}
-              {!pagoRegistrado && pagoUrgente && <StatusPill tone="negative" icon={Bell}>{textoDiasPago(alerta.diasParaPago)}</StatusPill>}
-              {alerta.enRangoOptimo && <StatusPill tone="positive" icon={ShieldCheck}>Buen momento de uso</StatusPill>}
-              {alerta.enRangoEvitar && <StatusPill tone="warning" icon={AlertTriangle}>Evita usarla hoy</StatusPill>}
-            </div>
-          </div>
-          <div className="credit-instrument-tools">
-            <button type="button" className="icon-button icon-button-sm" onClick={() => onEditar(credito)} title="Editar tarjeta" aria-label={`Editar ${credito.nombre}`}>
-              <Pencil />
-            </button>
-            <button type="button" className="icon-button icon-button-sm" onClick={() => onEliminar(credito.id)} title="Eliminar tarjeta" aria-label={`Eliminar ${credito.nombre}`}>
-              <Trash2 />
-            </button>
-          </div>
-        </div>
+    <article className={`tarjeta group ${riesgoAlto ? 'is-urgent' : requiereAtencion ? 'is-warning' : ''}`}>
+      <header className="tarjeta-cabecera">
+        <h3>{credito.nombre}</h3>
+        <span className="tarjeta-estados">
+          {mostrarMetodo && <StatusPill tone="primary" icon={Link2}>{metodoVinculado.nombre}</StatusPill>}
+          {pagoRegistrado && <StatusPill tone="positive" icon={CheckCircle2}>Ciclo cubierto</StatusPill>}
+          {!pagoRegistrado && pagoUrgente && <StatusPill tone="negative" icon={Bell}>{textoDiasPago(alerta.diasParaPago)}</StatusPill>}
+          {alerta.enRangoOptimo && <StatusPill tone="positive" icon={ShieldCheck}>Buen momento para usarla</StatusPill>}
+          {alerta.enRangoEvitar && <StatusPill tone="warning" icon={AlertTriangle}>Mejor no usarla hoy</StatusPill>}
+        </span>
+        <span className="tarjeta-herramientas acciones-hover">
+          <button type="button" className="icon-button icon-button-sm" onClick={() => onEditar(credito)} title="Editar tarjeta" aria-label={`Editar ${credito.nombre}`}>
+            <Pencil />
+          </button>
+          <button type="button" className="icon-button icon-button-sm" onClick={() => onEliminar(credito.id)} title="Eliminar tarjeta" aria-label={`Eliminar ${credito.nombre}`}>
+            <Trash2 />
+          </button>
+        </span>
+      </header>
 
-        <div className="credit-instrument-balance">
-          <div>
-            <span>Saldo utilizado</span>
-            <strong>{formatMXN(saldo)}</strong>
-          </div>
-          <span className={`credit-instrument-pct tone-${tonoUso}`}>{pctUso.toFixed(0)}%</span>
-        </div>
-
-        <ProgressRail
-          value={pctUso}
-          marker={30}
-          tone={tonoUso}
-          label={`${formatMXN(disponible)} disponibles`}
-          endLabel={`${formatMXN(limite)} de línea`}
-        />
-
-        {pagoPara30 > 0 && (
-          <p className="mt-3 text-[10px] font-bold" style={{ color: 'var(--warning-fg)' }}>
-            Paga {formatMXN(pagoPara30)} para llevar esta tarjeta al 30%.
-          </p>
-        )}
+      <div className="tarjeta-saldo">
+        <strong>{formatMXN(saldo)}</strong>
+        <span>
+          de {formatMXN(limite)} · <span className={`tarjeta-pct tone-${tonoUso}`}>{pctUso.toFixed(0)}%</span> · {formatMXN(disponible)} libres
+        </span>
       </div>
+      <ProgressRail value={pctUso} marker={30} tone={tonoUso} />
 
-      <div className="credit-instrument-meta">
-        <div className="credit-date-cell">
-          <CalendarClock aria-hidden="true" />
-          <div>
-            <span>Corte · día {credito.fecha_corte || '—'}</span>
-            <strong>{textoDiasCorte(alerta.diasParaCorte)}</strong>
-          </div>
+      <dl className="tarjeta-datos">
+        <div>
+          <dt>Corte · día {credito.fecha_corte || '—'}</dt>
+          <dd>{textoDiasCorte(alerta.diasParaCorte)}</dd>
         </div>
-        <div className={`credit-date-cell ${pagoRegistrado ? 'is-paid' : pagoUrgente || pagoProximo ? 'is-urgent' : ''}`}>
-          {pagoRegistrado ? <CheckCircle2 aria-hidden="true" /> : <Bell aria-hidden="true" />}
-          <div>
-            <span>Pago · día {credito.fecha_pago || '—'}</span>
-            <strong>{pagoRegistrado ? 'Pago registrado' : textoDiasPago(alerta.diasParaPago)}</strong>
-          </div>
+        <div className={pagoRegistrado ? 'is-paid' : pagoUrgente || pagoProximo ? 'is-urgent' : ''}>
+          <dt>Pago · día {credito.fecha_pago || '—'}</dt>
+          <dd>{pagoRegistrado ? 'Pago registrado' : textoDiasPago(alerta.diasParaPago)}</dd>
         </div>
-      </div>
-
-      {ciclo && metodoVinculado ? (
-        <div className="credit-cycle">
-          <div className="credit-cycle-primary">
+        {ciclo && metodoVinculado ? (
+          <>
             <div>
-              <span>Pago para no generar intereses</span>
-              <strong>{formatMXN(ciclo.pagoProximo)}</strong>
+              <dt>Pago sin intereses</dt>
+              <dd title={`Facturado al corte del ${fmtFechaCorta(ciclo.ultimoCorte)}`}>{formatMXN(ciclo.pagoProximo)}</dd>
             </div>
-            <p>Facturado al corte del {fmtFechaCorta(ciclo.ultimoCorte)}</p>
+            <div>
+              <dt>Compras del periodo{ciclo.msiPendiente > 0 ? ' · MSI' : ''}</dt>
+              <dd>
+                {formatMXN(ciclo.gastoPeriodoActual)}
+                {ciclo.msiPendiente > 0 && <small> · {formatMXN(ciclo.msiPendiente)}</small>}
+              </dd>
+            </div>
+          </>
+        ) : (
+          <div className="tarjeta-sin-metodo">
+            <dt>Sin método de pago vinculado</dt>
+            <dd>Vincúlalo al editar la tarjeta para separar lo facturado de lo del siguiente corte.</dd>
           </div>
+        )}
+      </dl>
+
+      <p className="tarjeta-ventana">
+        <span className={alerta.enRangoOptimo ? 'is-good' : ''}>Mejor para comprar: {fmtRango(alerta.inicioOptimo, alerta.finOptimo).toLowerCase()}</span>
+        <span className={alerta.enRangoEvitar ? 'is-bad' : ''}>Evita: {fmtRango(alerta.inicioEvitar, alerta.finEvitar).toLowerCase()}</span>
+      </p>
+
+      {(saldoNoRegistrado > 0 || pagoPara30 > 0) && (
+        <div className="tarjeta-notas">
+          {pagoPara30 > 0 && (
+            <p style={{ color: 'var(--warning-fg)' }}>Paga {formatMXN(pagoPara30)} para dejarla en 30% de uso.</p>
+          )}
           {saldoNoRegistrado > 0 && (
-            <p className="credit-cycle-note" role="note">
-              Tu saldo incluye {formatMXN(saldoNoRegistrado)} que no viene de compras registradas aquí
-              (por ejemplo, de antes de usar Finni). El pago real puede ser mayor: confírmalo en tu estado de cuenta.
+            <p role="note">
+              <Info aria-hidden="true" />
+              Incluye {formatMXN(saldoNoRegistrado)} que no viene de compras registradas aquí; confirma el pago en tu estado de cuenta.
             </p>
           )}
-          <div className="credit-cycle-secondary">
-            <div>
-              <span>Compras del periodo</span>
-              <strong>{formatMXN(ciclo.gastoPeriodoActual)}</strong>
-            </div>
-            <div>
-              <span>MSI por facturar{ciclo.msiActivos > 0 ? ` · ${ciclo.msiActivos}` : ''}</span>
-              <strong>{formatMXN(ciclo.msiPendiente)}</strong>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="credit-unlinked">
-          Vincula un método de pago para separar automáticamente lo facturado de las compras del siguiente corte.
         </div>
       )}
-
-      <div className="credit-guidance">
-        <div className={`credit-guidance-cell ${alerta.enRangoOptimo ? 'is-good' : ''}`}>
-          <span>Mejor ventana</span>
-          <strong>{fmtRango(alerta.inicioOptimo, alerta.finOptimo)}</strong>
-        </div>
-        <div className={`credit-guidance-cell ${alerta.enRangoEvitar ? 'is-bad' : ''}`}>
-          <span>Evita comprar</span>
-          <strong>{fmtRango(alerta.inicioEvitar, alerta.finEvitar)}</strong>
-        </div>
-      </div>
     </article>
   )
 }
@@ -396,67 +365,40 @@ export default function Creditos() {
       : 'No hay pagos pendientes del ciclo ni utilización por encima del nivel recomendado.'
 
   return (
-    <Layout titulo="Créditos">
+    <Layout titulo="Créditos" acciones={(
+      <button type="button" className="btn-primary" onClick={abrirNueva}>
+        <Plus className="w-4 h-4" aria-hidden="true" />
+        <span>Nueva tarjeta</span>
+      </button>
+    )}>
       <div className="commitment-page">
-        <div className="commitment-module-bar">
-          <CommitmentNav />
-          <button type="button" className="btn-primary flex items-center gap-2" onClick={abrirNueva}>
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Nueva tarjeta</span>
-          </button>
-        </div>
-
-        <CommitmentHero
-          eyebrow="Centro de compromisos"
-          title="Crédito visible, decisiones más ligeras."
-          description="Separa lo que ya debes, lo que está facturado y lo que apenas llegará al siguiente corte."
-          amountLabel="Saldo utilizado"
-          amount={formatMXN(totalSaldo)}
-          aside={(
+        <Resumen
+          titulo="Debes en tarjetas"
+          cifra={formatMXN(totalSaldo)}
+          nota={creditos.length > 0 ? `Usas ${pctGlobal.toFixed(0)}% de ${formatMXN(totalLimite)} · ${formatMXN(totalDisponible)} disponibles` : null}
+          progreso={creditos.length > 0 ? pctGlobal : null}
+          tono={pctGlobal > 80 ? 'negative' : pctGlobal > 30 ? 'warning' : 'neutral'}
+          cargando={loading}
+          desgloses={creditos.length > 0 && (
+            <>
+              <Dato label="Facturado al corte" value={formatMXN(totalFacturado)} />
+              <Dato label="Compras del periodo" value={formatMXN(totalPeriodo)} />
+              <Dato label="MSI por facturar" value={formatMXN(totalMsi)} />
+            </>
+          )}
+          aviso={creditos.length > 0 && (
             <PriorityPanel
-              icon={pagoPara30Total > 0 ? Gauge : proximoPago ? Bell : ShieldCheck}
-              tone={pagoPara30Total > 0 ? 'warning' : proximoPago ? 'primary' : 'positive'}
+              tone={pagoPara30Total > 0 ? 'warning' : 'neutral'}
               title={prioridadTitle}
               description={prioridadDescription}
               action={(pagoPara30Total > 0 || proximoPago) && (
                 <Link to="/deudas" className="commitment-text-action">
                   <span>Registrar pago</span>
-                  <CircleDollarSign aria-hidden="true" />
+                  <ArrowRight aria-hidden="true" />
                 </Link>
               )}
             />
           )}
-        >
-          <HeroMetric icon={WalletCards} label="Línea total" value={formatMXN(totalLimite)} />
-          <HeroMetric icon={ShieldCheck} label="Disponible" value={formatMXN(totalDisponible)} />
-          <HeroMetric icon={Gauge} label="Utilización global" value={`${pctGlobal.toFixed(0)}%`} />
-        </CommitmentHero>
-
-        {!loading && creditos.length > 0 && (
-          <div className="credit-overview-strip">
-            <div className="credit-overview-item">
-              <span>Facturado al último corte</span>
-              <strong>{formatMXN(totalFacturado)}</strong>
-              <p>Pago para no generar intereses calculado con gastos vinculados.</p>
-            </div>
-            <div className="credit-overview-item">
-              <span>Compras del periodo actual</span>
-              <strong>{formatMXN(totalPeriodo)}</strong>
-              <p>Se reflejarán en el siguiente corte de cada tarjeta.</p>
-            </div>
-            <div className="credit-overview-item">
-              <span>MSI aún por facturar</span>
-              <strong>{formatMXN(totalMsi)}</strong>
-              <p>Compromiso futuro de compras a meses sin intereses.</p>
-            </div>
-          </div>
-        )}
-
-        <SectionHeader
-          eyebrow="Portafolio de crédito"
-          title="Tarjetas activas"
-          description="Ordenadas por urgencia de pago y nivel de utilización."
-          action={creditos.length > 0 ? <StatusPill tone={pctGlobal > 30 ? 'warning' : 'positive'} icon={Gauge}>{pctGlobal.toFixed(0)}% global</StatusPill> : null}
         />
 
         {loading ? (
@@ -467,7 +409,7 @@ export default function Creditos() {
           <EmptyState
             icon={CreditCard}
             title="No tienes tarjetas registradas"
-            description="Agrega tus tarjetas para vigilar utilización, ciclos de corte y pagos desde un mismo lugar."
+            description="Agrega una tarjeta para ver su saldo, su fecha de corte y cuándo toca pagarla."
             action={(
               <button type="button" onClick={abrirNueva} className="btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Nueva tarjeta
@@ -494,7 +436,7 @@ export default function Creditos() {
         open={mostrarForm}
         onClose={cerrarForm}
         title={editando ? 'Editar tarjeta' : 'Nueva tarjeta'}
-        description="La línea, los días del ciclo y el método vinculado alimentan todos los cálculos de esta vista."
+        description="Con el límite y los días de corte y pago se calcula todo lo demás."
         footer={(
           <>
             <button type="button" className="btn-ghost" onClick={cerrarForm}>Cancelar</button>

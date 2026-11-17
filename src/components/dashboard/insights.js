@@ -3,8 +3,9 @@ import { formatMXN } from '../../utils/constantes'
 import { calcularIngresoPendiente } from '../../utils/calculos'
 import { plural } from '../../utils/texto'
 
-// Consejos ("insights") del Dashboard a partir de los números del mes.
-// Devuelve tarjetas ordenadas por prioridad; las muestra DashboardOverview.
+// Avisos de Inicio ("Por atender") a partir de los números del mes, ordenados
+// por prioridad. Cada uno lleva una `clave`; `omitir` quita los que la pantalla
+// ya muestra de otra forma (antes de recortar a 4, para no perder uno útil).
 export function buildDashboardInsights({
   totalIngresos,
   ingresoEsperado,
@@ -16,7 +17,7 @@ export function buildDashboardInsights({
   categoriasEnRiesgo,
   gastosHormiga,
   fijosPendientes,
-}) {
+}, { omitir = [] } = {}) {
   const insights = []
   const disponibleReal = porAsignar == null ? null : porAsignar - totalApartado
   const saldoProyectado = proyeccion?.saldoProyectado
@@ -28,6 +29,7 @@ export function buildDashboardInsights({
 
   if (proyeccion?.esMesActual && saldoProyectado != null && saldoProyectado < 0) {
     insights.push({
+      clave: 'cierre-negativo',
       kind: 'danger',
       icon: AlertTriangle,
       title: 'Riesgo de cierre negativo',
@@ -38,13 +40,14 @@ export function buildDashboardInsights({
     })
   } else if (disponibleReal != null) {
     insights.push({
+      clave: 'disponible',
       kind: disponibleReal >= 0 ? 'success' : 'danger',
       icon: Wallet,
       title: disponibleReal >= 0 ? 'Disponible real' : 'Disponible comprometido',
       value: formatMXN(disponibleReal),
       body: totalApartado > 0
         ? 'Ya descuenta lo apartado en tu plan de quincena.'
-        : 'Usalo como limite antes de registrar nuevos gastos.',
+        : 'Úsalo como límite antes de registrar nuevos gastos.',
       to: '/plan-quincena',
       action: 'Ver plan',
     })
@@ -52,11 +55,12 @@ export function buildDashboardInsights({
 
   if (fijosPendientes.length > 0) {
     insights.push({
+      clave: 'fijos',
       kind: 'warning',
       icon: CalendarClock,
       title: `${fijosPendientes.length} pago${fijosPendientes.length !== 1 ? 's' : ''} pendiente${fijosPendientes.length !== 1 ? 's' : ''}`,
       value: formatMXN(totalFijosPendientes),
-      body: 'Liquidarlos primero evita que el disponible se vea mejor de lo que realmente esta.',
+      body: 'Liquidarlos primero evita que el disponible se vea mejor de lo que realmente está.',
       to: '/gastos-fijos',
       action: 'Ver pendientes',
     })
@@ -64,9 +68,10 @@ export function buildDashboardInsights({
 
   if (topCategoria) {
     insights.push({
+      clave: 'categoria',
       kind: topCategoria.pct >= 100 ? 'danger' : 'warning',
       icon: Target,
-      title: topCategoria.pct >= 100 ? 'Categoria excedida' : 'Categoria en riesgo',
+      title: topCategoria.pct >= 100 ? 'Categoría excedida' : 'Categoría en riesgo',
       value: topCategoria.nombre,
       body: `Lleva ${topCategoria.pct.toFixed(0)}% usado (${formatMXN(topCategoria.gastado)} de ${formatMXN(topCategoria.monto_limite)}).`,
       to: '/gastos-variables',
@@ -76,11 +81,12 @@ export function buildDashboardInsights({
 
   if (ingresoFaltante > 0) {
     insights.push({
+      clave: 'ingreso',
       kind: 'info',
       icon: TrendingUp,
       title: 'Ingreso por registrar',
       value: formatMXN(ingresoFaltante),
-      body: 'Capturalo cuando llegue para que la proyeccion y el disponible sean mas precisos.',
+      body: 'Captúralo cuando llegue para que la proyección y el disponible sean más precisos.',
       to: '/ingresos',
       action: 'Capturar ingreso',
     })
@@ -88,6 +94,7 @@ export function buildDashboardInsights({
 
   if (objetivoAhorro > 0 && ahorroFaltante > objetivoAhorro * 0.2) {
     insights.push({
+      clave: 'ahorro',
       kind: 'info',
       icon: PiggyBank,
       title: 'Ahorro bajo la meta',
@@ -100,9 +107,10 @@ export function buildDashboardInsights({
 
   if (gastosHormiga.count >= 3) {
     insights.push({
+      clave: 'hormiga',
       kind: 'warning',
       icon: Sparkles,
-      title: 'Gastos pequenos acumulados',
+      title: 'Gastos pequeños acumulados',
       value: formatMXN(gastosHormiga.total),
       body: `${plural(gastosHormiga.count, 'movimiento menor', 'movimientos menores')} a ${formatMXN(gastosHormiga.umbral)} ya pesan en el mes.`,
       to: '/control-gastos',
@@ -112,6 +120,7 @@ export function buildDashboardInsights({
 
   if (insights.length === 0 && totalIngresos > 0) {
     insights.push({
+      clave: 'sin-alertas',
       kind: 'success',
       icon: Target,
       title: 'Mes bajo control',
@@ -122,5 +131,5 @@ export function buildDashboardInsights({
     })
   }
 
-  return insights.slice(0, 4)
+  return insights.filter(i => !omitir.includes(i.clave)).slice(0, 4)
 }

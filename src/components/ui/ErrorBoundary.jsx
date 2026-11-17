@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <p className="font-bold" style={{ color: 'var(--fg-1)' }}>Algo salió mal en esta pantalla</p>
+            <p className="font-semibold" style={{ color: 'var(--fg-1)' }}>Algo salió mal en esta pantalla</p>
             <p className="text-sm mt-1" style={{ color: 'var(--fg-3)' }}>
               Tus datos están a salvo. Recarga para intentarlo de nuevo o vuelve al inicio.
             </p>

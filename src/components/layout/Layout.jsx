@@ -2,33 +2,36 @@ import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import BottomNav from './BottomNav'
+import SeccionTabs from './SeccionTabs'
 
-export default function Layout({ titulo, children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const closeSidebar = () => setIsSidebarOpen(false)
+// titulo: nombre de la página (encabezado para lectores de pantalla; a la
+//   vista ya lo dicen la sección activa y la pestaña).
+// acciones: botón(es) principales de la página, a la derecha de las pestañas.
+export default function Layout({ titulo, acciones, children }) {
+  const [cajonAbierto, setCajonAbierto] = useState(false)
+  const cerrarCajon = () => setCajonAbierto(false)
 
   return (
-    <div className="app-shell flex min-h-screen">
-      <Sidebar open={isSidebarOpen} onClose={closeSidebar} />
+    <div className="app-shell min-h-screen">
+      <Header titulo={titulo} onMenuClick={() => setCajonAbierto(v => !v)} />
 
-      {/* Backdrop — solo mobile cuando el drawer está abierto */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-          onClick={closeSidebar}
-        />
+      <Sidebar open={cajonAbierto} onClose={cerrarCajon} />
+      {cajonAbierto && (
+        <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={cerrarCajon} aria-hidden="true" />
       )}
 
-      {/* min-w-0: sin esto, cualquier contenido más ancho que la pantalla estira
-          todo el contenedor y recorta el header en móvil (overflow horizontal) */}
-      <div className="app-content flex-1 lg:ml-[248px] min-h-screen min-w-0 overflow-x-hidden">
-        <Header titulo={titulo} onMenuClick={() => setIsSidebarOpen(v => !v)} />
-        <main className="app-main">
-          {children}
-        </main>
-      </div>
+      {/* min-w-0 + overflow-x: clip: nada más ancho que la pantalla estira la página.
+          clip y no hidden: hidden lo vuelve contenedor de scroll y rompe position: sticky */}
+      <main className="app-main min-w-0 [overflow-x:clip]">
+        <h1 className="sr-only">{titulo}</h1>
+        <div className="page-bar">
+          <SeccionTabs />
+          {acciones && <div className="page-bar-acciones">{acciones}</div>}
+        </div>
+        {children}
+      </main>
 
-      <BottomNav onMore={() => setIsSidebarOpen(true)} />
+      <BottomNav onMore={() => setCajonAbierto(true)} />
     </div>
   )
 }

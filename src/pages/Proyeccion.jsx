@@ -5,7 +5,7 @@ import ProyeccionView from '../components/plan/ProyeccionView'
 // como tab dentro de Plan de Quincena) con su propia entrada en el menú.
 export default function Proyeccion() {
   return (
-    <Layout titulo="Proyección 12 Meses">
+    <Layout titulo="Proyección a 12 meses">
       <ProyeccionView />
     </Layout>
   )

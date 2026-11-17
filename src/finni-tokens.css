@@ -1,313 +1,296 @@
 /* ============================================================================
-   FINNI APOYO — Design Tokens (colors + type) · v2 "Tinta & Esmeralda"
-   Sistema de gestión de gastos y finanzas personales
+   FINNI APOYO — Design Tokens · v3 "Libreta"
    ----------------------------------------------------------------------------
-   Minimal, Revolut-inspired direction: warm porcelain canvas, ink-neutral
-   primary (near-black buttons and active states), and a signature emerald
-   reserved for money-positive moments (ahorro, ingresos, brand). The 50/30/20
-   system (Necesidad / Deseo / Ahorro) survives as índigo / ámbar / esmeralda.
+   Dirección: una libreta de cuentas bien llevada. Papel neutro, tinta casi
+   negra y un solo acento (verde botella) para acciones y dinero a favor.
+   Reglas del sistema:
+     - Superficies planas: borde fino, sin sombra. La sombra queda solo para
+       lo que flota (menús, modales, toasts).
+     - Sin degradados, sin vidrio, sin etiquetas en MAYÚSCULAS.
+     - El color informa (clasificación, estado); nunca decora.
+     - Las cifras mandan: van en la tipografía de títulos, con números tabulares.
+   Clasificación 50/30/20: necesidad = azul tinta, deseo = buganvilia,
+   ahorro = verde.
 
-   Two themes: light (default) and dark via [data-theme="dark"] on <html>.
-   The primary scale FLIPS in dark mode (ink buttons become white buttons),
-   so components built on the tokens re-skin automatically.
+   Dos temas: claro (default) y oscuro con [data-theme="dark"] en <html>.
+   En oscuro la escala primaria se aclara y --fg-on-primary pasa a tinta.
 
-   Fonts load from Google Fonts CDN. One family does everything: Plus Jakarta
-   Sans. Numbers use tabular figures for column alignment.
+   Tipografías (Google Fonts, cargadas en index.html):
+     - Bricolage Grotesque → títulos y cifras grandes (--font-display)
+     - IBM Plex Sans       → interfaz y texto (--font-sans)
    ============================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 html { color-scheme: light; }
 html[data-theme="dark"] { color-scheme: dark; }
 
 :root {
   /* ---- Type families ---------------------------------------------------- */
-  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Manrope', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: var(--font-sans);
 
   /* ============================ COLOR ==================================== */
 
-  /* ---- App canvas & surfaces (warm porcelain) --------------------------- */
-  --bg-app:        #F1F4F9;
-  --bg-app-2:      #E9EEF6;
-  --bg-subtle:     #F8FAFD;
-  --surface:       #FFFFFF;   /* card / sheet */
-  --surface-2:     #F4F7FC;
-  --surface-3:     #E8EEF7;
-  --surface-glass: rgba(245, 248, 253, 0.86);
-  --surface-glass-strong: rgba(255, 255, 255, 0.94);
+  /* ---- Lienzo y superficies (papel neutro) ------------------------------ */
+  --bg-app:        #F3F2EE;
+  --bg-app-2:      #ECEBE6;
+  --bg-subtle:     #F8F7F4;
+  --surface:       #FFFFFF;   /* tarjeta / hoja */
+  --surface-2:     #F6F5F1;
+  --surface-3:     #ECEAE4;
+  --surface-glass: #F3F2EE;          /* ya no hay vidrio: son colores sólidos */
+  --surface-glass-strong: #FFFFFF;
 
-  /* ---- Text / foreground (warm ink) ------------------------------------- */
-  --fg-1: #111827;
-  --fg-2: #3B465A;
-  --fg-3: #68758C;
-  --fg-4: #9AA6B8;
+  /* ---- Texto (tinta) ---------------------------------------------------- */
+  --fg-1: #1A1C19;
+  --fg-2: #3D403A;
+  --fg-3: #6B6E66;
+  --fg-4: #9A9C94;
   --fg-on-primary: #FFFFFF;
   --fg-on-accent:  #FFFFFF;
 
-  /* ---- Borders & dividers ----------------------------------------------- */
-  --border:        #D9E1EC;
-  --border-strong: #B6C2D4;
-  --divider:       #E8EDF4;
+  /* ---- Bordes ----------------------------------------------------------- */
+  --border:        #DFDDD5;
+  --border-strong: #BEBBB0;
+  --divider:       #EAE8E1;
 
-  /* ---- Primary — "Tinta" (warm ink neutral) ----------------------------- */
-  --primary-50:  #EDF3FF;
-  --primary-100: #DCE8FF;
-  --primary-200: #B9D0FF;
-  --primary-300: #8AAEFF;
-  --primary-400: #5E87FF;
-  --primary-500: #3764F4;
-  --primary-600: #234FE8;
-  --primary-700: #1D40BE;
-  --primary-800: #203A91;
-  --primary-900: #1F326F;
+  /* ---- Primario — verde botella ----------------------------------------- */
+  --primary-50:  #EEF4EE;
+  --primary-100: #DDE9DD;
+  --primary-200: #BDD4BF;
+  --primary-300: #8FB595;
+  --primary-400: #5C9168;
+  --primary-500: #35744A;
+  --primary-600: #1F5C38;
+  --primary-700: #174A2D;
+  --primary-800: #123A24;
+  --primary-900: #0D2B1B;
 
   --primary:      var(--primary-600);
-  --primary-soft-bg:  var(--primary-100);  /* tinted button / active nav */
+  --primary-soft-bg:  var(--primary-100);
   --primary-soft-fg:  var(--primary-700);
 
-  /* ---- Finance classification system (50 / 30 / 20) --------------------- */
-  /* Necesidad — Need (índigo) */
-  --necesidad:     #315FE8;
-  --necesidad-bg:  #E8EEFF;
-  --necesidad-fg:  #2448B8;
-  /* Deseo — Want (ámbar) */
-  --deseo:         #E6952D;
-  --deseo-bg:      #FFF0D9;
-  --deseo-fg:      #9A590D;
-  /* Ahorro — Save (esmeralda, the brand accent) */
-  --ahorro:        #1DA77A;
-  --ahorro-bg:     #E1F6ED;
-  --ahorro-fg:     #087A59;
+  /* ---- Clasificación 50 / 30 / 20 --------------------------------------- */
+  /* Necesidad — azul tinta */
+  --necesidad:     #33598C;
+  --necesidad-bg:  #E7EDF5;
+  --necesidad-fg:  #27466F;
+  /* Deseo — buganvilia */
+  --deseo:         #B4447D;
+  --deseo-bg:      #F7E8F0;
+  --deseo-fg:      #8E2F60;
+  /* Ahorro — verde */
+  --ahorro:        #2F7D4F;
+  --ahorro-bg:     #E4F0E6;
+  --ahorro-fg:     #1F5C38;
 
-  /* ---- Status / feedback ------------------------------------------------ */
-  --positive:      #1DA77A;   /* ingresos, ganancia */
-  --positive-bg:   #E1F6ED;
-  --positive-fg:   #087F5B;
-  --negative:      #E05263;
-  --negative-bg:   #FDE9EC;
-  --negative-fg:   #B42F42;
-  --warning:       #E6952D;
-  --warning-bg:    #FFF0D9;
-  --warning-fg:    #9A590D;
-  --info:          var(--primary-600);
-  --info-bg:       var(--primary-50);
+  /* ---- Estado ----------------------------------------------------------- */
+  --positive:      #2F7D4F;
+  --positive-bg:   #E4F0E6;
+  --positive-fg:   #1F5C38;
+  --negative:      #C2402F;
+  --negative-bg:   #FAE9E5;
+  --negative-fg:   #9A2E20;
+  --warning:       #C4841D;
+  --warning-bg:    #FAF0DA;
+  --warning-fg:    #85560B;
+  --info:          var(--necesidad);
+  --info-bg:       var(--necesidad-bg);
 
-  /* ---- Extra accents (charts, decorative) ------------------------------- */
-  --accent-teal:   #11A8BD;
-  --accent-violet: #7869DA;
-  --accent-pink:   #D86B9E;
-  --accent-sky:    #388FD0;
+  /* ---- Acentos extra (gráficas) ----------------------------------------- */
+  --accent-teal:   #2C8C8C;
+  --accent-violet: #6F5BA8;
+  --accent-pink:   #B4447D;
+  --accent-sky:    #4C86B8;
 
-  /* Chart sequence — emerald-led designed spread */
-  --chart-1: #315FE8;
-  --chart-2: #1DA77A;
-  --chart-3: #E6952D;
-  --chart-4: #11A8BD;
-  --chart-5: #E05263;
-  --chart-6: #7869DA;
-  --chart-7: #D86B9E;
-  --chart-8: #65748B;
+  /* Secuencia de gráficas */
+  --chart-1: #1F5C38;
+  --chart-2: #33598C;
+  --chart-3: #B4447D;
+  --chart-4: #C4841D;
+  --chart-5: #2C8C8C;
+  --chart-6: #6F5BA8;
+  --chart-7: #C2402F;
+  --chart-8: #8A8C84;
 
-  /* ---- Signature gradients (hero balance card, FAB, splash) ------------- */
-  --grad-primary: linear-gradient(135deg, #111827 0%, #17388B 48%, #234FE8 100%); /* @kind color */
-  --grad-fresh:   linear-gradient(135deg, #234FE8 0%, #11A8BD 100%); /* @kind color */
-  --grad-ahorro:  linear-gradient(135deg, #1DA77A 0%, #52D6A7 100%); /* @kind color */
-  --grad-sunset:  linear-gradient(135deg, #E6952D 0%, #E05263 100%); /* @kind color */
-  --grad-canvas:  linear-gradient(180deg, #F8FAFD 0%, #EEF2F8 100%); /* @kind color */
+  /* ---- "Degradados" heredados: ahora son colores planos ------------------
+     Se conservan los nombres porque hay componentes que los usan como fondo. */
+  --grad-primary: var(--primary-600);
+  --grad-fresh:   var(--primary-500);
+  --grad-ahorro:  var(--ahorro);
+  --grad-sunset:  var(--warning);
+  --grad-canvas:  var(--bg-app);
 
-  /* ============================ RADII ==================================== */
-  --r-xs:   6px;
-  --r-sm:   8px;
-  --r-md:   10px;   /* controls, inputs, chips */
-  --r-lg:   8px;    /* cards */
-  --r-xl:   14px;   /* sheets, hero, modals */
-  --r-2xl:  18px;
+  /* ============================ RADIOS =================================== */
+  --r-xs:   3px;
+  --r-sm:   5px;
+  --r-md:   6px;    /* controles, inputs */
+  --r-lg:   8px;    /* tarjetas */
+  --r-xl:   10px;   /* hojas, modales */
+  --r-2xl:  12px;
   --r-full: 999px;
 
-  /* ============================ SHADOWS (soft, neutral) ================== */
-  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.05);
-  --shadow-sm: 0 2px 5px rgba(17, 24, 39, 0.05), 0 0 0 1px rgba(17, 24, 39, 0.02);
-  --shadow-md: 0 12px 30px rgba(17, 24, 39, 0.08), 0 2px 7px rgba(17, 24, 39, 0.04);
-  --shadow-lg: 0 20px 52px rgba(17, 24, 39, 0.13), 0 8px 20px rgba(17, 24, 39, 0.06);
-  --shadow-xl: 0 30px 76px rgba(17, 24, 39, 0.18), 0 12px 30px rgba(17, 24, 39, 0.08);
-  --shadow-primary: 0 14px 32px rgba(35, 79, 232, 0.27);
-  --shadow-ahorro:  0 12px 28px rgba(29, 167, 122, 0.22);
-  --ring-focus: 0 0 0 4px rgba(35, 79, 232, 0.18);
+  /* ============================ SOMBRAS ================================== */
+  /* Lo que está sobre la página no lleva sombra; solo lo que flota. */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 4px 14px rgba(26, 28, 25, 0.08);
+  --shadow-lg: 0 10px 30px rgba(26, 28, 25, 0.12), 0 0 0 1px rgba(26, 28, 25, 0.04);
+  --shadow-xl: 0 18px 50px rgba(26, 28, 25, 0.18), 0 0 0 1px rgba(26, 28, 25, 0.05);
+  --shadow-primary: none;
+  --shadow-ahorro:  none;
+  --ring-focus: 0 0 0 3px rgba(31, 92, 56, 0.22);
 
-  /* Glass material (nav bars, floating chrome) */
-  --glass-blur: blur(20px) saturate(180%); /* @kind other */
+  --glass-blur: none; /* @kind other */
 
-  /* ============================ SPACING (2px base) ===================== */
+  /* ============================ ESPACIADO =============================== */
   --space-1: 2px;   --space-2: 4px;   --space-3: 6px;   --space-4: 8px;
   --space-6: 12px;  --space-8: 16px;  --space-12: 24px; --space-16: 32px;
   --space-24: 48px; --space-32: 64px;
 
-  /* ============================ MOTION ================================== */
+  /* ============================ DENSIDAD ================================ */
+  /* Medidas de la interfaz compacta. Úsalas en vez de números sueltos.     */
+  --pagina-max:    1200px;
+  --pagina-pad:    20px;   /* margen lateral de la página */
+  --gap:           12px;   /* entre bloques */
+  --card-pad:      16px;   /* relleno de tarjeta */
+  --fila-alto:     40px;   /* fila de lista o tabla */
+  --control-alto:  34px;   /* botón, input, select */
+  --barra-alto:    52px;   /* barra superior */
+
+  /* ============================ MOVIMIENTO ============================== */
   --ease-ios:    cubic-bezier(0.32, 0.72, 0, 1); /* @kind other */
   --ease-out:    cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
-  --dur-fast:    150ms; /* @kind other */
-  --dur-base:    240ms; /* @kind other */
-  --dur-slow:    420ms; /* @kind other */
+  --dur-fast:    120ms; /* @kind other */
+  --dur-base:    200ms; /* @kind other */
+  --dur-slow:    360ms; /* @kind other */
 
-  /* ============================ TYPE SCALE ============================== */
-  /* Each semantic role packs size / weight / line-height / tracking.        */
-  --display-lg: 700 40px/1.05 var(--font-sans);  --display-lg-ls: 0;
-  --display:    700 32px/1.08 var(--font-sans);  --display-ls:    0;
-  --h1:         700 26px/1.15 var(--font-sans);  --h1-ls:         0;
-  --h2:         700 21px/1.2  var(--font-sans);  --h2-ls:         0;
-  --h3:         600 17px/1.3  var(--font-sans);  --h3-ls:         0;
-  --body-lg:    500 17px/1.5  var(--font-sans);  --body-lg-ls:    0;
-  --body:       450 15px/1.55 var(--font-sans);  --body-ls:        0;
-  --body-sm:    500 13px/1.5  var(--font-sans);  --body-sm-ls:     0;
-  --caption:    600 12px/1.4  var(--font-sans);  --caption-ls:     0;
-  --overline:   700 11px/1.2  var(--font-sans);  --overline-ls:    0; /* UPPERCASE labels */
+  /* ============================ ESCALA TIPOGRÁFICA ====================== */
+  --display-lg: 600 40px/1.05 var(--font-display);  --display-lg-ls: -0.02em;
+  --display:    600 32px/1.08 var(--font-display);  --display-ls:    -0.02em;
+  --h1:         600 26px/1.15 var(--font-display);  --h1-ls:         -0.015em;
+  --h2:         600 20px/1.2  var(--font-display);  --h2-ls:         -0.01em;
+  --h3:         600 16px/1.3  var(--font-sans);     --h3-ls:         0;
+  --body-lg:    400 17px/1.5  var(--font-sans);     --body-lg-ls:    0;
+  --body:       400 15px/1.55 var(--font-sans);     --body-ls:       0;
+  --body-sm:    400 13px/1.5  var(--font-sans);     --body-sm-ls:    0;
+  --caption:    500 12px/1.4  var(--font-sans);     --caption-ls:    0;
+  --overline:   500 12px/1.3  var(--font-sans);     --overline-ls:   0;
 
-  /* Numeric (currency, dates, %) — Plus Jakarta Sans with tabular figures */
-  --num-xl: 700 28px/1.1 var(--font-mono);
-  --num-lg: 700 21px/1.1 var(--font-mono);
-  --num:    600 15px/1.2 var(--font-mono);
-  --num-sm: 500 12px/1.2 var(--font-mono);
+  --num-xl: 600 28px/1.1 var(--font-display);
+  --num-lg: 600 21px/1.1 var(--font-display);
+  --num:    500 15px/1.2 var(--font-sans);
+  --num-sm: 500 12px/1.2 var(--font-sans);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --pagina-pad:   12px;
+    --card-pad:     14px;
+    --control-alto: 40px;
+    --barra-alto:   48px;
+  }
 }
 
 /* ============================================================================
-   DARK THEME — [data-theme="dark"] on <html>.
-   The primary (Tinta) scale flips: ink buttons become white buttons.
+   TEMA OSCURO
    ============================================================================ */
 [data-theme="dark"] {
-  /* Canvas & surfaces */
-  --bg-app:        #080C14;
-  --bg-app-2:      #0D1422;
-  --bg-subtle:     #0F1726;
-  --surface:       #121827;
-  --surface-2:     #172033;
-  --surface-3:     #1F2A42;
-  --surface-glass: rgba(8, 12, 20, 0.78);
-  --surface-glass-strong: rgba(15, 23, 38, 0.92);
+  --bg-app:        #121311;
+  --bg-app-2:      #171816;
+  --bg-subtle:     #161715;
+  --surface:       #1A1B19;
+  --surface-2:     #20221F;
+  --surface-3:     #2A2C28;
+  --surface-glass: #121311;
+  --surface-glass-strong: #1A1B19;
 
-  /* Text */
-  --fg-1: #F3F7FF;
-  --fg-2: #C4D0E3;
-  --fg-3: #8290A7;
-  --fg-4: #56657E;
-  --fg-on-primary: #FFFFFF;
-  --fg-on-accent:  #07111F;
+  --fg-1: #EEEDE8;
+  --fg-2: #C9C8C1;
+  --fg-3: #94968E;
+  --fg-4: #6A6C65;
+  --fg-on-primary: #0F1A12;
+  --fg-on-accent:  #0F1A12;
 
-  /* Borders */
-  --border:        #243149;
-  --border-strong: #3A4B6C;
-  --divider:       #1D283D;
+  --border:        #2E302B;
+  --border-strong: #454841;
+  --divider:       #262824;
 
-  /* Primary flips to white */
-  --primary-50:  #101936;
-  --primary-100: #152456;
-  --primary-200: #1D3477;
-  --primary-300: #2C4EA6;
-  --primary-400: #3F67DA;
-  --primary-500: #5F86F6;
-  --primary-600: #82A4FF;
-  --primary-700: #A9C0FF;
-  --primary-800: #D0DDFF;
-  --primary-900: #EEF4FF;
+  --primary-50:  #162019;
+  --primary-100: #1C2B20;
+  --primary-200: #27402E;
+  --primary-300: #3A6146;
+  --primary-400: #56895F;
+  --primary-500: #76AC80;
+  --primary-600: #93C59B;
+  --primary-700: #AED6B4;
+  --primary-800: #CBE5CE;
+  --primary-900: #E6F3E7;
 
-  /* Classification — brighter on dark */
-  --necesidad:     #7898FF;
-  --necesidad-bg:  #172652;
-  --necesidad-fg:  #B1C2FF;
-  --deseo:         #E8A15C;
-  --deseo-bg:      #392711;
-  --deseo-fg:      #F2BE87;
-  --ahorro:        #43C990;
-  --ahorro-bg:     #123729;
-  --ahorro-fg:     #95E8C5;
+  --necesidad:     #7FA6DA;
+  --necesidad-bg:  #1B2635;
+  --necesidad-fg:  #A9C4E8;
+  --deseo:         #E083B0;
+  --deseo-bg:      #35202B;
+  --deseo-fg:      #EDA9C9;
+  --ahorro:        #6FBE85;
+  --ahorro-bg:     #1A2B1F;
+  --ahorro-fg:     #A4D9B0;
 
-  /* Status */
-  --positive:      #43C990;
-  --positive-bg:   #123729;
-  --positive-fg:   #95E8C5;
-  --negative:      #FF6877;
-  --negative-bg:   #412029;
-  --negative-fg:   #FFA3AD;
-  --warning:       #E8A15C;
-  --warning-bg:    #392711;
-  --warning-fg:    #F2BE87;
+  --positive:      #6FBE85;
+  --positive-bg:   #1A2B1F;
+  --positive-fg:   #A4D9B0;
+  --negative:      #EC7A68;
+  --negative-bg:   #3A201B;
+  --negative-fg:   #F5A698;
+  --warning:       #E0A84A;
+  --warning-bg:    #33280F;
+  --warning-fg:    #EEC27A;
 
-  /* Accents & charts — brighter */
-  --accent-teal:   #36C4D9;
-  --accent-violet: #A08FF0;
-  --accent-pink:   #ECA5C4;
-  --accent-sky:    #6FC4F0;
-  --chart-1: #82A4FF;
-  --chart-2: #43C990;
-  --chart-3: #E8A15C;
-  --chart-4: #36C4D9;
-  --chart-5: #FF6877;
-  --chart-6: #A08FF0;
-  --chart-7: #ECA5C4;
-  --chart-8: #7F958B;
+  --accent-teal:   #5FBDBD;
+  --accent-violet: #A493D6;
+  --accent-pink:   #E083B0;
+  --accent-sky:    #7FB4DE;
+  --chart-1: #93C59B;
+  --chart-2: #7FA6DA;
+  --chart-3: #E083B0;
+  --chart-4: #E0A84A;
+  --chart-5: #5FBDBD;
+  --chart-6: #A493D6;
+  --chart-7: #EC7A68;
+  --chart-8: #8A8C84;
 
-  /* Gradients */
-  --grad-primary: linear-gradient(135deg, #080C14 0%, #2657D8 58%, #12A6B8 100%); /* @kind color */
-  --grad-fresh:   linear-gradient(135deg, #315CD6 0%, #36C4D9 100%); /* @kind color */
-  --grad-canvas:  linear-gradient(180deg, #0D1422 0%, #080C14 100%); /* @kind color */
-
-  /* Shadows — deeper on dark */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.40), 0 2px 6px rgba(0, 0, 0, 0.30);
-  --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.48), 0 6px 14px rgba(0, 0, 0, 0.32);
-  --shadow-xl: 0 28px 70px rgba(0, 0, 0, 0.55), 0 10px 24px rgba(0, 0, 0, 0.35);
-  --shadow-primary: 0 12px 28px rgba(38, 87, 216, 0.38);
-  --shadow-ahorro:  0 12px 28px rgba(67, 201, 144, 0.24);
-  --ring-focus: 0 0 0 4px rgba(130, 164, 255, 0.22);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-xl: 0 18px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ring-focus: 0 0 0 3px rgba(147, 197, 155, 0.28);
 }
 
 /* ============================================================================
    PUENTE TAILWIND → TOKENS
-   Las páginas usan clases utilitarias (text-gray-800, bg-red-50, ...) con
-   valores fijos que no responden al tema. tailwind.config.js las remapea a
-   estas variables: en claro conservan el hex original de Tailwind (cero cambio
-   visual) y en oscuro toman valores de la paleta Tinta — así TODA la app
-   flipea sin tocar página por página.
+   Las páginas usan clases utilitarias (text-gray-800, bg-red-50, ...).
+   tailwind.config.js las remapea a estas variables, que apuntan a los tokens
+   de arriba: así TODA la app sigue el tema sin tocar página por página.
    ============================================================================ */
 :root {
-  --tw-gray-50:  #F9FAFB;  --tw-gray-100: #F3F4F6;  --tw-gray-200: #E5E7EB;
-  --tw-gray-300: #D1D5DB;  --tw-gray-400: #9CA3AF;  --tw-gray-500: #6B7280;
-  --tw-gray-600: #4B5563;  --tw-gray-700: #374151;  --tw-gray-800: #1F2937;
-  --tw-gray-900: #111827;
+  --tw-gray-50:  var(--surface-2);  --tw-gray-100: var(--surface-3);  --tw-gray-200: var(--border);
+  --tw-gray-300: var(--border-strong);  --tw-gray-400: var(--fg-4);  --tw-gray-500: var(--fg-3);
+  --tw-gray-600: var(--fg-2);  --tw-gray-700: var(--fg-2);  --tw-gray-800: var(--fg-1);
+  --tw-gray-900: var(--fg-1);
 
-  --tw-red-50:  #FEF2F2;  --tw-red-100: #FEE2E2;  --tw-red-200: #FECACA;
-  --tw-red-400: #F87171;  --tw-red-500: #EF4444;  --tw-red-600: #DC2626;
+  --tw-red-50:  var(--negative-bg);  --tw-red-100: var(--negative-bg);  --tw-red-200: color-mix(in srgb, var(--negative) 30%, var(--surface));
+  --tw-red-400: var(--negative);  --tw-red-500: var(--negative);  --tw-red-600: var(--negative-fg);
 
-  --tw-emerald-50: #ECFDF5;  --tw-emerald-100: #D1FAE5;
-  --tw-emerald-500: #10B981; --tw-emerald-600: #059669;
+  --tw-emerald-50: var(--positive-bg);  --tw-emerald-100: var(--positive-bg);
+  --tw-emerald-500: var(--positive); --tw-emerald-600: var(--positive-fg);
 
-  --tw-amber-50: #FFFBEB;  --tw-amber-400: #FBBF24;  --tw-amber-500: #F59E0B;
+  --tw-amber-50: var(--warning-bg);  --tw-amber-400: var(--warning);  --tw-amber-500: var(--warning);
 
-  --tw-blue-50: #EEF4FF;  --tw-blue-500: #386FDB;
-}
-
-[data-theme="dark"] {
-  /* Grises: luminancia invertida, alineados a las superficies Tinta */
-  --tw-gray-50:  #172033;  --tw-gray-100: #1F2A42;  --tw-gray-200: #2B3A56;
-  --tw-gray-300: #465978;  --tw-gray-400: #6D7D96;  --tw-gray-500: #9AA7BA;
-  --tw-gray-600: #C4D0E3;  --tw-gray-700: #D7E0EF;  --tw-gray-800: #E8EEF8;
-  --tw-gray-900: #F3F7FF;
-
-  /* Tintes de estado: mismos valores que los tokens de status en oscuro */
-  --tw-red-50:  #412023;  --tw-red-100: #4A272A;  --tw-red-200: #5C3134;
-  --tw-red-400: #FF9296;  --tw-red-500: #FF9296;  --tw-red-600: #F1575C;
-
-  --tw-emerald-50: #123527;  --tw-emerald-100: #1A4232;
-  --tw-emerald-500: #34C08F; --tw-emerald-600: #5FD8AC;
-
-  --tw-amber-50: #3D2B15;  --tw-amber-400: #F3BC85;  --tw-amber-500: #EFA55F;
-
-  --tw-blue-50: #101936;  --tw-blue-500: #82A4FF;
+  --tw-blue-50: var(--necesidad-bg);  --tw-blue-500: var(--necesidad);
 }
 
 /* ============================================================================
-   SEMANTIC HELPERS — opt-in classes mirroring the tokens above.
+   SEMANTIC HELPERS
    ============================================================================ */
 .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-
+.font-display { font-family: var(--font-display); letter-spacing: -0.015em; }

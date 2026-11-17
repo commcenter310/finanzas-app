@@ -28,11 +28,9 @@ import { useToast } from '../components/ui/Toast'
 import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import {
   CommitmentHero,
-  CommitmentNav,
   HeroMetric,
   PriorityPanel,
   ProgressRail,
-  SectionHeader,
   SegmentedControl,
   Sheet,
   StatusPill,
@@ -273,30 +271,24 @@ export default function Deudas() {
   const prioridadTitle = plan.tarjetasSobre30.length > 0
     ? `Baja ${plan.tarjetasSobre30[0].nombre} antes de acelerar otras deudas`
     : plan.foco
-      ? `Concentra el siguiente extra en ${plan.foco.nombre}`
-      : 'Tu cartera no tiene saldos pendientes'
+      ? `Si te sobra dinero, abónalo a ${plan.foco.nombre}`
+      : 'No debes nada'
   const prioridadDescription = plan.tarjetasSobre30.length > 0
     ? `${plan.tarjetasSobre30.length} tarjeta${plan.tarjetasSobre30.length !== 1 ? 's están' : ' está'} por encima del 30% de utilización.`
     : plan.foco
-      ? `${plan.metodo} es la ruta sugerida con la información que ya capturaste.`
+      ? `Es lo que sugiere el método ${plan.metodo.toLowerCase()} con tus datos.`
       : 'Cuando agregues una deuda, aquí aparecerá la siguiente acción recomendada.'
 
   return (
-    <Layout titulo="Deudas">
+    <Layout titulo="Deudas" acciones={(
+      <button type="button" className="btn-primary" onClick={abrirNueva}>
+        <Plus className="w-4 h-4" aria-hidden="true" />
+        <span>Nueva deuda</span>
+      </button>
+    )}>
       <div className="commitment-page">
-        <div className="commitment-module-bar">
-          <CommitmentNav />
-          <button type="button" className="btn-primary flex items-center gap-2" onClick={abrirNueva}>
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Nueva deuda</span>
-          </button>
-        </div>
-
         <CommitmentHero
-          eyebrow="Centro de compromisos"
-          title="Tu deuda, convertida en un plan."
-          description="Un solo lugar para ver saldos, registrar pagos y decidir qué compromiso atacar primero."
-          amountLabel="Saldo total pendiente"
+          title="Debes en total"
           amount={formatMXN(totalDeuda)}
           aside={(
             <PriorityPanel
@@ -312,29 +304,22 @@ export default function Deudas() {
             />
           )}
         >
-          <HeroMetric icon={CircleDollarSign} label="Compromiso mensual" value={formatMXN(totalPagoMensual)} />
-          <HeroMetric icon={Wallet} label="Cuentas activas" value={`${deudas.length}`} />
-          <HeroMetric icon={TimerReset} label="Ritmo estimado" value={formatearMeses(plan.mesesTotales)} />
+          <HeroMetric label="Pagos al mes" value={formatMXN(totalPagoMensual)} />
+          <HeroMetric label="Deudas y tarjetas" value={`${deudas.length}`} />
+          <HeroMetric label="Terminas en" value={formatearMeses(plan.mesesTotales)} />
         </CommitmentHero>
 
-        <SectionHeader
-          eyebrow={vista === 'cartera' ? 'Cartera operativa' : 'Orden de ataque'}
-          title={vista === 'cartera' ? 'Compromisos activos' : 'Estrategia de liquidación'}
-          description={vista === 'cartera'
-            ? 'Compara saldos, registra pagos y consulta el historial sin perder contexto.'
-            : 'Cambia de método para ver cómo se reordena tu siguiente movimiento.'}
-          action={(
-            <SegmentedControl
-              value={vista}
-              ariaLabel="Vista de deudas"
-              onChange={setVista}
-              options={[
-                { value: 'cartera', label: 'Cartera', icon: Wallet },
-                { value: 'estrategia', label: 'Estrategia', icon: ListOrdered },
-              ]}
-            />
-          )}
-        />
+        <div className="deudas-vista">
+          <SegmentedControl
+            value={vista}
+            ariaLabel="Vista de deudas"
+            onChange={setVista}
+            options={[
+              { value: 'cartera', label: 'Lo que debes', icon: Wallet },
+              { value: 'estrategia', label: 'En qué orden pagar', icon: ListOrdered },
+            ]}
+          />
+        </div>
 
         {vista === 'cartera' ? (
           loading ? (
@@ -345,7 +330,7 @@ export default function Deudas() {
             <EmptyState
               icon={Target}
               title="No tienes deudas registradas"
-              description="Cuando captures una deuda, la app armará el orden de ataque y dará seguimiento a cada pago."
+              description="Agrega una deuda para llevar sus pagos y ver cuál conviene liquidar primero."
               action={(
                 <button type="button" onClick={abrirNueva} className="btn-primary text-sm">
                   <Plus className="w-4 h-4" /> Nueva deuda
@@ -398,15 +383,15 @@ export default function Deudas() {
 
                       <div className="commitment-debt-balance">
                         <div>
-                          <span>{esTarjeta ? 'Saldo utilizado' : 'Saldo pendiente'}</span>
                           <strong>{formatMXN(saldoActual)}</strong>
+                          <span>
+                            {esTarjeta ? 'usado' : 'pagado'} {Math.max(0, esTarjeta ? pctUso : pctLiquidado).toFixed(0)}%
+                          </span>
                         </div>
                         <ProgressRail
                           value={esTarjeta ? pctUso : pctLiquidado}
                           marker={esTarjeta ? 30 : null}
                           tone={esTarjeta ? (pctUso > 80 ? 'negative' : pctUso > 30 ? 'warning' : 'positive') : 'positive'}
-                          label={esTarjeta ? 'Utilización' : 'Avance liquidado'}
-                          endLabel={`${Math.max(0, esTarjeta ? pctUso : pctLiquidado).toFixed(0)}%`}
                         />
                       </div>
 
@@ -416,7 +401,7 @@ export default function Deudas() {
                           min="0"
                           className="input"
                           aria-label={`Monto de pago para ${deuda.nombre}`}
-                          placeholder="Monto del pago"
+                          placeholder="Monto"
                           value={montoAbono[deuda.id] ?? ''}
                           onChange={event => setMontoAbono(current => ({ ...current, [deuda.id]: event.target.value }))}
                           disabled={pagoEnCurso}
@@ -541,7 +526,7 @@ export default function Deudas() {
         open={mostrarForm}
         onClose={cerrarForm}
         title={editandoId ? 'Editar deuda' : 'Nueva deuda'}
-        description="Captura lo esencial para que el plan pueda ordenar pagos y estimar el avance."
+        description="Con el saldo y el pago basta; la tasa ayuda a decidir cuál pagar primero."
         footer={(
           <>
             <button type="button" className="btn-ghost" onClick={cerrarForm}>Cancelar</button>

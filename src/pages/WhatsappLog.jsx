@@ -14,22 +14,22 @@ export default function WhatsappLog() {
   const errores = logs.filter(l => !l.procesado).length
 
   return (
-    <Layout titulo="WhatsApp Log">
-      <div className="space-y-4">
+    <Layout titulo="WhatsApp">
+      <div className="space-y-3">
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="stat-strip grid grid-cols-3">
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Total Mensajes</p>
-            <p className="text-xl font-bold font-mono text-primary-700">{logs.length}</p>
+            <p className="stat-label">Mensajes</p>
+            <p className="stat-value">{logs.length}</p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Procesados</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{procesados}</p>
+            <p className="stat-label">Procesados</p>
+            <p className="stat-value">{procesados}</p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Errores</p>
-            <p className="text-xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{errores}</p>
+            <p className="stat-label">Errores</p>
+            <p className="stat-value" style={{ color: 'var(--negative-fg)' }}>{errores}</p>
           </div>
         </div>
 
@@ -45,9 +45,9 @@ export default function WhatsappLog() {
         )}
 
         {/* Info de uso */}
-        <div className="card p-4 bg-primary-50 border-primary-200 border">
-          <h3 className="font-bold text-primary-900 mb-2">Cómo usar el bot de WhatsApp</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-primary-800">
+        <div className="card p-4">
+          <h3 className="titulo-seccion mb-2">Cómo usar el bot de WhatsApp</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
             {[
               ['Registrar gasto', '"89 café nu" o "ayer 200 gasolina"'],
               ['Compra a meses', '"3000 tele nu a 12 meses"'],
@@ -60,7 +60,7 @@ export default function WhatsappLog() {
             ].map(([label, ejemplo]) => (
               <div key={label}>
                 <span className="font-semibold">{label}:</span>{' '}
-                <code className="bg-primary-100 px-1 rounded text-xs">{ejemplo}</code>
+                <code className="px-1 rounded text-xs bg-[var(--surface-3)] text-[var(--fg-2)]">{ejemplo}</code>
               </div>
             ))}
           </div>
@@ -68,7 +68,7 @@ export default function WhatsappLog() {
 
         {/* Tabla de logs */}
         <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-50">
+          <div className="px-5 py-3 border-b border-[var(--divider)]">
             <p className="text-sm text-gray-500">Últimos 50 mensajes</p>
           </div>
           {loading
@@ -88,9 +88,9 @@ export default function WhatsappLog() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px]">
                     <thead>
-                      <tr className="border-b border-gray-50">
+                      <tr className="border-b border-[var(--divider)]">
                         {['Estado','Fecha','Mensaje','Respuesta del Bot','Transacción'].map(h => (
-                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                          <th key={h} className="px-4 py-3 text-left text-[13px] font-normal text-gray-500">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -102,7 +102,7 @@ export default function WhatsappLog() {
                               ? <CheckCircle className="w-4 h-4" style={{ color: 'var(--positive-fg)' }} />
                               : <XCircle className="w-4 h-4" style={{ color: 'var(--negative-fg)' }} />}
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">
+                          <td className="px-4 py-3 font-mono text-[13px] text-gray-500 whitespace-nowrap">
                             {new Date(log.created_at).toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </td>
                           <td className="px-4 py-3">

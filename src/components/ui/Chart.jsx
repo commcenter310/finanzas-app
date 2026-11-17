@@ -66,11 +66,3 @@ export function ChartLegend({ payload = [], nameMap = {} }) {
     </div>
   )
 }
-
-export function ChartEmptyState({ children = 'Sin datos para graficar' }) {
-  return (
-    <div className="chart-empty">
-      {children}
-    </div>
-  )
-}

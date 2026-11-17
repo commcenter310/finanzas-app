@@ -107,15 +107,15 @@ export default function SimuladorCredito() {
   const pagoMinEstimado = montoNum > 0 ? (montoNum * (esQuincenal ? 0.0075 : 0.015)).toFixed(0) : ''
 
   return (
-    <Layout titulo="Simulador de Crédito">
+    <Layout titulo="Simulador de crédito">
       <div className="space-y-6">
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Inputs */}
-          <div className="card p-5 space-y-4">
+          <div className="card p-4 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Calculator className="w-5 h-5 text-primary-700" />
-              <h2 className="font-bold text-gray-900">Datos del Crédito</h2>
+              <h2 className="titulo-seccion">Datos del crédito</h2>
             </div>
 
             {/* Cargar una deuda o tarjeta real */}
@@ -131,7 +131,7 @@ export default function SimuladorCredito() {
                   }))}
                   placeholder="Elegir deuda o tarjeta..."
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[13px] text-gray-500 mt-1">
                   Pre-llena saldo, tasa y pago con tus datos reales.
                 </p>
               </div>
@@ -140,7 +140,7 @@ export default function SimuladorCredito() {
             {/* Frecuencia de pago */}
             <div>
               <label className="label">Frecuencia de pago</label>
-              <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+              <div className="flex rounded-[var(--r-lg)] border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
                 {[
                   { v: 'mensual',   t: 'Mensual'   },
                   { v: 'quincenal', t: 'Quincenal' },
@@ -159,7 +159,7 @@ export default function SimuladorCredito() {
                   )
                 })}
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-[13px] text-gray-500 mt-1">
                 Muchos préstamos bancarios se pagan por quincena (2 pagos al mes).
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function SimuladorCredito() {
                   ⚠️ Tasa muy alta. Considera liquidar antes o buscar otra opción.
                 </p>
               )}
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-[13px] text-gray-500 mt-1">
                 Referencia: NU ~36% · Liverpool ~85% · HSBC ~28%
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function SimuladorCredito() {
               <input type="number" className="input font-mono" placeholder={pagoMinEstimado || '2,000'}
                 value={pago} onChange={e => setPago(e.target.value)} />
               {pagoMinEstimado && (
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[13px] text-gray-500 mt-1">
                   Pago mínimo estimado: {formatMXN(Number(pagoMinEstimado))} por {unidad}
                 </p>
               )}
@@ -195,7 +195,7 @@ export default function SimuladorCredito() {
           </div>
 
           {/* Resultado principal */}
-          <div className="card p-5 flex flex-col justify-center">
+          <div className="card p-4 flex flex-col justify-center">
             {!listo && (
               <div className="text-center text-gray-300 py-8">
                 <Calculator className="w-10 h-10 mx-auto mb-3 opacity-40" />
@@ -206,12 +206,12 @@ export default function SimuladorCredito() {
             {listo && resultado?.imposible && (
               <div className="text-center py-8">
                 <AlertTriangle className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--negative)' }} />
-                <p className="font-bold text-lg mb-1" style={{ color: 'var(--negative-fg)' }}>Pago insuficiente</p>
+                <p className="font-semibold text-lg mb-1" style={{ color: 'var(--negative-fg)' }}>Pago insuficiente</p>
                 <p className="text-sm text-gray-500">
                   El pago por {unidad} no cubre ni los intereses.<br />
                   Interés por {unidad}: {formatMXN(interesPeriodo)}
                 </p>
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-[13px] text-gray-500 mt-3">
                   Necesitas pagar más de {formatMXN(interesPeriodo)} cada {unidad} solo para no crecer la deuda.
                 </p>
               </div>
@@ -220,32 +220,32 @@ export default function SimuladorCredito() {
             {listo && resultado && !resultado.imposible && (() => {
               const dur = duracionLabel(resultado.periodos, esQuincenal)
               return (
-                <div className="space-y-4">
-                  <h2 className="font-bold text-gray-900">Resultado</h2>
+                <div className="space-y-3">
+                  <h2 className="titulo-seccion">Resultado</h2>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
-                      <p className="text-xs text-gray-400 mb-1">Tiempo para liquidar</p>
-                      <p className="text-2xl font-bold font-mono text-primary-700">{dur.grande}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                    <div className="bg-primary-50 rounded-[var(--r-lg)] p-4 border border-primary-100">
+                      <p className="text-[13px] text-gray-500 mb-1">Tiempo para liquidar</p>
+                      <p className="text-2xl font-semibold font-mono text-primary-700">{dur.grande}</p>
+                      <p className="text-[13px] text-gray-500 mt-1">
                         {dur.chico ? `${dur.chico} · ` : ''}~{resultado.fechaFin}
                       </p>
                     </div>
-                    <div className="rounded-xl p-4 border" style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
-                      <p className="text-xs text-gray-400 mb-1">Intereses totales</p>
-                      <p className="text-2xl font-bold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(resultado.totalIntereses)}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                    <div className="rounded-[var(--r-lg)] p-4 border" style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning-bg)' }}>
+                      <p className="text-[13px] text-gray-500 mb-1">Intereses totales</p>
+                      <p className="text-2xl font-semibold font-mono" style={{ color: 'var(--warning-fg)' }}>{formatMXN(resultado.totalIntereses)}</p>
+                      <p className="text-[13px] text-gray-500 mt-1">
                         {((resultado.totalIntereses / montoNum) * 100).toFixed(0)}% del monto original
                       </p>
                     </div>
-                    <div className="rounded-xl p-4 border" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
-                      <p className="text-xs text-gray-400 mb-1">Costo total</p>
-                      <p className="text-2xl font-bold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(resultado.totalPagado)}</p>
-                      <p className="text-xs text-gray-400 mt-1">Capital + intereses</p>
+                    <div className="rounded-[var(--r-lg)] p-4 border" style={{ background: 'var(--negative-bg)', borderColor: 'var(--negative-bg)' }}>
+                      <p className="text-[13px] text-gray-500 mb-1">Costo total</p>
+                      <p className="text-2xl font-semibold font-mono" style={{ color: 'var(--negative-fg)' }}>{formatMXN(resultado.totalPagado)}</p>
+                      <p className="text-[13px] text-gray-500 mt-1">Capital + intereses</p>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                      <p className="text-xs text-gray-400 mb-1">Pago por {unidad}</p>
-                      <p className="text-2xl font-bold font-mono text-gray-700">{formatMXN(pagoNum)}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                    <div className="bg-gray-50 rounded-[var(--r-lg)] p-4 border border-gray-100">
+                      <p className="text-[13px] text-gray-500 mb-1">Pago por {unidad}</p>
+                      <p className="text-2xl font-semibold font-mono text-gray-700">{formatMXN(pagoNum)}</p>
+                      <p className="text-[13px] text-gray-500 mt-1">
                         {((pagoNum / montoNum) * 100).toFixed(1)}% del capital
                       </p>
                     </div>
@@ -258,17 +258,17 @@ export default function SimuladorCredito() {
 
         {/* Comparativa de pagos */}
         {listo && resultado && !resultado.imposible && (
-          <div className="card p-5">
+          <div className="card p-4">
             <div className="flex items-center gap-2 mb-4">
               <TrendingDown className="w-5 h-5" style={{ color: 'var(--ahorro-fg)' }} />
-              <h2 className="font-bold text-gray-900">¿Qué pasa si pago más?</h2>
+              <h2 className="titulo-seccion">¿Qué pasa si pago más?</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px]">
                 <thead>
-                  <tr className="border-b border-gray-50">
+                  <tr className="border-b border-[var(--divider)]">
                     {[`Pago por ${unidad}`, unidadPlural.charAt(0).toUpperCase() + unidadPlural.slice(1), 'Intereses totales', 'Costo total', 'Ahorro vs. base'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-[13px] font-normal text-gray-500">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -280,7 +280,7 @@ export default function SimuladorCredito() {
                     const dur = duracionLabel(periodos, esQuincenal)
                     return (
                       <tr key={extra} className={esBase ? 'bg-primary-50' : 'hover:bg-gray-50'}>
-                        <td className="px-4 py-3 font-mono font-bold text-gray-800">
+                        <td className="px-4 py-3 font-mono font-semibold text-gray-800">
                           {formatMXN(pagoNum + extra)}
                           {extra > 0 && <span className="text-emerald-600 text-xs ml-1">(+{formatMXN(extra)})</span>}
                         </td>
@@ -316,7 +316,7 @@ export default function SimuladorCredito() {
                   <thead className="sticky top-0 bg-surface">
                     <tr className="border-b border-gray-100">
                       {['#','Pago','Interés','Amortización','Saldo'].map(h => (
-                        <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                        <th key={h} className="px-4 py-2 text-left text-[13px] font-normal text-gray-500">{h}</th>
                       ))}
                     </tr>
                   </thead>

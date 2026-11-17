@@ -1,7 +1,6 @@
-export const chartAxisTick = {
+const chartAxisTick = {
   fill: 'var(--fg-3)',
-  fontSize: 11,
-  fontWeight: 600,
+  fontSize: 12,
 }
 
 export const chartAxisProps = {
@@ -12,7 +11,7 @@ export const chartAxisProps = {
 
 export const chartGridProps = {
   stroke: 'var(--divider)',
-  strokeDasharray: '4 8',
+  strokeDasharray: '2 4',
   vertical: false,
 }
 

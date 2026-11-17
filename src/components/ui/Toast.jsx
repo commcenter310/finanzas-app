@@ -72,7 +72,7 @@ function ToastItem({ message, type, accion, onDismiss }) {
         <button
           type="button"
           onClick={() => { onDismiss?.(); accion.onClick() }}
-          className="ml-1 underline underline-offset-2 font-bold whitespace-nowrap"
+          className="ml-1 underline underline-offset-2 font-semibold whitespace-nowrap"
           style={{ color: 'inherit' }}
         >
           {accion.etiqueta}

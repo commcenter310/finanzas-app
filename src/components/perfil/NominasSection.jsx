@@ -107,28 +107,28 @@ export default function NominasSection() {
 
   return (
     <div className="card overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
         <div>
-          <h2 className="font-bold text-sm" style={{ color: 'var(--fg-1)' }}>Ingresos y Nómina</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--fg-4)' }}>
+          <h2 className="titulo-seccion">Ingresos y nómina</h2>
+          <p className="hidden sm:block text-xs mt-0.5" style={{ color: 'var(--fg-4)' }}>
             Opcional · ayuda a estimar cuánto percibes al año incluyendo prestaciones
           </p>
         </div>
-        <button onClick={abrirNueva} className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+        <button onClick={abrirNueva} className="btn-secondary flex-shrink-0 text-xs">
           <Plus className="w-3.5 h-3.5" /> Agregar nómina
         </button>
       </div>
 
       {/* Resumen agregado */}
       {nominas.length > 0 && (
-        <div className="grid grid-cols-2 divide-x" style={{ borderColor: 'var(--divider)', background: 'var(--surface-2)' }}>
-          <div className="px-5 py-3">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Ingreso anual estimado</p>
-            <p className="text-lg font-bold font-mono" style={{ color: 'var(--positive-fg)' }}>{formatMXN(totalAnual)}</p>
+        <div className="grid grid-cols-2 divide-x divide-[var(--divider)] border-b border-[var(--divider)]">
+          <div className="px-4 py-2">
+            <p className="stat-label">Ingreso anual estimado</p>
+            <p className="stat-value">{formatMXN(totalAnual)}</p>
           </div>
-          <div className="px-5 py-3">
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Promedio mensual</p>
-            <p className="text-lg font-bold font-mono text-primary-700">{formatMXN(totalMensualProm)}</p>
+          <div className="px-4 py-2">
+            <p className="stat-label">Promedio mensual</p>
+            <p className="stat-value">{formatMXN(totalMensualProm)}</p>
           </div>
         </div>
       )}
@@ -159,7 +159,7 @@ export default function NominasSection() {
 
           {/* Prestaciones — solo para sueldo */}
           {esSueldo && (
-            <div className="rounded-xl border p-3 mb-3" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <div className="rounded-[var(--r-lg)] border p-3 mb-3" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <Calculator className="w-4 h-4" style={{ color: 'var(--primary-700)' }} />
                 <p className="text-sm font-semibold text-gray-700">Prestaciones</p>
@@ -188,7 +188,7 @@ export default function NominasSection() {
                     <FilterSelect value={form.mes_aguinaldo} onChange={v => setF('mes_aguinaldo', v)} options={MESES_OPTS} placeholder="Mes" showClear={false} />
                   </div>
                   <span className="text-sm text-gray-500">→</span>
-                  <span className="text-sm font-mono font-bold" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(preview.aguinaldo)}</span>
+                  <span className="text-sm font-mono font-semibold" style={{ color: 'var(--ahorro-fg)' }}>{formatMXN(preview.aguinaldo)}</span>
                 </div>
               )}
 
@@ -207,7 +207,7 @@ export default function NominasSection() {
                     <input type="number" min="1" max="4" className="input text-sm font-mono w-16" placeholder="veces"
                       value={form.veces_prima_al_anio} onChange={e => setF('veces_prima_al_anio', e.target.value)} />
                     <span className="text-sm text-gray-500">veces/año →</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: 'var(--ahorro-fg)' }}>
+                    <span className="text-sm font-mono font-semibold" style={{ color: 'var(--ahorro-fg)' }}>
                       {formatMXN(preview.primaAnual)} <span className="font-normal text-gray-400">({formatMXN(preview.primaPorEvento)} c/u)</span>
                     </span>
                   </div>
@@ -242,11 +242,11 @@ export default function NominasSection() {
           )}
 
           {/* Previsualización total */}
-          <div className="flex items-center justify-between rounded-xl px-4 py-2.5 mb-3" style={{ background: 'var(--ahorro-bg)' }}>
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ahorro-fg)' }}>
+          <div className="flex items-center justify-between rounded-[var(--r-lg)] px-4 py-2.5 mb-3" style={{ background: 'var(--ahorro-bg)' }}>
+            <span className="text-xs font-semibold" style={{ color: 'var(--ahorro-fg)' }}>
               Esta nómina al año
             </span>
-            <span className="text-base font-bold font-mono" style={{ color: 'var(--ahorro-fg)' }}>
+            <span className="text-base font-semibold font-mono" style={{ color: 'var(--ahorro-fg)' }}>
               {formatMXN(preview.ingresoAnualTotal)}
             </span>
           </div>
@@ -289,18 +289,17 @@ export default function NominasSection() {
           const c = calcNomina(n)
           const Icono = n.tipo === 'honorarios' ? Briefcase : Wallet
           return (
-            <div key={n.id} className="flex items-center justify-between px-5 py-3 group">
+            <div key={n.id} className="flex items-center justify-between px-4 py-2 group">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Icono className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fg-3)' }} />
                   <p className="font-semibold text-sm" style={{ color: 'var(--fg-1)' }}>{n.nombre}</p>
                   {n.es_principal && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                      style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
-                      <Star className="w-2.5 h-2.5" /> Principal
+                    <span className="text-[13px] flex items-center gap-1" style={{ color: 'var(--fg-3)' }}>
+                      <Star className="w-3 h-3" /> principal
                     </span>
                   )}
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
+                  <span className="text-[13px] lowercase" style={{ color: 'var(--fg-3)' }}>
                     {FRECUENCIA_LABEL[n.frecuencia]}
                   </span>
                 </div>
@@ -311,11 +310,11 @@ export default function NominasSection() {
               </div>
               <div className="flex items-center gap-1 flex-shrink-0 ml-2 acciones-hover">
                 <button onClick={() => abrirEditar(n)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-primary-50 hover:text-primary-700 transition-colors">
+                  className="icon-button icon-button-sm">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => setConfirmDelete(n.id)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-500 transition-colors">
+                  className="icon-button icon-button-sm">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>

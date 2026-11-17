@@ -1,6 +1,7 @@
 import logoClaro from '../../assets/brand/logo-claro.png'
 import logoOscuro from '../../assets/brand/logo-oscuro.png'
-import emblema from '../../assets/brand/emblema.png'
+import emblemaClaro from '../../assets/brand/emblema-claro.png'
+import emblemaOscuro from '../../assets/brand/emblema-oscuro.png'
 import { useTheme } from '../../context/ThemeContext'
 
 // Logo de Finni Apoyo.
@@ -10,10 +11,10 @@ import { useTheme } from '../../context/ThemeContext'
 export default function BrandMark({ compact = false, inverse = false, className = '' }) {
   // Fuera de ThemeProvider (p. ej. pantalla de error general) useTheme es null
   const tema = useTheme()
-  if (compact) {
-    return <img src={emblema} alt="Finni Apoyo" className={`brand-emblem ${className}`} width="256" height="256" />
-  }
   const oscuro = inverse || tema?.esOscuro
+  if (compact) {
+    return <img src={oscuro ? emblemaOscuro : emblemaClaro} alt="Finni Apoyo" className={`brand-emblem ${className}`} width="256" height="256" />
+  }
   return (
     <img
       src={oscuro ? logoOscuro : logoClaro}
