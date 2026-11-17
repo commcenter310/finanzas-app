@@ -5,7 +5,8 @@ import { PASSWORD_MIN, traducirErrorAuth, validarPasswordNueva } from '../../uti
 // Formulario "contraseña nueva + confirmación". Lo usan Configuración
 // (cambiar contraseña) y la pantalla de recuperación.
 // onGuardar(password) debe devolver { error } (como supabase.auth.updateUser).
-export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contraseña' }) {
+// enLinea: los dos campos y el botón en una fila (en pantallas anchas).
+export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contraseña', enLinea = false }) {
   const [nueva, setNueva] = useState('')
   const [confirmacion, setConfirmacion] = useState('')
   const [visible, setVisible] = useState(false)
@@ -29,7 +30,8 @@ export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contrase
 
   const tipo = visible ? 'text' : 'password'
   return (
-    <form onSubmit={enviar} className="space-y-3" noValidate>
+    <form onSubmit={enviar} noValidate
+      className={enLinea ? 'grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end' : 'space-y-3'}>
       <div>
         <label className="label" htmlFor="password-nueva">Contraseña nueva</label>
         <div className="relative">
@@ -49,11 +51,17 @@ export default function PasswordForm({ onGuardar, textoBoton = 'Cambiar contrase
         <input id="password-confirmacion" type={tipo} className="input" autoComplete="new-password"
           value={confirmacion} onChange={e => setConfirmacion(e.target.value)} />
       </div>
-      {error && <p className="text-sm font-medium" role="alert" style={{ color: 'var(--negative-fg)' }}>{error}</p>}
-      {ok && <p className="text-sm font-medium" role="status" style={{ color: 'var(--positive-fg)' }}>Contraseña actualizada ✅</p>}
+      {!enLinea && error && <p className="text-sm font-medium" role="alert" style={{ color: 'var(--negative-fg)' }}>{error}</p>}
+      {!enLinea && ok && <p className="text-sm font-medium" role="status" style={{ color: 'var(--positive-fg)' }}>Contraseña actualizada</p>}
       <button type="submit" className="btn-primary text-sm" disabled={guardando}>
         {guardando ? 'Guardando…' : textoBoton}
       </button>
+      {enLinea && (error || ok) && (
+        <p className="text-sm font-medium sm:col-span-3" role={error ? 'alert' : 'status'}
+          style={{ color: error ? 'var(--negative-fg)' : 'var(--positive-fg)' }}>
+          {error || 'Contraseña actualizada'}
+        </p>
+      )}
     </form>
   )
 }

@@ -20,8 +20,9 @@ export default function Layout({ titulo, acciones, children }) {
         <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={cerrarCajon} aria-hidden="true" />
       )}
 
-      {/* min-w-0 + overflow-x-hidden: nada más ancho que la pantalla estira la página */}
-      <main className="app-main min-w-0 overflow-x-hidden">
+      {/* min-w-0 + overflow-x: clip: nada más ancho que la pantalla estira la página.
+          clip y no hidden: hidden lo vuelve contenedor de scroll y rompe position: sticky */}
+      <main className="app-main min-w-0 [overflow-x:clip]">
         <h1 className="sr-only">{titulo}</h1>
         <div className="page-bar">
           <SeccionTabs />

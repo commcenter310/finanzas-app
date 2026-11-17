@@ -2704,3 +2704,50 @@
     .plan-avance { display: none; }
   }
 }
+
+/* ============================================================================
+   CONFIGURACIÓN — índice fijo a la izquierda (escritorio)
+   ============================================================================ */
+@layer components {
+  .ajustes {
+    display: grid;
+    grid-template-columns: 172px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .ajustes-indice {
+    position: sticky;
+    top: calc(var(--barra-alto) + 14px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .ajustes-indice-titulo {
+    margin-bottom: 6px;
+    color: var(--fg-1);
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .ajustes-indice > button,
+  .ajustes-indice > a {
+    min-height: 30px;
+    padding: 0 8px;
+    margin-left: -8px;
+    border-radius: var(--r-sm);
+    color: var(--fg-3);
+    font-size: 13px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+  }
+  .ajustes-indice > button:hover,
+  .ajustes-indice > a:hover { color: var(--fg-1); background: var(--surface-3); }
+  .ajustes-indice > a { margin-top: 6px; border-top: 1px solid var(--divider); border-radius: 0; padding-top: 6px; }
+
+  @media (max-width: 1023px) {
+    .ajustes { display: block; }
+    .ajustes-indice { display: none; }
+  }
+}

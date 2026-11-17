@@ -62,10 +62,10 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
 
   return (
     <div id="perfil-categorias" className="card overflow-hidden scroll-mt-24">
-      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
         <h2 className="titulo-seccion">Categorías</h2>
         <button onClick={() => setMostrarFormCat(v => !v)}
-          className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+          className="btn-secondary flex-shrink-0 text-xs">
           <Plus className="w-3.5 h-3.5" /> Agregar
         </button>
       </div>
@@ -111,7 +111,7 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
           />
         </div>
       </div>
-      <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
+      <div className="divide-y overflow-y-auto max-h-44 lg:max-h-52" style={{ borderColor: 'var(--divider)' }}>
         {(categorias ?? [])
           .filter(c => c.nombre.toLowerCase().includes(busquedaCat.toLowerCase()))
           .map(c => (
@@ -151,7 +151,7 @@ export default function CategoriasSection({ categorias, mostrarForm: mostrarForm
             </div>
           ) : (
             /* ── Fila normal ── */
-            <div key={c.id} className="flex items-center justify-between px-5 py-2.5 group"
+            <div key={c.id} className="flex items-center justify-between px-4 py-2 group"
               style={{ opacity: c.activa ? 1 : 0.4 }}>
               <div className="flex items-center gap-2 min-w-0">
                 <span className="flex-shrink-0">{c.icono}</span>

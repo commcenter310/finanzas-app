@@ -107,14 +107,14 @@ export default function NominasSection() {
 
   return (
     <div className="card overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
         <div>
           <h2 className="titulo-seccion">Ingresos y nómina</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--fg-4)' }}>
+          <p className="hidden sm:block text-xs mt-0.5" style={{ color: 'var(--fg-4)' }}>
             Opcional · ayuda a estimar cuánto percibes al año incluyendo prestaciones
           </p>
         </div>
-        <button onClick={abrirNueva} className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+        <button onClick={abrirNueva} className="btn-secondary flex-shrink-0 text-xs">
           <Plus className="w-3.5 h-3.5" /> Agregar nómina
         </button>
       </div>
@@ -122,11 +122,11 @@ export default function NominasSection() {
       {/* Resumen agregado */}
       {nominas.length > 0 && (
         <div className="grid grid-cols-2 divide-x divide-[var(--divider)] border-b border-[var(--divider)]">
-          <div className="px-5 py-3">
+          <div className="px-4 py-2">
             <p className="stat-label">Ingreso anual estimado</p>
             <p className="stat-value">{formatMXN(totalAnual)}</p>
           </div>
-          <div className="px-5 py-3">
+          <div className="px-4 py-2">
             <p className="stat-label">Promedio mensual</p>
             <p className="stat-value">{formatMXN(totalMensualProm)}</p>
           </div>
@@ -289,7 +289,7 @@ export default function NominasSection() {
           const c = calcNomina(n)
           const Icono = n.tipo === 'honorarios' ? Briefcase : Wallet
           return (
-            <div key={n.id} className="flex items-center justify-between px-5 py-3 group">
+            <div key={n.id} className="flex items-center justify-between px-4 py-2 group">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Icono className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--fg-3)' }} />

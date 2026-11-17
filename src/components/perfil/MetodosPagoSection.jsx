@@ -79,10 +79,10 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
   return (
     <>
     <div id="perfil-metodos" className="card overflow-hidden scroll-mt-24">
-      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--divider)' }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b" style={{ borderColor: 'var(--divider)' }}>
         <h2 className="titulo-seccion">Métodos de pago</h2>
         <button onClick={() => setMostrarFormMetodo(v => !v)}
-          className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3">
+          className="btn-secondary flex-shrink-0 text-xs">
           <Plus className="w-3.5 h-3.5" /> Agregar
         </button>
       </div>
@@ -123,7 +123,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
           />
         </div>
       </div>
-      <div className="divide-y overflow-y-auto max-h-52" style={{ borderColor: 'var(--divider)' }}>
+      <div className="divide-y overflow-y-auto max-h-44 lg:max-h-52" style={{ borderColor: 'var(--divider)' }}>
         {(() => {
           const lista = (metodos ?? []).filter(m => m.activo && m.nombre.toLowerCase().includes(busquedaMetodo.toLowerCase()))
           if (lista.length === 0) return <p className="px-5 py-8 text-center text-sm" style={{ color: 'var(--fg-4)' }}>{busquedaMetodo ? 'Sin resultados' : 'Sin métodos de pago'}</p>
@@ -159,7 +159,7 @@ export default function MetodosPagoSection({ metodos, mostrarForm: mostrarFormMe
               </div>
             ) : (
               /* ── Fila normal ── */
-              <div key={m.id} className="flex items-center justify-between px-5 py-3 group">
+              <div key={m.id} className="flex items-center justify-between px-4 py-2 group">
                 <div>
                   <p className="font-medium text-sm" style={{ color: 'var(--fg-1)' }}>{m.nombre}</p>
                   <p className="text-xs capitalize" style={{ color: 'var(--fg-4)' }}>{m.tipo}</p>

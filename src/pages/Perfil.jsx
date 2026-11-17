@@ -1,6 +1,7 @@
 // Perfil sincroniza el form con datos cargados async (profile) vía effects de sync
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -193,9 +194,27 @@ export default function Perfil() {
     )
   }
 
+  const indice = [
+    ['perfil-datos', 'Tus datos'],
+    ['perfil-regla', 'Regla de reparto'],
+    ['perfil-nomina', 'Ingresos y nómina'],
+    ['perfil-metodos', 'Métodos de pago'],
+    ['perfil-categorias', 'Categorías'],
+    ['perfil-seguridad', 'Seguridad'],
+  ]
+
   return (
     <Layout titulo="Configuración">
-      <div className="space-y-3">
+      <div className="ajustes">
+      {/* Índice (solo escritorio): salta a cada sección sin tocar la URL */}
+      <nav className="ajustes-indice" aria-label="Secciones de configuración">
+        <p className="ajustes-indice-titulo">Configuración</p>
+        {indice.map(([id, etiqueta]) => (
+          <button key={id} type="button" onClick={() => irA(id)}>{etiqueta}</button>
+        ))}
+        <Link to="/whatsapp">Historial de WhatsApp</Link>
+      </nav>
+      <div className="space-y-3 min-w-0">
         <SetupGuide items={setupItems} />
 
         {/* ── Fila 1: misma altura en ambas columnas ── */}
@@ -203,7 +222,7 @@ export default function Perfil() {
 
           {/* Datos básicos */}
           <div id="perfil-datos" className="card p-4 scroll-mt-24">
-            <h2 className="titulo-seccion mb-4">Tus datos</h2>
+            <h2 className="titulo-seccion mb-3">Tus datos</h2>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="col-span-2">
                 <label className="label">Email</label>
@@ -234,7 +253,7 @@ export default function Perfil() {
                 />
               </div>
             </div>
-            <div className="mb-4">
+            <div className="mb-3">
               <label className="label">Gasto hormiga: hasta cuánto</label>
               <div className="flex items-center gap-2">
                 <input type="number" className="input font-mono text-sm w-28" placeholder="100"
@@ -256,8 +275,8 @@ export default function Perfil() {
           {/* Regla 50/30/20 */}
           <div id="perfil-regla" className="card p-4 scroll-mt-24">
             <h2 className="titulo-seccion mb-1">Tu regla de reparto</h2>
-            <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
-            <div className="space-y-3 mb-4">
+            <p className="text-xs mb-3" style={{ color: 'var(--fg-4)' }}>Los porcentajes deben sumar exactamente 100%</p>
+            <div className="space-y-2 mb-3">
               {[
                 { key: 'necesidad', label: 'Necesidad', color: 'var(--necesidad-fg)', trackColor: 'var(--necesidad)' },
                 { key: 'deseo',     label: 'Deseo',     color: 'var(--deseo-fg)',     trackColor: 'var(--deseo)'     },
@@ -267,7 +286,7 @@ export default function Perfil() {
                 return (
                   <div key={key}>
                     {/* Etiqueta + valor */}
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="text-sm flex items-center gap-2" style={{ color: 'var(--fg-1)' }}>
                         <span className="w-2 h-2 rounded-full" style={{ background: trackColor }} />{label}
                       </span>
@@ -307,7 +326,7 @@ export default function Perfil() {
                 )
               })}
             </div>
-            <div className="flex items-center justify-between mb-4 pt-3 border-t border-[var(--divider)]">
+            <div className="flex items-center justify-between mb-3 pt-2 border-t border-[var(--divider)]">
               <span className="text-sm" style={{ color: reglaOk ? 'var(--fg-3)' : 'var(--negative-fg)' }}>
                 {reglaOk ? 'Total' : 'Debe sumar 100%'}
               </span>
@@ -339,16 +358,15 @@ export default function Perfil() {
 
         {/* ── Seguridad ── */}
         <div id="perfil-seguridad" className="card p-4 scroll-mt-24">
-          <h2 className="titulo-seccion mb-1 flex items-center gap-2">
+          <h2 className="titulo-seccion mb-2 sm:mb-1 flex items-center gap-2">
             <KeyRound className="w-4 h-4" style={{ color: 'var(--fg-3)' }} /> Seguridad
           </h2>
-          <p className="text-xs mb-4" style={{ color: 'var(--fg-4)' }}>
+          <p className="hidden sm:block text-xs mb-3" style={{ color: 'var(--fg-3)' }}>
             Cambia la contraseña con la que entras a Finni. Tu sesión en este dispositivo sigue abierta.
           </p>
-          <div style={{ maxWidth: 360 }}>
-            <PasswordForm onGuardar={cambiarPassword} />
-          </div>
+          <PasswordForm onGuardar={cambiarPassword} enLinea />
         </div>
+      </div>
       </div>
     </Layout>
   )
