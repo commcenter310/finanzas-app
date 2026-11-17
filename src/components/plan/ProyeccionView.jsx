@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useProyeccion } from '../../hooks/useProyeccion'
 import { formatMXN } from '../../utils/constantes'
-import { ChevronDown, ChevronUp, Sparkles, TrendingUp, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronUp, TrendingUp, AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function ProyeccionView() {
@@ -57,26 +57,26 @@ export default function ProyeccionView() {
             <div key={m.key} className="border-b last:border-0" style={{ borderColor: 'var(--divider)' }}>
               <button
                 onClick={() => setExpandido(abierto ? null : m.key)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left">
+                className="w-full flex items-center gap-3 px-4 py-2 min-h-[40px] hover:bg-gray-50 transition-colors text-left">
                 {/* Mes */}
-                <div className="w-20 flex-shrink-0">
+                <div className="w-[4.5rem] sm:w-24 flex-shrink-0 flex items-baseline gap-1.5">
                   <p className="font-semibold text-sm" style={{ color: 'var(--fg-1)' }}>
                     {m.labelCorto} <span className="text-gray-400 font-normal">{String(m.anioM).slice(2)}</span>
                   </p>
-                  {m.esActual && <span className="text-xs font-semibold" style={{ color: 'var(--primary-600)' }}>actual</span>}
+                  {m.esActual && <span className="hidden sm:inline text-xs" style={{ color: 'var(--fg-3)' }}>actual</span>}
                 </div>
 
                 {/* Barra libre */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                    <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
                       <div className="h-full rounded-full"
                         style={{ width: `${barPct}%`, background: negativo ? 'var(--negative)' : 'var(--ahorro)' }} />
                     </div>
                     {m.totalExtra > 0 && (
-                      <span className="flex items-center gap-0.5 text-xs font-semibold flex-shrink-0 px-1.5 py-0.5 rounded-full"
-                        style={{ background: 'var(--warning-bg)', color: 'var(--warning-fg)' }}>
-                        <Sparkles className="w-2.5 h-2.5" /> +{formatMXN(m.totalExtra)}
+                      <span className="hidden sm:inline text-xs flex-shrink-0 tabular" style={{ color: 'var(--warning-fg)' }}
+                        title="Aguinaldo, prima o utilidades">
+                        +{formatMXN(m.totalExtra)} extra
                       </span>
                     )}
                     {negativo && <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--negative-fg)' }} />}
@@ -84,12 +84,11 @@ export default function ProyeccionView() {
                 </div>
 
                 {/* Libre */}
-                <div className="text-right flex-shrink-0 w-28">
-                  <p className="font-mono font-semibold text-sm" style={{ color: negativo ? 'var(--negative-fg)' : 'var(--ahorro-fg)' }}>
-                    {formatMXN(m.libre)}
-                  </p>
-                  <p className="text-[13px] text-gray-500">libre</p>
-                </div>
+                <p className="text-right flex-shrink-0 sm:w-36 text-sm tabular">
+                  <span className="font-semibold" style={{ color: negativo ? 'var(--negative-fg)' : 'var(--fg-1)' }}>{formatMXN(m.libre)}</span>
+                  <span className="hidden sm:inline text-xs text-gray-500"> libre</span>
+                  {m.totalExtra > 0 && <span className="sm:hidden block text-[11px]" style={{ color: 'var(--warning-fg)' }}>+{formatMXN(m.totalExtra)} extra</span>}
+                </p>
                 {abierto ? <ChevronUp className="w-4 h-4 text-gray-300 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-300 flex-shrink-0" />}
               </button>
 

@@ -110,37 +110,38 @@ export default function Tendencias() {
 
   return (
     <Layout titulo="Tendencias">
-      <div className="space-y-6">
+      <div className="space-y-3">
 
         {/* Resumen */}
         <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
           <div className="card p-4">
             <p className="stat-label">Ingreso promedio</p>
-            <p className="stat-value break-all">{formatMXN(promIngresos)}</p>
-            <p className="text-[13px] text-gray-500 mt-0.5">últimos 6 meses</p>
+            <p className="stat-value">{formatMXN(promIngresos)}</p>
+            <p className="stat-nota">últimos 6 meses</p>
           </div>
           <div className="card p-4">
             <p className="stat-label">Gasto promedio</p>
-            <p className="stat-value break-all">{formatMXN(promGastos)}</p>
-            <p className="text-[13px] text-gray-500 mt-0.5">últimos 6 meses</p>
+            <p className="stat-value">{formatMXN(promGastos)}</p>
+            <p className="stat-nota">últimos 6 meses</p>
           </div>
           <div className="card p-4">
             <p className="stat-label">Mes más caro</p>
             <p className="stat-value">{mesConMasGastos?.mes ?? '—'}</p>
-            <p className="text-[13px] text-gray-500 mt-0.5">{mesConMasGastos ? formatMXN(mesConMasGastos.gastos) : ''}</p>
+            <p className="stat-nota">{mesConMasGastos ? formatMXN(mesConMasGastos.gastos) : ''}</p>
           </div>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Ingresos vs Gastos */}
         <div className="card p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="titulo-seccion">Ingresos y gastos, últimos 6 meses</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="titulo-seccion">Ingresos y gastos</h2>
             <span className="text-xs" style={{ color: 'var(--fg-4)' }}>* mes en curso (parcial)</span>
           </div>
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={190}>
                 <LineChart data={tendencias ?? []} margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="mes" {...chartAxisProps} />
@@ -158,11 +159,11 @@ export default function Tendencias() {
 
         {/* Distribución 50/30/20 */}
         <div className="card p-4">
-          <h2 className="titulo-seccion mb-4">En qué se fue el gasto</h2>
+          <h2 className="titulo-seccion mb-2">En qué se fue el gasto</h2>
           {loading
             ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
             : (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={190}>
                 <BarChart data={tendencias ?? []} barSize={30} barCategoryGap="30%" margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="mes" {...chartAxisProps} />
@@ -177,13 +178,15 @@ export default function Tendencias() {
             )}
         </div>
 
+        </div>
+
         {/* Utilización de Crédito */}
         {(creditoTendencia?.datos?.length > 0 || loadingCredito) && (
           <div className="card p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="titulo-seccion">Uso de tus tarjetas</h2>
-                <p className="text-[13px] text-gray-500 mt-0.5">% del límite total utilizado por mes · línea amarilla = 30% recomendado</p>
+                <p className="stat-nota">% del límite total utilizado por mes · línea amarilla = 30% recomendado</p>
               </div>
               {creditoTendencia?.totalLimite > 0 && (
                 <span className="text-[13px] text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
@@ -194,7 +197,7 @@ export default function Tendencias() {
             {loadingCredito
               ? <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
               : (
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={190}>
                   <LineChart data={creditoTendencia.datos} margin={{ top: 8, right: 16, bottom: 0, left: -6 }}>
                     <CartesianGrid {...chartGridProps} />
                     <XAxis dataKey="mes" {...chartAxisProps} />
