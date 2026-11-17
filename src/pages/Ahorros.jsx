@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Layout from '../components/layout/Layout'
+import Resumen from '../components/ui/Resumen'
 import { useAhorros } from '../hooks/useAhorros'
 import { formatMXN } from '../utils/constantes'
 import { Plus, Trash2, Pencil, Check, PiggyBank } from 'lucide-react'
@@ -63,66 +64,79 @@ function TarjetaAhorro({ ahorro, metodos, ultimoDeposito, onActualizar, onElimin
 
   if (editando) {
     return (
-      <div className="card p-4">
-        <div className="space-y-2 mb-3">
-          <input className="input text-sm" value={form.concepto} onChange={e => setForm(f => ({ ...f, concepto: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-2">
-            <input type="number" className="input text-sm font-mono" placeholder="Meta" value={form.monto_meta} onChange={e => setForm(f => ({ ...f, monto_meta: e.target.value }))} />
-            <input type="number" className="input text-sm font-mono" placeholder="Actual" value={form.monto_actual} onChange={e => setForm(f => ({ ...f, monto_actual: e.target.value }))} />
+      <li className="meta-edicion">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="col-span-2">
+            <label className="label" htmlFor={`meta-nombre-${ahorro.id}`}>Nombre</label>
+            <input id={`meta-nombre-${ahorro.id}`} className="input" value={form.concepto} onChange={e => setForm(f => ({ ...f, concepto: e.target.value }))} />
           </div>
-          <select className="input text-sm" value={form.clasificacion} onChange={e => setForm(f => ({ ...f, clasificacion: e.target.value }))}>
+          <div>
+            <label className="label" htmlFor={`meta-meta-${ahorro.id}`}>Meta</label>
+            <input id={`meta-meta-${ahorro.id}`} type="number" className="input" value={form.monto_meta} onChange={e => setForm(f => ({ ...f, monto_meta: e.target.value }))} />
+          </div>
+          <div>
+            <label className="label" htmlFor={`meta-actual-${ahorro.id}`}>Ahorrado</label>
+            <input id={`meta-actual-${ahorro.id}`} type="number" className="input" value={form.monto_actual} onChange={e => setForm(f => ({ ...f, monto_actual: e.target.value }))} />
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <select className="input w-auto" aria-label="Clasificación" value={form.clasificacion} onChange={e => setForm(f => ({ ...f, clasificacion: e.target.value }))}>
             {CLASIF_OPTS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+          <button type="button" className="btn-ghost ml-auto" style={{ color: 'var(--negative-fg)' }}
+            onClick={() => { setEditando(false); onEliminar(ahorro.id) }}>
+            <Trash2 className="w-4 h-4" aria-hidden="true" /> Eliminar
+          </button>
+          <button type="button" onClick={() => setEditando(false)} className="btn-ghost">Cancelar</button>
+          <button type="button" onClick={guardar} className="btn-primary"><Check className="w-3.5 h-3.5" aria-hidden="true" /> Guardar</button>
         </div>
-        <div className="flex gap-2">
-          <button onClick={guardar} className="btn-primary py-2"><Check className="w-3.5 h-3.5" /> Guardar</button>
-          <button onClick={() => setEditando(false)} className="btn-ghost py-2">Cancelar</button>
-        </div>
-      </div>
+      </li>
     )
   }
 
   return (
-    <div className="card p-4 self-start">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <p className="font-semibold text-gray-900">{ahorro.concepto}</p>
-          {completado && <span className="text-[13px] font-medium" style={{ color: 'var(--positive-fg)' }}>Meta alcanzada</span>}
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => { setDepositando(v => !v); setEditando(false) }}
-            className="icon-button icon-button-sm"
-            style={depositando ? { background: 'var(--ahorro-bg)', color: 'var(--ahorro-fg)' } : {}}
-            aria-label={`Depositar a ${ahorro.concepto}`} title="Depositar">
-            <PiggyBank className="w-3.5 h-3.5" />
+    <li className="meta-fila group">
+      <div className="meta-principal">
+        <span className="meta-nombre">
+          <button type="button" className="meta-abrir" onClick={() => { setEditando(true); setDepositando(false) }} title="Editar">
+            {ahorro.concepto}
           </button>
+          {completado && <small style={{ color: 'var(--positive-fg)' }}>meta alcanzada</small>}
+        </span>
+        <span className="meta-uso">
+          <span className="presu-barra" aria-hidden="true">
+            <span style={{ width: `${pct}%`, background: 'var(--ahorro)' }} />
+          </span>
+          <span className="presu-pct">{pct.toFixed(0)}%</span>
+        </span>
+        <span className="meta-monto">
+          {formatMXN(ahorro.monto_actual)} <small>de {formatMXN(ahorro.monto_meta)}</small>
+        </span>
+        <span className="meta-ultimo">
+          {ultimoDeposito && (
+            <>
+              último {formatMXN(ultimoDeposito.monto)} · {fechaCorta(ultimoDeposito.fecha)} ·{' '}
+              <button type="button" className="underline underline-offset-2" style={{ color: 'var(--primary-700)' }}
+                onClick={() => setConfirmDeshacer(true)} disabled={saving}>
+                deshacer
+              </button>
+            </>
+          )}
+        </span>
+        <button type="button" onClick={() => { setDepositando(v => !v); setEditando(false) }}
+          className={`btn-check meta-depositar ${depositando ? 'is-on' : ''}`} aria-expanded={depositando}>
+          <PiggyBank className="w-4 h-4" aria-hidden="true" /> Depositar
+        </button>
+        <span className="acciones-hover meta-herramientas">
           <button aria-label={`Editar ${ahorro.concepto}`} title="Editar" onClick={() => { setEditando(true); setDepositando(false) }} className="icon-button icon-button-sm">
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button aria-label={`Eliminar ${ahorro.concepto}`} title="Eliminar" onClick={() => onEliminar(ahorro.id)} className="icon-button icon-button-sm">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
-        </div>
+        </span>
       </div>
 
-      <p className="stat-value">{formatMXN(ahorro.monto_actual)}</p>
-      <p className="text-[13px] text-gray-500 mb-3">de {formatMXN(ahorro.monto_meta)} · {pct.toFixed(0)}%</p>
-
-      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full bar-fill"
-          style={{ width: `${pct}%`, backgroundColor: 'var(--ahorro)' }} />
-      </div>
-
-      {ultimoDeposito && (
-        <p className="text-[13px] mt-3" style={{ color: 'var(--fg-3)' }}>
-          Último depósito: <span className="font-mono">{formatMXN(ultimoDeposito.monto)}</span> · {fechaCorta(ultimoDeposito.fecha)}
-          {' · '}
-          <button type="button" className="font-semibold underline underline-offset-2" style={{ color: 'var(--primary-700)' }}
-            onClick={() => setConfirmDeshacer(true)} disabled={saving}>
-            Deshacer
-          </button>
-        </p>
-      )}
       <ConfirmModal
         open={confirmDeshacer}
         titulo={`¿Deshacer el depósito de ${formatMXN(ultimoDeposito?.monto)}?`}
@@ -132,36 +146,29 @@ function TarjetaAhorro({ ahorro, metodos, ultimoDeposito, onActualizar, onElimin
       />
 
       {depositando && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-500 mb-2">Depositar a esta meta</p>
-          <div className="flex gap-2 mb-2">
-            <input type="number" className="input text-sm font-mono flex-1" placeholder="Monto ($)"
-              value={formDep.monto} onChange={e => setFormDep(f => ({ ...f, monto: e.target.value }))} />
-            <DatePicker
-              className="w-36"
-              value={formDep.fecha}
-              onChange={v => setFormDep(f => ({ ...f, fecha: v }))}
-            />
-          </div>
-          <select className="input text-sm mb-2 w-full" value={formDep.metodo_pago_id}
+        <div className="meta-deposito">
+          <input type="number" className="input" placeholder="Monto" aria-label={`Monto a depositar en ${ahorro.concepto}`}
+            value={formDep.monto} onChange={e => setFormDep(f => ({ ...f, monto: e.target.value }))} />
+          <DatePicker
+            value={formDep.fecha}
+            onChange={v => setFormDep(f => ({ ...f, fecha: v }))}
+          />
+          <select className="input" aria-label="Método de pago" value={formDep.metodo_pago_id}
             onChange={e => setFormDep(f => ({ ...f, metodo_pago_id: e.target.value }))}>
-            <option value="">Método de pago (opcional)</option>
+            <option value="">Sin método</option>
             {metodos.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
           </select>
-          <div className="flex gap-2">
-            <button onClick={handleDepositar} disabled={saving || !formDep.monto}
-              className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5">
-              <PiggyBank className="w-3.5 h-3.5" />
-              {saving ? 'Guardando...' : 'Confirmar depósito'}
-            </button>
-            <button onClick={() => { setDepositando(false); setFormDep(FORM_DEP_VACIO) }}
-              className="btn-ghost text-xs">
+          <span className="flex gap-2">
+            <button type="button" onClick={() => { setDepositando(false); setFormDep(FORM_DEP_VACIO) }} className="btn-ghost">
               Cancelar
             </button>
-          </div>
+            <button type="button" onClick={handleDepositar} disabled={saving || !formDep.monto} className="btn-primary">
+              {saving ? 'Guardando...' : 'Depositar'}
+            </button>
+          </span>
         </div>
       )}
-    </div>
+    </li>
   )
 }
 
@@ -195,32 +202,23 @@ export default function Ahorros() {
   }
 
   return (
-    <Layout titulo="Ahorros">
+    <Layout titulo="Ahorros" acciones={(
+      <button type="button" onClick={() => setMostrarForm(v => !v)} className="btn-primary">
+        <Plus className="w-4 h-4" aria-hidden="true" /> <span>Nueva meta</span>
+      </button>
+    )}>
       <div className="space-y-3">
 
-        <div className="stat-strip grid grid-cols-2 lg:grid-cols-3">
-          <div className="card p-4">
-            <p className="stat-label">Meta total</p>
-            <p className="stat-value break-all">{formatMXN(totales.meta)}</p>
-          </div>
-          <div className="card p-4">
-            <p className="stat-label">Ahorrado</p>
-            <p className="stat-value break-all">{formatMXN(totales.actual)}</p>
-          </div>
-          <div className="card p-4">
-            <p className="stat-label">Avance</p>
-            <p className="stat-value">{pctTotal.toFixed(0)}%</p>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <button onClick={() => setMostrarForm(v => !v)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nueva meta
-          </button>
-        </div>
+        <Resumen
+          titulo="Llevas ahorrado"
+          cifra={formatMXN(totales.actual)}
+          nota={ahorros.length > 0 ? `${pctTotal.toFixed(0)}% de ${formatMXN(totales.meta)} entre ${ahorros.length === 1 ? 'una meta' : `${ahorros.length} metas`}` : null}
+          progreso={ahorros.length > 0 ? pctTotal : null}
+          cargando={loading}
+        />
 
         {mostrarForm && (
-          <div className="card p-4 border-2" style={{ borderColor: 'var(--ahorro-bg)' }}>
+          <div className="card p-4">
             <h3 className="titulo-seccion mb-3">Nueva meta de ahorro</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div className="sm:col-span-2">
@@ -255,12 +253,12 @@ export default function Ahorros() {
         )}
 
         {loading
-          ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-36 animate-pulse" />)}</div>
+          ? <div className="space-y-2">{Array(3).fill(0).map((_,i) => <div key={i} className="card h-12 animate-pulse" />)}</div>
           : ahorros.length === 0
             ? (
               <EmptyState
                 icon={PiggyBank}
-                title="Aun no tienes metas de ahorro"
+                title="Aún no tienes metas de ahorro"
                 description="Crea una meta para apartar dinero y ver el avance contra tu objetivo."
                 action={
                   <button onClick={() => setMostrarForm(true)} className="btn-primary text-sm">
@@ -269,9 +267,9 @@ export default function Ahorros() {
                 }
               />
             )
-            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+            : <ul className="card">
                 {ahorros.map(a => <TarjetaAhorro key={a.id} ahorro={a} metodos={metodos} ultimoDeposito={ultimoDeposito[a.id]} saving={saving} onActualizar={actualizar} onEliminar={(id) => setConfirmDelete(id)} onDepositar={depositar} onDeshacerDeposito={deshacerDeposito} />)}
-              </div>}
+              </ul>}
 
       </div>
       <ConfirmModal

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Layout from '../components/layout/Layout'
+import Resumen, { Dato } from '../components/ui/Resumen'
 import { useIngresos } from '../hooks/useIngresos'
 import { useMes } from '../context/MesContext'
 import { formatMXN, MESES } from '../utils/constantes'
@@ -136,33 +137,29 @@ export default function Ingresos() {
   }
 
   return (
-    <Layout titulo="Ingresos">
+    <Layout titulo="Ingresos" acciones={(
+      <button type="button" className="btn-primary" onClick={() => (form ? setForm(null) : abrirForm())}>
+        <Plus className="w-4 h-4" aria-hidden="true" /> <span>Agregar ingreso</span>
+      </button>
+    )}>
       <div className="space-y-3">
 
-        {/* Tarjetas resumen */}
-        <div className="stat-strip grid grid-cols-1 sm:grid-cols-3">
-          {[
-            { label: 'Recibido',   value: totales.actual,      color: '' },
-            { label: 'Esperado',   value: totales.presupuesto, color: '' },
-            { label: 'Diferencia', value: totales.actual - totales.presupuesto,
-              color: (totales.actual - totales.presupuesto) >= 0 ? '' : 'text-negative' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="card p-4">
-              <p className="stat-label">{label}</p>
-              <p className={`stat-value ${color}`}>{formatMXN(value)}</p>
-            </div>
-          ))}
-        </div>
+        <Resumen
+          titulo={`Recibido en ${MESES[mes - 1].toLowerCase()}`}
+          cifra={formatMXN(totales.actual)}
+          cargando={loading}
+          desgloses={(
+            <>
+              <Dato label="Esperado" value={formatMXN(totales.presupuesto)} />
+              <Dato label="Diferencia"
+                value={`${totales.actual - totales.presupuesto > 0 ? '+' : ''}${formatMXN(totales.actual - totales.presupuesto)}`}
+                tone={totales.actual - totales.presupuesto < 0 ? 'negative' : 'neutral'} />
+            </>
+          )}
+        />
 
         {/* Tabla */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-[var(--divider)]">
-            <h2 className="titulo-seccion">Ingresos del mes</h2>
-            <button className="btn-primary flex items-center gap-2 text-sm py-1.5 px-3"
-              onClick={() => (form ? setForm(null) : abrirForm())}>
-              <Plus className="w-4 h-4" /> Agregar
-            </button>
-          </div>
 
           {/* Formulario de alta */}
           {form && (
