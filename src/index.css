@@ -1098,13 +1098,6 @@
   .commitment-section-action { flex: 0 0 auto; }
 
   /* Presupuesto: filtro por clasificación + selector de orden */
-  .budget-list-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-  }
   .budget-sort {
     display: flex;
     align-items: center;
@@ -1746,7 +1739,6 @@
     .commitment-section-header { align-items: stretch; flex-direction: column; gap: 12px; }
     .commitment-section-action { width: 100%; }
     .commitment-segments { width: 100%; }
-    .budget-list-controls { justify-content: stretch; }
     .budget-sort { width: 100%; }
     .commitment-segments button { flex: 1; min-width: 0; padding: 0 7px; }
     .commitment-debt-main { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: 17px 15px; }
@@ -1885,141 +1877,17 @@
 
   .spending-form-amount input::placeholder { color: var(--fg-4); }
 
-  .budget-category-head,
-  .budget-category-row {
-    display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.45fr) minmax(110px, 0.65fr) minmax(150px, 0.8fr);
-    align-items: center;
-    column-gap: 20px;
-  }
 
-  .budget-category-head {
-    min-height: 36px;
-    padding: 0 18px;
-    border-bottom: 1px solid var(--divider);
-    color: var(--fg-3);
-    font-size: 13px;
-  }
 
-  .budget-category-row {
-    position: relative;
-    min-height: 52px;
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--divider);
-  }
 
-  .budget-category-row:last-child { border-bottom: 0; }
-
-  .budget-category-identity {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .budget-category-icon {
-    display: none;
-  }
-
-  .budget-category-identity > div { min-width: 0; }
-
-  .budget-category-identity > div > strong {
-    display: block;
-    overflow: hidden;
-    margin-bottom: 2px;
-    color: var(--fg-1);
-    font-size: 14px;
-    font-weight: 500;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .budget-category-progress-copy {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 7px;
-    color: var(--fg-3);
-    font-size: 13px;
-  }
-
-  .budget-category-progress-copy strong {
-    color: var(--fg-2);
-    font-weight: 600;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .budget-category-track {
-    height: 4px;
-    overflow: hidden;
-    border-radius: var(--r-full);
-    background: var(--surface-3);
-  }
-
-  .budget-category-track > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-  }
-
-  .budget-category-balance > span,
-  .budget-category-balance > strong {
-    display: block;
-  }
-
-  .budget-category-balance > span {
-    color: var(--fg-3);
-    font-size: 13px;
-  }
-
-  .budget-category-balance > strong {
-    margin-top: 1px;
-    color: var(--fg-1);
-    font-size: 14px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .budget-category-balance > strong.is-negative { color: var(--negative-fg); }
-
-  .budget-limit-button {
-    width: 100%;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    color: var(--fg-3);
-    background: var(--surface);
-    text-align: left;
-  }
-
-  .budget-limit-button:hover {
-    color: var(--fg-1);
-    border-color: var(--fg-3);
-  }
-
-  .budget-limit-button small,
-  .budget-limit-button strong {
-    display: block;
-  }
-
-  .budget-limit-button small { color: var(--fg-3); font-size: 12px; }
-  .budget-limit-button strong { color: var(--fg-1); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
-  .budget-limit-button svg { width: 13px; height: 13px; flex: 0 0 auto; }
 
   .budget-limit-editor {
-    min-height: 42px;
+    min-height: 32px;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) 28px 28px;
     align-items: center;
     gap: 3px;
-    padding: 4px;
+    padding: 1px 2px;
     border: 1px solid var(--primary-300);
     border-radius: var(--r-sm);
     color: var(--fg-4);
@@ -2056,49 +1924,9 @@
   .budget-limit-editor button:first-of-type:hover { background: var(--primary-700); }
   .budget-limit-editor svg { width: 13px; height: 13px; }
 
-  .budget-chart-section {
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .budget-chart {
-    min-width: 0;
-    margin-top: 14px;
-    padding-top: 13px;
-    border-top: 1px solid var(--divider);
-  }
-
-  @media (max-width: 1040px) {
-    .budget-category-head,
-    .budget-category-row { grid-template-columns: minmax(170px, 1fr) minmax(190px, 1.25fr) minmax(100px, 0.65fr) minmax(140px, 0.75fr); column-gap: 13px; }
-  }
-
-  @media (max-width: 840px) {
-    .budget-category-head { display: none; }
-    .budget-category-row {
-      grid-template-columns: minmax(0, 1fr) minmax(130px, auto);
-      gap: 14px 18px;
-      padding: 16px;
-    }
-    .budget-category-progress { grid-column: 1 / -1; grid-row: 2; }
-    .budget-category-balance { grid-column: 1; grid-row: 3; }
-    .budget-category-limit { grid-column: 2; grid-row: 3; }
-  }
 
   @media (max-width: 640px) {
     .spending-form-amount input { font-size: 27px; }
-    .budget-category-row { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
-    .budget-category-progress,
-    .budget-category-balance,
-    .budget-category-limit { width: 100%; }
-    .budget-category-balance { display: flex; align-items: center; justify-content: space-between; }
-    .budget-category-balance > strong { margin-top: 0; }
-    .budget-chart-section { padding: 16px 12px; }
-    .budget-chart { overflow-x: auto; }
-    .budget-chart .recharts-responsive-container { min-width: 520px; }
   }
 }
 
@@ -2763,5 +2591,79 @@
     }
     .fijo-meta .badge-necesidad, .fijo-meta .badge-deseo, .fijo-meta .badge-ahorro { display: inline-flex; }
     .fijo-tipo, .fijo-detalle, .fijo-acciones { display: none; }
+  }
+}
+
+/* ============================================================================
+   PRESUPUESTO — una fila por categoría
+   ============================================================================ */
+@layer components {
+  .presu-conteo { margin-left: auto; color: var(--fg-3); font-size: 13px; white-space: nowrap; }
+  .budget-sort { min-width: 170px; }
+
+  /* categoría · uso · gastado · disponible · límite */
+  .presu-fila {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.1fr) minmax(110px, 1.2fr) 170px 140px 150px;
+    align-items: center;
+    column-gap: 14px;
+    min-height: 44px;
+    padding: 4px 10px 4px 14px;
+    border-top: 1px solid var(--divider);
+    color: var(--fg-1);
+    font-size: 13px;
+  }
+  .presu-cabecera { min-height: 32px; color: var(--fg-3); font-size: 12px; }
+  .presu-nombre { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .presu-nombre > strong { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .presu-uso { display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 8px; min-width: 0; }
+  .presu-barra { display: block; height: 4px; overflow: hidden; border-radius: var(--r-full); background: var(--surface-3); }
+  .presu-barra > span { display: block; height: 100%; border-radius: inherit; transition: width var(--dur-slow) var(--ease-out); }
+  .presu-pct { text-align: right; color: var(--fg-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .presu-fila.tone-negative .presu-pct { color: var(--negative-fg); font-weight: 600; }
+  .presu-gastado,
+  .presu-disponible { text-align: right; white-space: nowrap; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .presu-gastado small,
+  .presu-disponible small { color: var(--fg-3); font-size: 12px; font-weight: 400; }
+  .presu-disponible.is-negative { color: var(--negative-fg); }
+  .presu-limite { display: flex; justify-content: flex-end; }
+  .presu-limite-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 0 8px;
+    border-radius: var(--r-sm);
+    color: var(--fg-2);
+    font-size: 13px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .presu-limite-boton svg { width: 13px; height: 13px; color: var(--fg-4); }
+  .presu-limite-boton:hover { background: var(--surface-3); color: var(--fg-1); }
+  .presu-limite .budget-limit-editor { width: 150px; }
+
+  @media (max-width: 1100px) {
+    .presu-fila { grid-template-columns: minmax(130px, 1fr) minmax(90px, 1fr) 150px 120px 140px; column-gap: 10px; }
+  }
+
+  /* Móvil: nombre y gastado · barra · disponible y límite */
+  @media (max-width: 840px) {
+    .presu-cabecera { display: none; }
+    .presu-fila {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "nombre gastado" "uso uso" "disponible limite";
+      row-gap: 4px;
+      padding: 8px 14px 4px;
+    }
+    .presu-nombre { grid-area: nombre; }
+    .presu-gastado { grid-area: gastado; }
+    .presu-uso { grid-area: uso; }
+    .presu-disponible { grid-area: disponible; text-align: left; font-size: 12px; }
+    .presu-limite { grid-area: limite; }
+    .presu-limite-boton { min-height: 36px; padding: 0 0 0 8px; font-size: 12px; }
+    .presu-limite .budget-limit-editor { width: 170px; }
+    .budget-sort { min-width: 0; flex: 1 1 140px; }
+    .presu-conteo { display: none; }
   }
 }

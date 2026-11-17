@@ -14,23 +14,10 @@ import {
   Target,
   X,
 } from 'lucide-react'
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 import Layout from '../components/layout/Layout'
 import EmptyState from '../components/ui/EmptyState'
-import { ChartLegend, ChartTooltip } from '../components/ui/Chart'
 import { useToast } from '../components/ui/Toast'
 import {
-  SectionHeader,
   SegmentedControl,
 } from '../components/commitments/CommitmentUI'
 import {
@@ -43,12 +30,6 @@ import { formatMXN } from '../utils/constantes'
 import { CRITERIOS_ORDEN, ordenarCategorias } from '../utils/ordenarCategorias'
 import { plural } from '../utils/texto'
 import FilterSelect from '../components/ui/FilterSelect'
-import {
-  chartAxisProps,
-  chartAxisTick,
-  chartGridProps,
-  formatCompactCurrency,
-} from '../utils/chart'
 
 const BAR_COLORS = {
   necesidad: 'var(--necesidad)',
@@ -108,40 +89,38 @@ function BudgetCategoryRow({ categoria, onActualizar }) {
   }
 
   return (
-    <article className={`budget-category-row tone-${tone}`}>
-      <div className="budget-category-identity">
-        <span className="budget-category-icon">{categoria.icono}</span>
-        <div>
-          <strong>{categoria.nombre}</strong>
-          <span className={`badge-${categoria.clasificacion}`}>{categoria.clasificacion}</span>
-        </div>
-      </div>
+    <li className={`presu-fila tone-${tone}`}>
+      <span className="presu-nombre">
+        <strong>{categoria.nombre}</strong>
+        <span className={`badge-${categoria.clasificacion}`}>{categoria.clasificacion}</span>
+      </span>
 
-      <div className="budget-category-progress">
-        <div className="budget-category-progress-copy">
-          <span>{sinLimite ? 'Sin referencia mensual' : `${porcentajeReal.toFixed(0)}% utilizado`}</span>
-          <strong>{sinLimite ? formatMXN(categoria.gastado) : `${formatMXN(categoria.gastado)} de ${formatMXN(categoria.limite)}`}</strong>
-        </div>
-        <div className="budget-category-track">
+      <span className="presu-uso">
+        <span className="presu-barra" aria-hidden="true">
           <span
             style={{
               width: `${Math.min(porcentajeReal, 100)}%`,
               background: categoria.sobre ? 'var(--negative)' : (BAR_COLORS[categoria.clasificacion] ?? 'var(--primary)'),
             }}
           />
-        </div>
-      </div>
+        </span>
+        <span className="presu-pct">{sinLimite ? '' : `${porcentajeReal.toFixed(0)}%`}</span>
+      </span>
 
-      <div className="budget-category-balance">
-        <span>{categoria.sobre ? 'Excedente' : sinLimite ? 'Gastado' : 'Disponible'}</span>
-        <strong className={categoria.sobre ? 'is-negative' : ''}>
-          {categoria.sobre ? formatMXN(Math.abs(disponible)) : sinLimite ? formatMXN(categoria.gastado) : formatMXN(disponible)}
-        </strong>
-      </div>
+      <span className="presu-gastado">
+        {formatMXN(categoria.gastado)}
+        {!sinLimite && <small> de {formatMXN(categoria.limite)}</small>}
+      </span>
 
-      <div className="budget-category-limit">
+      <span className={`presu-disponible ${categoria.sobre ? 'is-negative' : ''}`}>
+        {categoria.sobre
+          ? <>{formatMXN(Math.abs(disponible))} <small>de más</small></>
+          : sinLimite ? <small>sin límite</small> : <>{formatMXN(disponible)} <small>libres</small></>}
+      </span>
+
+      <span className="presu-limite">
         {editando ? (
-          <div className="budget-limit-editor">
+          <span className="budget-limit-editor">
             <span>$</span>
             <input
               type="number"
@@ -162,25 +141,23 @@ function BudgetCategoryRow({ categoria, onActualizar }) {
             <button type="button" onClick={cancelarEdicion} aria-label="Cancelar edición" title="Cancelar">
               <X aria-hidden="true" />
             </button>
-          </div>
+          </span>
         ) : (
           <button
             type="button"
-            className="budget-limit-button"
+            className="presu-limite-boton"
+            aria-label={`Cambiar límite de ${categoria.nombre}`}
             onClick={() => {
               setNuevoLimite(categoria.limite)
               setEditando(true)
             }}
           >
-            <span>
-              <small>Límite</small>
-              <strong>{sinLimite ? 'Sin límite' : formatMXN(categoria.limite)}</strong>
-            </span>
+            {sinLimite ? 'Poner límite' : `Límite ${formatMXN(categoria.limite)}`}
             <Pencil aria-hidden="true" />
           </button>
         )}
-      </div>
-    </article>
+      </span>
+    </li>
   )
 }
 
@@ -240,16 +217,6 @@ export default function GastosVariables() {
     filtro === 'todas' ? categorias : categorias.filter(categoria => categoria.clasificacion === filtro),
     orden
   )
-
-  const datosGrafico = resumen.conLimite
-    .map(categoria => ({
-      name: categoria.nombre.length > 16 ? `${categoria.nombre.slice(0, 15)}…` : categoria.nombre,
-      limite: categoria.limite,
-      gastado: categoria.gastado,
-      sobre: categoria.sobre,
-      clasificacion: categoria.clasificacion,
-    }))
-    .sort((a, b) => Number(b.sobre) - Number(a.sobre) || b.gastado - a.gastado)
 
   const proyeccionLabel = esMesPasado ? 'Cierre real' : 'Proyección'
 
@@ -330,31 +297,6 @@ export default function GastosVariables() {
           aside={signal}
         />
 
-        <SectionHeader
-          title="Presupuesto por categoría"
-          description={plural(filtradas.length, 'categoría')}
-          action={(
-            <div className="budget-list-controls">
-              <SegmentedControl
-                ariaLabel="Filtrar presupuesto por clasificación"
-                value={filtro}
-                options={FILTER_OPTIONS}
-                onChange={setFiltro}
-              />
-              <div className="budget-sort" aria-label="Ordenar categorías">
-                <ArrowUpDown aria-hidden="true" />
-                <FilterSelect
-                  value={orden}
-                  onChange={valor => setOrden(valor || 'alfabetico')}
-                  options={ORDEN_OPTIONS}
-                  placeholder="Ordenar"
-                  showClear={false}
-                />
-              </div>
-            </div>
-          )}
-        />
-
         {loading ? (
           <div className="budget-category-list spending-loading">
             {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
@@ -368,63 +310,44 @@ export default function GastosVariables() {
           />
         ) : (
           <section className="budget-category-list">
-            <div className="budget-category-head" aria-hidden="true">
-              <span>Categoría</span>
-              <span>Uso del presupuesto</span>
-              <span>Balance</span>
-              <span>Límite mensual</span>
-            </div>
-            {filtradas.map(categoria => (
-              <BudgetCategoryRow
-                key={categoria.id}
-                categoria={categoria}
-                onActualizar={actualizarPresupuesto}
+            <div className="mov-filtros">
+              <SegmentedControl
+                ariaLabel="Filtrar presupuesto por clasificación"
+                value={filtro}
+                options={FILTER_OPTIONS}
+                onChange={setFiltro}
               />
-            ))}
+              <span className="presu-conteo">{plural(filtradas.length, 'categoría')}</span>
+              <div className="budget-sort" aria-label="Ordenar categorías">
+                <ArrowUpDown aria-hidden="true" />
+                <FilterSelect
+                  value={orden}
+                  onChange={valor => setOrden(valor || 'alfabetico')}
+                  options={ORDEN_OPTIONS}
+                  placeholder="Ordenar"
+                  showClear={false}
+                />
+              </div>
+            </div>
+            <div className="presu-fila presu-cabecera" aria-hidden="true">
+              <span>Categoría</span>
+              <span>Uso</span>
+              <span className="text-right">Gastado</span>
+              <span className="text-right">Disponible</span>
+              <span className="text-right">Límite</span>
+            </div>
+            <ul>
+              {filtradas.map(categoria => (
+                <BudgetCategoryRow
+                  key={categoria.id}
+                  categoria={categoria}
+                  onActualizar={actualizarPresupuesto}
+                />
+              ))}
+            </ul>
           </section>
         )}
 
-        {!loading && datosGrafico.length > 0 && (
-          <section className="budget-chart-section">
-            <SectionHeader
-              title="Límite contra gasto"
-              description="Solo categorías con límite"
-            />
-            <div className="budget-chart">
-              <ResponsiveContainer width="100%" height={Math.max(260, datosGrafico.length * 42)}>
-                <BarChart
-                  data={datosGrafico}
-                  layout="vertical"
-                  barSize={11}
-                  barGap={4}
-                  margin={{ left: 2, right: 22, top: 10, bottom: 0 }}
-                >
-                  <CartesianGrid {...chartGridProps} horizontal={false} vertical />
-                  <XAxis type="number" {...chartAxisProps} tickFormatter={formatCompactCurrency} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={124}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ ...chartAxisTick, fontSize: 11 }}
-                  />
-                  <Tooltip content={<ChartTooltip nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
-                  <Legend content={<ChartLegend nameMap={{ limite: 'Límite', gastado: 'Gastado' }} />} />
-                  <Bar dataKey="limite" name="limite" fill="var(--surface-3)" radius={[0, 2, 2, 0]} />
-                  <Bar dataKey="gastado" name="gastado" radius={[0, 2, 2, 0]}>
-                    {datosGrafico.map(entry => (
-                      <Cell
-                        key={entry.name}
-                        fill={entry.sobre ? 'var(--negative)' : (BAR_COLORS[entry.clasificacion] ?? 'var(--primary)')}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-        )}
       </div>
     </Layout>
   )
