@@ -93,34 +93,40 @@ export default function PlanQuincena() {
     )
   }
 
+  // Selector de quincena: va en la cabecera de la lista, con el avance
+  const selectorQuincena = (
+    <div className="tabs" role="group" aria-label="Periodo">
+      {[
+        { k: 'q1',  label: '1ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 1); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+        { k: 'q2',  label: '2ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 2); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
+        { k: 'mes', label: 'Todo el mes', sub: () => '' },
+      ].map(({ k, label, sub }) => {
+        const active = modo === k
+        return (
+          <button key={k} onClick={() => setModo(k)}
+            className={`tab ${active ? 'is-active' : ''}`}>
+            {label}{sub() && <span className="font-normal ml-1.5" style={{ color: 'var(--fg-3)' }}>{sub()}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <Layout titulo="Plan de quincena">
+    <Layout titulo="Plan de quincena" acciones={(
+      <>
+        <button type="button" onClick={() => setMostrarManual(v => !v)} className="btn-secondary">
+          <Plus className="w-4 h-4" aria-hidden="true" /> <span>Apartar para otra cosa</span>
+        </button>
+        {pendientes.length > 0 && (
+          <button type="button" onClick={handleApartarTodo} disabled={saving} className="btn-primary">
+            <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> <span>Apartar todo ({pendientes.length})</span>
+          </button>
+        )}
+      </>
+    )}>
       <div className="space-y-3">
 
-        {/* Selector de quincena */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="tabs">
-            {[
-              { k: 'q1',  label: '1ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 1); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
-              { k: 'q2',  label: '2ª quincena', sub: () => { const r = rangoQuincena(mes, anio, 2); return `${r.diaInicio}–${r.diaFin} ${MESES[mes - 1].slice(0, 3)}` } },
-              { k: 'mes', label: 'Todo el mes', sub: () => '' },
-            ].map(({ k, label, sub }) => {
-              const active = modo === k
-              return (
-                <button key={k} onClick={() => setModo(k)}
-                  className={`tab ${active ? 'is-active' : ''}`}>
-                  {label} <span className="font-normal" style={{ color: 'var(--fg-3)' }}>{sub()}</span>
-                </button>
-              )
-            })}
-          </div>
-          {pendientes.length > 0 && (
-            <button onClick={handleApartarTodo} disabled={saving}
-              className="btn-primary flex items-center gap-2 text-sm">
-              Apartar todo ({pendientes.length})
-            </button>
-          )}
-        </div>
 
         {/* Tarjetas de resultado */}
         <div className="stat-strip grid grid-cols-2 lg:grid-cols-4">
@@ -153,26 +159,6 @@ export default function PlanQuincena() {
             <p className="stat-value">{formatMXN(disponibleAhora)}</p>
             <p className="stat-nota">{formatMXN(totalApartado)} ya apartado</p>
           </div>
-        </div>
-
-        {/* Barra de progreso */}
-        {totalItems > 0 && (
-          <div>
-            <div className="flex justify-between text-sm mb-2" style={{ color: 'var(--fg-3)' }}>
-              <span>Llevas apartados {countApartados} de {totalItems}</span>
-            </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
-              <div className="h-full rounded-full bar-fill"
-                style={{ width: `${totalItems > 0 ? (countApartados / totalItems) * 100 : 0}%`, background: 'var(--fg-1)' }} />
-            </div>
-          </div>
-        )}
-
-        {/* Acción: agregar manual */}
-        <div className="flex justify-end">
-          <button onClick={() => setMostrarManual(v => !v)} className="btn-secondary flex items-center gap-2 text-sm">
-            <Plus className="w-4 h-4" /> Apartar para otra cosa
-          </button>
         </div>
 
         {mostrarManual && (
@@ -225,45 +211,56 @@ export default function PlanQuincena() {
             {Array(4).fill(0).map((_, i) => <div key={i} className="card h-16 animate-pulse" />)}
           </div>
         ) : compromisos.length === 0 ? (
-          <EmptyState
-            icon={CalendarClock}
-            title="No hay compromisos en esta quincena"
-            description={`Agrega gastos fijos con dia de cobro ${rango.diaInicio}-${rango.diaFin} o aparta algo manualmente.`}
-            action={
-              <button onClick={() => setMostrarManual(true)} className="btn-primary text-sm">
-                <Plus className="w-4 h-4" /> Apartar para otra cosa
-              </button>
-            }
-          />
+          <section className="card">
+            <div className="plan-cabecera">{selectorQuincena}</div>
+            <EmptyState
+              icon={CalendarClock}
+              title={esMes ? 'No hay compromisos este mes' : 'No hay compromisos en esta quincena'}
+              description={esMes
+                ? 'Agrega gastos fijos o deudas, o aparta algo a mano.'
+                : `Agrega gastos fijos con día de cobro del ${rango.diaInicio} al ${rango.diaFin}, o aparta algo a mano.`}
+              className="min-h-[160px] m-3"
+              action={
+                <button onClick={() => setMostrarManual(true)} className="btn-primary text-sm">
+                  <Plus className="w-4 h-4" /> Apartar para otra cosa
+                </button>
+              }
+            />
+          </section>
         ) : (
-          <div className="card divide-y divide-[var(--divider)]">
+          <section className="card">
+            <div className="plan-cabecera">
+              {selectorQuincena}
+              {totalItems > 0 && <span className="plan-avance">{countApartados} de {totalItems} apartados</span>}
+            </div>
+            {totalItems > 0 && (
+              <div className="fijos-barra" aria-hidden="true">
+                <span style={{ width: `${(countApartados / totalItems) * 100}%` }} />
+              </div>
+            )}
+            <ul>
             {compromisos.map(c => {
               const meta = TIPO_META[c.tipo] ?? TIPO_META.otro
               const estaApartado = !!c.apartadoRow
               const montoMostrado = estaApartado ? Number(c.apartadoRow.monto) : c.montoSugerido
               return (
-                <div key={c.key} className="px-5 py-3 flex items-center gap-4">
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm truncate" style={{ color: 'var(--fg-1)' }}>{c.concepto}</p>
-                      {c.pagado && (
-                        <span className="text-[13px]" style={{ color: 'var(--positive-fg)' }}>ya pagado</span>
-                      )}
-                    </div>
-                    <div className="mt-0.5 text-[13px]" style={{ color: 'var(--fg-3)' }}>
-                      {meta.label}
-                      {c.dia_cobro && ` · día ${c.dia_cobro}`}
-                      {c.sinFecha && c.tipo !== 'ahorro' && c.tipo !== 'otro' && (
-                        <span style={{ color: 'var(--warning-fg)' }}> · sin día asignado</span>
-                      )}
-                    </div>
-                  </div>
+                <li key={c.key} className="plan-fila">
+                  <span className="plan-concepto">
+                    <span className="truncate">{c.concepto}</span>
+                    {c.pagado && <small style={{ color: 'var(--positive-fg)' }}>ya pagado</small>}
+                  </span>
+                  <span className="plan-detalle">
+                    {meta.label}
+                    {c.dia_cobro && ` · día ${c.dia_cobro}`}
+                    {c.sinFecha && c.tipo !== 'ahorro' && c.tipo !== 'otro' && (
+                      <span style={{ color: 'var(--warning-fg)' }}> · sin día asignado</span>
+                    )}
+                  </span>
 
                   {/* Monto */}
                   {editId === c.apartadoRow?.id ? (
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <input type="number" autoFocus
+                    <div className="plan-monto flex items-center justify-end gap-1">
+                      <input type="number" autoFocus aria-label={`Monto apartado para ${c.concepto}`}
                         className="input text-sm py-1 px-2 w-28 font-mono text-right"
                         value={editValor} onChange={e => setEditValor(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && guardarEdicion(c.apartadoRow.id)} />
@@ -277,9 +274,8 @@ export default function PlanQuincena() {
                   ) : (
                     <button
                       onClick={() => estaApartado && (setEditId(c.apartadoRow.id), setEditValor(String(montoMostrado)))}
-                      className="font-medium text-sm flex-shrink-0 text-right tabular"
-                      style={{ color: 'var(--fg-1)' }}
-                      title={estaApartado ? 'Click para editar monto' : ''}>
+                      className={`plan-monto ${estaApartado ? 'is-editable' : ''}`}
+                      title={estaApartado ? 'Cambiar el monto apartado' : undefined}>
                       {formatMXN(montoMostrado)}
                     </button>
                   )}
@@ -287,23 +283,24 @@ export default function PlanQuincena() {
                   {/* Botón apartar/quitar */}
                   {estaApartado ? (
                     <button onClick={() => setConfirmQuitar(c.apartadoRow.id)}
-                      className="btn-check is-on" title="Quitar el apartado">
+                      className="btn-check is-on plan-check" title="Quitar el apartado">
                       <CheckCircle2 className="w-4 h-4" /> Apartado
                     </button>
                   ) : (
                     <button onClick={() => handleApartar(c)} disabled={saving}
-                      className="btn-check">
+                      className="btn-check plan-check">
                       <Circle className="w-4 h-4" /> Apartar
                     </button>
                   )}
-                </div>
+                </li>
               )
             })}
-          </div>
+            </ul>
+          </section>
         )}
 
         <p className="text-[13px] text-gray-500 text-center">
-          Los gastos fijos y deudas se sugieren según su día de cobro. Click en el monto apartado para ajustarlo.
+          Los gastos fijos y las deudas se sugieren según su día de cobro. Toca un monto apartado para cambiarlo.
         </p>
       </div>
 

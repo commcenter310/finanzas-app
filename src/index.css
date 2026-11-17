@@ -2655,3 +2655,52 @@
     .meta-deposito > :nth-child(4) { justify-content: flex-end; }
   }
 }
+
+/* ============================================================================
+   PLAN DE QUINCENA — selector y avance como cabecera de la lista
+   ============================================================================ */
+@layer components {
+  .plan-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .plan-avance { color: var(--fg-3); font-size: 13px; padding-right: 4px; }
+
+  /* concepto · detalle · monto · apartar */
+  .plan-fila {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) minmax(0, 1.2fr) 150px 116px;
+    align-items: center;
+    column-gap: 14px;
+    min-height: 44px;
+    padding: 4px 10px 4px 14px;
+    border-top: 1px solid var(--divider);
+    color: var(--fg-1);
+    font-size: 13px;
+  }
+  .plan-concepto { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-weight: 500; }
+  .plan-concepto small { font-size: 12px; font-weight: 400; white-space: nowrap; }
+  .plan-detalle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-3); }
+  .plan-monto { justify-self: end; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+  .plan-monto.is-editable { text-decoration: underline dotted; text-underline-offset: 4px; }
+  .plan-check { justify-self: end; }
+
+  @media (max-width: 840px) {
+    .plan-fila {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "concepto monto" "detalle check";
+      row-gap: 2px;
+      padding: 8px 14px;
+    }
+    .plan-concepto { grid-area: concepto; font-size: 14px; }
+    .plan-detalle { grid-area: detalle; font-size: 12px; }
+    .plan-monto { grid-area: monto; }
+    .plan-check { grid-area: check; }
+    .plan-cabecera .tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+    .plan-avance { display: none; }
+  }
+}
