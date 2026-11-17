@@ -35,7 +35,6 @@ import {
 } from '../components/commitments/CommitmentUI'
 import {
   SpendingMetric,
-  SpendingNav,
   SpendingOverview,
   SpendingSignal,
 } from '../components/spending/SpendingUI'
@@ -306,16 +305,13 @@ export default function GastosVariables() {
   }
 
   return (
-    <Layout titulo="Presupuesto">
+    <Layout titulo="Presupuesto" acciones={(
+      <button type="button" onClick={handleCopiar} className="btn-secondary">
+        <Copy className="w-4 h-4" aria-hidden="true" />
+        <span>Copiar mes anterior</span>
+      </button>
+    )}>
       <div className="spending-page">
-        <div className="spending-module-bar">
-          <SpendingNav />
-          <button type="button" onClick={handleCopiar} className="btn-secondary spending-copy-button">
-            <Copy aria-hidden="true" />
-            <span>Copiar mes anterior</span>
-          </button>
-        </div>
-
         <SpendingOverview
           title={resumen.disponible < 0 ? 'Te pasaste del presupuesto por' : 'Te queda del presupuesto'}
           amount={formatMXN(Math.abs(resumen.disponible))}

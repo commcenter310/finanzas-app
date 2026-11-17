@@ -21,7 +21,6 @@ import ErrorState from '../components/ui/ErrorState'
 import { useToast } from '../components/ui/Toast'
 import {
   CommitmentHero,
-  CommitmentNav,
   HeroMetric,
   PriorityPanel,
   ProgressRail,
@@ -395,16 +394,13 @@ export default function Creditos() {
       : 'No hay pagos pendientes del ciclo ni utilización por encima del nivel recomendado.'
 
   return (
-    <Layout titulo="Créditos">
+    <Layout titulo="Créditos" acciones={(
+      <button type="button" className="btn-primary" onClick={abrirNueva}>
+        <Plus className="w-4 h-4" aria-hidden="true" />
+        <span>Nueva tarjeta</span>
+      </button>
+    )}>
       <div className="commitment-page">
-        <div className="commitment-module-bar">
-          <CommitmentNav />
-          <button type="button" className="btn-primary flex items-center gap-2" onClick={abrirNueva}>
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Nueva tarjeta</span>
-          </button>
-        </div>
-
         <CommitmentHero
           title="Debes en tarjetas"
           amount={formatMXN(totalSaldo)}

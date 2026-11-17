@@ -15,7 +15,6 @@ import { plural } from '../utils/texto'
 import { useToast } from '../components/ui/Toast'
 import { useGuardarConAviso } from '../hooks/useGuardarConAviso'
 import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
-import ProyeccionView from '../components/plan/ProyeccionView'
 
 const TIPO_META = {
   gasto_fijo: { icon: Receipt,    emoji: '🧾', label: 'Gasto fijo' },
@@ -39,7 +38,6 @@ export default function PlanQuincena() {
     apartar, quitarApartado, editarMonto, agregarManual, apartarTodo,
   } = usePlanQuincena()
 
-  const [vista, setVista] = useState('plan')
   const [confirmQuitar, setConfirmQuitar] = useState(null)
   const [editId, setEditId] = useState(null)
   const [editValor, setEditValor] = useState('')
@@ -98,19 +96,6 @@ export default function PlanQuincena() {
   return (
     <Layout titulo="Plan de quincena">
       <div className="space-y-5">
-
-        {/* Tabs: plan actual vs proyección */}
-        <div className="tabs" role="tablist">
-          {[['plan', 'Esta quincena'], ['proyeccion', 'Próximos 12 meses']].map(([k, label]) => (
-            <button key={k} role="tab" aria-selected={vista === k} onClick={() => setVista(k)}
-              className={`tab ${vista === k ? 'is-active' : ''}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {vista === 'proyeccion' ? <ProyeccionView /> : (
-        <>
 
         {/* Selector de quincena */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -320,8 +305,6 @@ export default function PlanQuincena() {
         <p className="text-[13px] text-gray-500 text-center">
           Los gastos fijos y deudas se sugieren según su día de cobro. Click en el monto apartado para ajustarlo.
         </p>
-        </>
-        )}
       </div>
 
       <ConfirmModal

@@ -28,7 +28,6 @@ import { useToast } from '../components/ui/Toast'
 import { esMontoPositivo, textoLimpio } from '../utils/validaciones'
 import {
   CommitmentHero,
-  CommitmentNav,
   HeroMetric,
   PriorityPanel,
   ProgressRail,
@@ -282,16 +281,13 @@ export default function Deudas() {
       : 'Cuando agregues una deuda, aquí aparecerá la siguiente acción recomendada.'
 
   return (
-    <Layout titulo="Deudas">
+    <Layout titulo="Deudas" acciones={(
+      <button type="button" className="btn-primary" onClick={abrirNueva}>
+        <Plus className="w-4 h-4" aria-hidden="true" />
+        <span>Nueva deuda</span>
+      </button>
+    )}>
       <div className="commitment-page">
-        <div className="commitment-module-bar">
-          <CommitmentNav />
-          <button type="button" className="btn-primary flex items-center gap-2" onClick={abrirNueva}>
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Nueva deuda</span>
-          </button>
-        </div>
-
         <CommitmentHero
           title="Debes en total"
           amount={formatMXN(totalDeuda)}

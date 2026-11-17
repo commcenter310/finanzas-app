@@ -80,7 +80,7 @@ Alto total de página en px. Es la métrica de "qué tan comprimida está".
 | Tendencias | 1742 | 1898 | ≤ 1500 | ≤ 1900 |
 | Configuración | 1460 | 2321 | ≤ 1200 | ≤ 2000 |
 
-Tendencias recibe una gráfica nueva en la fase 4, por eso su meta baja poco.
+Tendencias solo gana densidad, por eso su meta baja poco.
 Las demás pantallas ya caben casi en una pantalla; solo deben heredar la
 densidad nueva sin romperse.
 
@@ -176,10 +176,12 @@ Columna lateral (1/3):
 2. **Pagos fijos pendientes** — filas de 32 px.
 3. **Categorías cerca del límite** — filas de 32 px.
 4. **Gastos hormiga** — una línea.
+5. **Gasto por categoría** — la dona se queda en Inicio (decisión del dueño,
+   17 nov 2026), más chica (≈ 160 px) y con la leyenda como lista de
+   categoría · monto a un lado o debajo.
 
-Se quitan de Inicio las dos gráficas (`DashboardCharts`): "Meta contra gasto
-real" repite la Regla 50/30/20, y la dona se muda a Tendencias (fase 4).
-Con eso Inicio deja de cargar `recharts`.
+Se quita de Inicio la gráfica de barras "Meta contra gasto real": repite la
+Regla 50/30/20. La dona sigue cargándose aparte (`React.lazy`).
 
 ### 4.4 Listas en móvil ⚠
 
@@ -231,10 +233,7 @@ Presupuesto en móvil.
   Nómina · Métodos de pago · Categorías · WhatsApp · Seguridad) en escritorio;
   secciones apiladas en móvil. El historial de WhatsApp (`/whatsapp`) se
   enlaza desde la sección WhatsApp.
-- **Tendencias:** agregar arriba "En qué se fue el gasto" del mes seleccionado
-  (la dona que sale de Inicio, o mejor una lista de barras horizontales por
-  categoría, que se lee más rápido). Los datos están en
-  `useDashboard().gastosPorCategoria`.
+- **Tendencias:** solo densidad (la dona se queda en Inicio).
 
 ## 5. Fases
 
@@ -326,8 +325,7 @@ Notas:
 
 ### Fase 4 — Tendencias y limpieza
 
-1. Mover a Tendencias el desglose por categoría (4.5) y borrar
-   `components/dashboard/DashboardCharts.jsx` si queda sin uso.
+1. Densidad en Tendencias (4.5).
 2. Buscar y borrar CSS y componentes huérfanos.
 3. Actualizar `CLAUDE.md`: sección "Design system" (tokens de densidad, regla
    "una fila, una línea", componente `Resumen`), y describir la navegación por
@@ -365,14 +363,14 @@ Notas:
 - El archivo `src/index.css` es grande; para cambios masivos seguir la nota de
   "Making code changes" de `CLAUDE.md`.
 
-## 8. Decisiones pendientes del dueño
+## 8. Decisiones del dueño
 
-Si no hay respuesta, ejecutar con lo marcado como "por defecto".
+Confirmadas el 17 nov 2026: todas con su valor por defecto, salvo la 2.
 
 1. **Barra superior en lugar de barra lateral** en escritorio. Por defecto: sí.
    Alternativa: conservar la lateral pero angosta (64 px, solo íconos).
-2. **Quitar las gráficas de Inicio** (la dona se muda a Tendencias). Por
-   defecto: sí.
+2. ~~Quitar las gráficas de Inicio~~ — **decidido (17 nov 2026): la dona se
+   queda en Inicio**; solo se quita la gráfica de barras.
 3. **En móvil, tocar la fila para editar y borrar desde el panel**, en vez de
    botones en cada fila. Por defecto: sí.
 4. **Quitar la gráfica "Límite contra gasto" de Presupuesto.** Por defecto: sí.

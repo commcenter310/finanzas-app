@@ -36,7 +36,6 @@ import {
 } from '../components/commitments/CommitmentUI'
 import {
   SpendingMetric,
-  SpendingNav,
   SpendingOverview,
   SpendingSignal,
 } from '../components/spending/SpendingUI'
@@ -316,14 +315,6 @@ export default function ControlGastos() {
   return (
     <Layout titulo="Movimientos">
       <div className="spending-page">
-        <div className="spending-module-bar">
-          <SpendingNav />
-          <button type="button" onClick={abrirNuevo} className="btn-primary spending-new-button">
-            <Plus aria-hidden="true" />
-            <span>Registrar gasto</span>
-          </button>
-        </div>
-
         <SpendingOverview
           title={`Gastado en ${MESES[mes - 1].toLowerCase()}`}
           amount={formatMXN(totales.total)}

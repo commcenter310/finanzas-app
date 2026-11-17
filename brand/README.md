@@ -31,4 +31,6 @@ genera el script tal cual: se pasaron a una sola tinta (casi negro `#1A1C19`
 para fondo claro, blanco hueso `#F3F2EE` para fondo oscuro) conservando la
 forma, para que el logo no pelee con la paleta nueva. Si se regeneran desde el
 kit, hay que volver a aplicar ese paso (rellenar con un color plano usando el
-canal alfa del PNG). Los íconos de `public/` siguen con el arte original.
+canal alfa del PNG). Lo mismo para el símbolo: `emblema-claro.png` y
+`emblema-oscuro.png` salen del `emblema.png` del script (ese ya no se usa en la
+app). Los íconos de `public/` siguen con el arte original.

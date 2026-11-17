@@ -1,22 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { NavLink } from 'react-router-dom'
-import { ArrowRight, CreditCard, Landmark, X } from 'lucide-react'
-
-export function CommitmentNav() {
-  return (
-    <nav className="commitment-nav" aria-label="Centro de compromisos">
-      <NavLink to="/deudas" className={({ isActive }) => `commitment-nav-item ${isActive ? 'is-active' : ''}`}>
-        <Landmark aria-hidden="true" />
-        <span>Deudas</span>
-      </NavLink>
-      <NavLink to="/creditos" className={({ isActive }) => `commitment-nav-item ${isActive ? 'is-active' : ''}`}>
-        <CreditCard aria-hidden="true" />
-        <span>Créditos</span>
-      </NavLink>
-    </nav>
-  )
-}
+import { ArrowRight, X } from 'lucide-react'
 
 export function CommitmentHero({
   title,

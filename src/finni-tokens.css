@@ -148,6 +148,16 @@ html[data-theme="dark"] { color-scheme: dark; }
   --space-6: 12px;  --space-8: 16px;  --space-12: 24px; --space-16: 32px;
   --space-24: 48px; --space-32: 64px;
 
+  /* ============================ DENSIDAD ================================ */
+  /* Medidas de la interfaz compacta. Úsalas en vez de números sueltos.     */
+  --pagina-max:    1200px;
+  --pagina-pad:    20px;   /* margen lateral de la página */
+  --gap:           12px;   /* entre bloques */
+  --card-pad:      16px;   /* relleno de tarjeta */
+  --fila-alto:     40px;   /* fila de lista o tabla */
+  --control-alto:  34px;   /* botón, input, select */
+  --barra-alto:    52px;   /* barra superior */
+
   /* ============================ MOVIMIENTO ============================== */
   --ease-ios:    cubic-bezier(0.32, 0.72, 0, 1); /* @kind other */
   --ease-out:    cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
@@ -171,6 +181,15 @@ html[data-theme="dark"] { color-scheme: dark; }
   --num-lg: 600 21px/1.1 var(--font-display);
   --num:    500 15px/1.2 var(--font-sans);
   --num-sm: 500 12px/1.2 var(--font-sans);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --pagina-pad:   12px;
+    --card-pad:     14px;
+    --control-alto: 40px;
+    --barra-alto:   48px;
+  }
 }
 
 /* ============================================================================

@@ -1,21 +1,3 @@
-import { NavLink } from 'react-router-dom'
-import { BarChart3, ListChecks } from 'lucide-react'
-
-export function SpendingNav() {
-  return (
-    <nav className="spending-nav" aria-label="Centro de gastos">
-      <NavLink to="/control-gastos" className={({ isActive }) => `spending-nav-item ${isActive ? 'is-active' : ''}`}>
-        <ListChecks aria-hidden="true" />
-        <span>Movimientos</span>
-      </NavLink>
-      <NavLink to="/gastos-variables" className={({ isActive }) => `spending-nav-item ${isActive ? 'is-active' : ''}`}>
-        <BarChart3 aria-hidden="true" />
-        <span>Presupuesto</span>
-      </NavLink>
-    </nav>
-  )
-}
-
 export function SpendingOverview({
   title,
   amount,
