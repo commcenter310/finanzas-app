@@ -1313,10 +1313,10 @@
 
   .commitment-debt-main {
     display: grid;
-    grid-template-columns: minmax(230px, 1.3fr) minmax(180px, 0.9fr) minmax(170px, 0.72fr);
+    grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 0.8fr) minmax(300px, 1.1fr);
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
+    gap: 20px;
+    padding: 10px 10px 10px 16px;
   }
 
   .commitment-debt-identity { min-width: 0; }
@@ -1342,8 +1342,8 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 5px 12px;
-    margin-top: 7px;
+    gap: 2px 12px;
+    margin-top: 3px;
     color: var(--fg-3);
     font-size: 12px;
   }
@@ -1365,7 +1365,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .commitment-debt-balance span {
@@ -1383,18 +1383,16 @@
   .commitment-debt-actions {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 7px;
+    grid-template-columns: minmax(80px, 1fr) auto auto;
+    align-items: center;
+    gap: 6px;
   }
 
-  .commitment-debt-actions .input {
-    min-width: 0;
-    height: 38px;
-  }
+  .commitment-debt-actions .input { min-width: 0; }
 
   .commitment-pay-button {
     min-width: 72px;
-    min-height: 38px;
+    min-height: var(--control-alto);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1412,7 +1410,7 @@
   .commitment-pay-button svg { width: 14px; height: 14px; }
 
   .commitment-row-tools {
-    grid-column: 1 / -1;
+    grid-column: auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -1725,9 +1723,8 @@
   }
 
   @media (max-width: 1120px) {
-    .commitment-debt-main { grid-template-columns: minmax(220px, 1.15fr) minmax(170px, 0.85fr); }
-    .commitment-debt-actions { grid-column: 1 / -1; grid-template-columns: minmax(180px, 1fr) auto auto; }
-    .commitment-row-tools { grid-column: auto; }
+    .commitment-debt-main { grid-template-columns: minmax(200px, 1.2fr) minmax(150px, 0.9fr); }
+    .commitment-debt-actions { grid-column: 1 / -1; }
   }
 
   @media (max-width: 820px) {
@@ -1741,10 +1738,9 @@
     .commitment-segments { width: 100%; }
     .budget-sort { width: 100%; }
     .commitment-segments button { flex: 1; min-width: 0; padding: 0 7px; }
-    .commitment-debt-main { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: 17px 15px; }
+    .commitment-debt-main { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px; }
     .commitment-debt-balance > div:first-child { margin-bottom: 7px; }
-    .commitment-debt-actions { grid-template-columns: minmax(0, 1fr) auto; }
-    .commitment-row-tools { grid-column: 1 / -1; justify-content: space-between; border-top: 1px solid var(--divider); padding-top: 8px; }
+    .commitment-debt-actions { grid-template-columns: minmax(0, 1fr) auto auto; }
     .commitment-debt-detail { grid-template-columns: minmax(0, 1fr); padding: 15px; }
     .commitment-strategy-item { grid-template-columns: 30px minmax(0, 1fr); padding: 12px; }
     .commitment-strategy-amount { grid-column: 2; }
@@ -2665,5 +2661,13 @@
     .presu-limite .budget-limit-editor { width: 170px; }
     .budget-sort { min-width: 0; flex: 1 1 140px; }
     .presu-conteo { display: none; }
+  }
+}
+
+@layer components {
+  .deudas-vista { display: flex; }
+  @media (max-width: 640px) {
+    .deudas-vista .commitment-segments { width: 100%; }
+    .deudas-vista .commitment-segments button { flex: 1; }
   }
 }

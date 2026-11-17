@@ -31,7 +31,6 @@ import {
   HeroMetric,
   PriorityPanel,
   ProgressRail,
-  SectionHeader,
   SegmentedControl,
   Sheet,
   StatusPill,
@@ -310,23 +309,17 @@ export default function Deudas() {
           <HeroMetric label="Terminas en" value={formatearMeses(plan.mesesTotales)} />
         </CommitmentHero>
 
-        <SectionHeader
-          title={vista === 'cartera' ? 'Lo que debes' : 'En qué orden pagar'}
-          description={vista === 'cartera'
-            ? 'Registra un pago o revisa el historial de cada una.'
-            : 'Cambia de método y mira cómo cambia el orden.'}
-          action={(
-            <SegmentedControl
-              value={vista}
-              ariaLabel="Vista de deudas"
-              onChange={setVista}
-              options={[
-                { value: 'cartera', label: 'Cartera', icon: Wallet },
-                { value: 'estrategia', label: 'Estrategia', icon: ListOrdered },
-              ]}
-            />
-          )}
-        />
+        <div className="deudas-vista">
+          <SegmentedControl
+            value={vista}
+            ariaLabel="Vista de deudas"
+            onChange={setVista}
+            options={[
+              { value: 'cartera', label: 'Lo que debes', icon: Wallet },
+              { value: 'estrategia', label: 'En qué orden pagar', icon: ListOrdered },
+            ]}
+          />
+        </div>
 
         {vista === 'cartera' ? (
           loading ? (
@@ -390,15 +383,15 @@ export default function Deudas() {
 
                       <div className="commitment-debt-balance">
                         <div>
-                          <span>{esTarjeta ? 'Saldo utilizado' : 'Saldo pendiente'}</span>
                           <strong>{formatMXN(saldoActual)}</strong>
+                          <span>
+                            {esTarjeta ? 'usado' : 'pagado'} {Math.max(0, esTarjeta ? pctUso : pctLiquidado).toFixed(0)}%
+                          </span>
                         </div>
                         <ProgressRail
                           value={esTarjeta ? pctUso : pctLiquidado}
                           marker={esTarjeta ? 30 : null}
                           tone={esTarjeta ? (pctUso > 80 ? 'negative' : pctUso > 30 ? 'warning' : 'positive') : 'positive'}
-                          label={esTarjeta ? 'Utilización' : 'Avance liquidado'}
-                          endLabel={`${Math.max(0, esTarjeta ? pctUso : pctLiquidado).toFixed(0)}%`}
                         />
                       </div>
 
@@ -408,7 +401,7 @@ export default function Deudas() {
                           min="0"
                           className="input"
                           aria-label={`Monto de pago para ${deuda.nombre}`}
-                          placeholder="Monto del pago"
+                          placeholder="Monto"
                           value={montoAbono[deuda.id] ?? ''}
                           onChange={event => setMontoAbono(current => ({ ...current, [deuda.id]: event.target.value }))}
                           disabled={pagoEnCurso}
