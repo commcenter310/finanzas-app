@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 
+// Altura que el panel ocuparía sin recorte, en la misma medida que maxHeight
+// (border-box). scrollHeight no incluye el borde: sin sumarlo, cada recálculo
+// (se recalcula con cada scroll, también el de la propia lista) quitaba 2 px y
+// el desplegable se iba encogiendo hasta dejar dos opciones. Y si quien hace
+// scroll es un hijo (la lista de FilterSelect), el panel no desborda: lo que
+// falta es lo que desborda ese hijo.
+export function alturaNatural(panel) {
+  let alto = panel.scrollHeight + (panel.offsetHeight - panel.clientHeight)
+  for (const hijo of panel.children) alto += Math.max(0, hijo.scrollHeight - hijo.clientHeight)
+  return alto
+}
+
 export function useFloatingPosition({
   open,
   triggerRef,
@@ -19,10 +31,10 @@ export function useFloatingPosition({
     const rect = trigger.getBoundingClientRect()
     const panel = panelRef.current
     const panelWidth = width ?? Math.max(rect.width, panel?.offsetWidth ?? rect.width)
-    // scrollHeight = altura NATURAL del contenido (aunque el panel esté recortado
-    // por un maxHeight previo). Usar offsetHeight aquí se retroalimentaba y dejaba
-    // el panel cada vez más pequeño (calendario mostrando solo el encabezado).
-    const naturalHeight = panel?.scrollHeight || maxHeight
+    // Altura NATURAL del contenido (aunque el panel esté recortado por un
+    // maxHeight previo). Usar offsetHeight aquí se retroalimentaba y dejaba el
+    // panel cada vez más pequeño (calendario mostrando solo el encabezado).
+    const naturalHeight = (panel && alturaNatural(panel)) || maxHeight
     const viewportH = window.innerHeight
 
     // Altura final: la deseada, pero nunca más alta que la pantalla
