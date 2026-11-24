@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowRight,
@@ -221,9 +221,15 @@ export default function Creditos() {
     vincularMetodo,
   } = useCreditos()
   const toast = useToast()
-  const [mostrarForm, setMostrarForm] = useState(false)
+  const navigate = useNavigate()
+  // Llega desde el formulario de gastos con un método de crédito que aún no
+  // tiene tarjeta: abre el alta ya vinculada a ese método.
+  const nuevaTarjeta = useLocation().state?.nuevaTarjeta
+  const [mostrarForm, setMostrarForm] = useState(Boolean(nuevaTarjeta))
   const [editando, setEditando] = useState(null)
-  const [form, setForm] = useState(FORM_VACIO)
+  const [form, setForm] = useState(() => nuevaTarjeta
+    ? { ...FORM_VACIO, nombre: nuevaTarjeta.nombre ?? '', metodo_vinculado_id: String(nuevaTarjeta.metodoId ?? '') }
+    : FORM_VACIO)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const setF = (key, value) => setForm(current => ({ ...current, [key]: value }))
 
@@ -288,6 +294,7 @@ export default function Creditos() {
   }
 
   const cerrarForm = () => {
+    if (nuevaTarjeta) navigate('.', { replace: true, state: null })
     setMostrarForm(false)
     setEditando(null)
     setForm(FORM_VACIO)

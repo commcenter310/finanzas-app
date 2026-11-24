@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
   CircleDollarSign,
@@ -204,6 +204,9 @@ export default function ControlGastos() {
 
   const metodoSeleccionado = metodos.find(item => item.id === Number(form.metodo_pago_id))
   const esTarjetaCredito = Boolean(metodoSeleccionado?.credito_id)
+  // Método marcado como "crédito" en Perfil pero sin tarjeta en Créditos: las
+  // compras a meses viven en el ciclo de la tarjeta, así que hace falta darla de alta.
+  const esCreditoSinTarjeta = metodoSeleccionado?.tipo === 'credito' && !esTarjetaCredito
 
   const handleGuardar = async () => {
     if (!form.descripcion || !form.monto) return
@@ -581,6 +584,14 @@ export default function ControlGastos() {
               placeholder="No especificado"
             />
           </div>
+          {esCreditoSinTarjeta && (
+            <div className="commitment-form-field is-wide">
+              <p className="commitment-form-note">
+                Para registrar compras a meses con {metodoSeleccionado.nombre}, primero agrégala como tarjeta en Créditos.{' '}
+                <Link to="/creditos" state={{ nuevaTarjeta: { nombre: metodoSeleccionado.nombre, metodoId: metodoSeleccionado.id } }} className="enlace-seccion">Agregar tarjeta →</Link>
+              </p>
+            </div>
+          )}
           {esTarjetaCredito && (
             <div className="commitment-form-field is-wide">
               <label className="label">Compra a meses</label>
